@@ -1,5 +1,5 @@
 /*
- This code is based on a template been made by Neodyme under the MIT license. Thanks Neodyme!
+ This code is based on a template that was made by Neodyme under the MIT license. Thanks Neodyme!
  Youtube : https://www.youtube.com/neodymetv
  Twitch : https://www.twitch.tv/ioodyme
  Github : https://github.com/n3odym3
@@ -11,33 +11,10 @@
   for a  linear tracking turntable model P-L45 or P-L55 (and perhaps others)
 */
 
-
-//OTA===================================
-#include <WiFi.h>
-#include <ESPAsyncWebServer.h>
-#include <Update.h>
-AsyncWebServer updateserver(4992);
-
-
-// HTML
-const char* updateIndex = 
-"<form method='POST' action='/doupdate' enctype='multipart/form-data'>"
-  "<h3>Let's build geeky things</h2>"
-  "<p></p>"
-  "<h2>Firmware update</h3>"
-  "<p></p>"
-  "<input type='file' name='update' accept='.bin'>"
-  "<input type='submit' value='UPDATE'>"
-"</form>";
-//OTA===================================
-
 //Turntable config========
-
 uint16_t device_name_text;
 String stored_devicename;
 //Turntable config========
-
-
 
 //Web server==================================
 #ifdef ESP8266
@@ -76,45 +53,12 @@ String option;
 String stored_ssid, stored_pass;
 String stored_mqtt_server, stored_mqtt_user, stored_mqtt_pass, stored_mqtt_topic_in, stored_mqtt_topic_out;
 bool mqtt_enabled = false;
+
+//ESPUI turntable GUI fields
+uint16_t armStatusLabelId, armPositionLabelId;
+
 //ESPUI==================================================================================================================
 
-//Custom libraries..............
-void setupOTA(AsyncWebServer &otaServer, const char* path) {
-    //OTA update  
-    // 1. form
-    otaServer.on(path, HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(200, "text/html", updateIndex);
-    });
-    // 2. ending upload and reboot
-    otaServer.on("/doupdate", HTTP_POST, [](AsyncWebServerRequest *request){
-      bool failure = Update.hasError();
-      request->send(200, "text/plain", failure ? "Error" : "SUCCES : Reboot...");
-      delay(1000);
-      if(!failure) ESP.restart();
-    }, 
-    // 3. manage .bin
-    [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
-      if (!index) { // 1st pack
-        Serial.printf("Update start: %s\n", filename.c_str());
-        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { 
-          Update.printError(Serial);
-        }
-      }
-      if (len) { // write each part in flash
-        if (Update.write(data, len) != len) {
-          Update.printError(Serial);
-        }
-      }
-      if (final) { // done. validate
-        if (Update.end(true)) {
-          Serial.printf("Update end: %u bytes\n", index + len);
-        } else {
-          Update.printError(Serial);
-        }
-      }
-    });
-}
-//Custom libraries..............
 
 //SETUP=========================
 void setup() {
@@ -123,7 +67,9 @@ void setup() {
   Serial.println();
 
   //Custom setup...............
-  setupOTA(updateserver, "/");
+  simpleOTAsetup();
+  turntableSetup();
+  turntableUiSetup();
   //Custom setup...............
 
   //pinMode(LED_BUILTIN, OUTPUT);
@@ -131,7 +77,7 @@ void setup() {
   wifi_init();
   espui_init();
 
-  updateserver.begin();
+  simpleOTAbegin();
 }
 //SETUP=========================
 
@@ -145,8 +91,7 @@ void loop() {
   }
   mqtt_loop();
 
-  //Custom loop.................................
-  //Your code HERE !
-  //Custom loop.................................
+  turntableLoop();
+  turntableUiUpdate(getArmPosition());
 }
 //LOOP==========================================

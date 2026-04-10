@@ -1,6 +1,21 @@
 //ESPUI=====================================================================================================================
 void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);
+  
+  //Tonearm UI..............................................................................
+  auto tonearmtab = ESPUI.addControl(Tab, "", "Tonearm control");
+  armStatusLabelId = ESPUI.addControl(Label, "Status", "status", Carrot, tonearmtab, textCallback);
+  armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusLabelId, textCallback);
+  auto in_button = ESPUI.addControl(Button, "Controls", "    <-    ", None, tonearmtab, buttonInCallback);
+  auto out_button = ESPUI.addControl(Button, "",        "    ->    ", None, in_button, buttonOutCallback);
+  auto up_button = ESPUI.addControl(Button, "",         "  up/down ", None, in_button, textCallback);
+  auto ss_button = ESPUI.addControl(Button, "",         "start/stop", None, in_button, textCallback);
+  auto rpt_button = ESPUI.addControl(Button, "",        "  repeat  ", None, in_button, textCallback);
+
+  //auto demo_tab = ESPUI.addControl(Tab, "", "demo");
+  //auto demo_button = ESPUI.addControl(Button, "", "Button", None, demo_tab, textCallback);
+  //Tonearm UI..............................................................................
+
   //Debugtab-----------------------------------------------------------------------------------------------
   auto debugtab = ESPUI.addControl(Tab, "", "Debug");
   serialLabelId = ESPUI.addControl(Label, "Serial", "Serial IN", Peterriver, debugtab, textCallback);
@@ -11,8 +26,6 @@ void espui_init() {
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Carrot, configtab, textCallback);
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
   auto espreboot = ESPUI.addControl(Button, "", "Reboot ESP", None, configsave, ESPReset);
-
-
 
   //WiFi-------------------------------------------------------------------------------------------------------------------
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");

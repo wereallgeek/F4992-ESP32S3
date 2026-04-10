@@ -30,6 +30,20 @@ void textCallback(Control *sender, int type) {
 }
 //Default ESPUI callback======================
 
+//Turntable ESPUI callback========================
+void buttonInCallback(Control *sender, int type) {
+  if (type == B_DOWN) {
+    updateArmPosition(getArmPosition() + 5);
+  }
+}
+void buttonOutCallback(Control *sender, int type) {
+  if (type == B_DOWN) {
+    updateArmPosition(getArmPosition() - 5);
+  }
+}
+//Turntable ESPUI callback========================
+
+
 //config settings callback
 void SaveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
@@ -133,19 +147,32 @@ void SerialSetup(String input) {
     Serial.println("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
+  // temp fake status change
+  else if (input.indexOf("status") > -1) {
+    Serial.println(updateArmStatus(splitString(input, ' ', 1)));
+  }
+
+  // temp debug fake arm movement
+  else if (input.indexOf("arm") > -1) {
+    String armvalue = splitString(input, ' ', 1);
+    updateArmPosition(armvalue.toInt());
+    Serial.println(armPositionStatus(getArmPosition()));
+  }
+
   else if (input.indexOf("restart") > -1) {
     ESP.restart();
   }
 
   else if (input.indexOf("info") > -1) {
+    Serial.println("Device name " + stored_devicename);
     Serial.println("SSID " + stored_ssid);
+    Serial.print("IP :");
+    Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
     Serial.println("MQTT server " + stored_mqtt_server);
     Serial.println("MQTT user " + stored_mqtt_user);
     Serial.println("MQTT enabled " + String(mqtt_enabled));
     Serial.println("Topic IN " + stored_mqtt_topic_in);
     Serial.println("Topic OUT " + stored_mqtt_topic_out);
-    Serial.print("IP :");
-    Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
   }
 
   // else if (input.indexOf("custom_cmd") > -1) {
