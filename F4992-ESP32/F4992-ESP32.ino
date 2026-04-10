@@ -31,6 +31,14 @@ const char* updateIndex =
 "</form>";
 //OTA===================================
 
+//Turntable config========
+
+uint16_t device_name_text;
+String stored_devicename;
+//Turntable config========
+
+
+
 //Web server==================================
 #ifdef ESP8266
 #include <ESP8266WiFi.h>

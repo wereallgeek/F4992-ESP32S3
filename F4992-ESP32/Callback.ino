@@ -30,6 +30,16 @@ void textCallback(Control *sender, int type) {
 }
 //Default ESPUI callback======================
 
+//config settings callback
+void SaveTurntableDetailsCallback(Control *sender, int type) {
+  if (type == B_UP) {
+    stored_devicename = String(ESPUI.getControl(device_name_text)->value);
+    preferences.putString("devicename", stored_devicename);
+    Serial.println(stored_devicename);
+    Serial.println("Saving configuration");
+  }
+}
+
 //WiFi settings callback=====================================================
 void SaveWifiDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
