@@ -1,0 +1,19 @@
+/F4992-ESP32/build/
+*.hex
+*.elf
+*.bin
+*.o
+*.d
+*.a
+
+# --- IDE specific files ---
+.vscode/
+.idea/
+*.swp
+*.swo
+_vm/
+*.vsarduino.h
+
+# --- OS specific ---
+.DS_Store
+Thumbs.db
