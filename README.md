@@ -65,3 +65,6 @@ The Wifi tab allows to setup the WiFi and MQTT (don't forget to save the setting
 | info | [print all the settings] | info (will not print WiFi password) |
 
 
+## OTA firmware update
+
+When connected to wifi, browsing to device_ip:4992/ will allow the upload of a .bin file to the ESP32 for ongoing development.
