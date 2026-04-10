@@ -47,7 +47,7 @@ Preferences preferences;
 #define DNS_PORT 53
 IPAddress apIP(192, 168, 4, 1);
 DNSServer dnsServer;
-const char* hostname = "ESPUI-Demo";
+const char* hostname = "F4992-ESP32-S3";
 bool wificonnected = false;
 //Web server==================================
 
