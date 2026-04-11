@@ -1,16 +1,17 @@
 //ESPUI=====================================================================================================================
 void espui_init() {
-  ESPUI.setVerbosity(Verbosity::Quiet);
+  ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
   
   //Tonearm UI..............................................................................
   auto tonearmtab = ESPUI.addControl(Tab, "", "Tonearm control");
   armStatusLabelId = ESPUI.addControl(Label, "Status", "status", Carrot, tonearmtab, textCallback);
   armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusLabelId, textCallback);
-  auto in_button = ESPUI.addControl(Button, "Controls", "    <-    ", None, tonearmtab, buttonInCallback);
-  auto out_button = ESPUI.addControl(Button, "",        "    ->    ", None, in_button, buttonOutCallback);
-  auto up_button = ESPUI.addControl(Button, "",         "  up/down ", None, in_button, textCallback);
-  auto ss_button = ESPUI.addControl(Button, "",         "start/stop", None, in_button, textCallback);
-  auto rpt_button = ESPUI.addControl(Button, "",        "  repeat  ", None, in_button, textCallback);
+  auto in_button = ESPUI.addControl(Button, "Controls", "<- Left", None, tonearmtab, buttonInCallback);
+  auto out_button = ESPUI.addControl(Button, "", "Right ->", None, in_button, buttonOutCallback);
+  auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, in_button, buttonUpdownCallback);
+  auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, in_button, buttonStartStopCallback);
+  auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, in_button, buttonRepeatCallback);
+  //todo: add speed inversion.
 
   //auto demo_tab = ESPUI.addControl(Tab, "", "demo");
   //auto demo_button = ESPUI.addControl(Button, "", "Button", None, demo_tab, textCallback);

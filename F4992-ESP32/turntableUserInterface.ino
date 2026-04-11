@@ -9,6 +9,7 @@
 // Does not contain ESPUI specific data
 //    such as field ID
 //========================================
+unsigned long lastUpdateMillis = 0; 
 
 
 // Turntable user interface ==============================================
@@ -23,7 +24,10 @@ void turntableUiSetup() {
 
 void turntableUiUpdate(uint16_t armPosition) {
   // conditionnal ui update
-  ESPUI.print(armStatusLabelId, turntableStatus());  
-  ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+  if (millis() - lastUpdateMillis >= 500) {
+    lastUpdateMillis += 500;
+    ESPUI.print(armStatusLabelId, turntableStatus());  
+    ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+  }
 }
 // Turntable user interface ==============================================

@@ -33,12 +33,12 @@ void textCallback(Control *sender, int type) {
 //Turntable ESPUI callback========================
 void buttonInCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    requestMove(+5);
+    requestMoveIn(5);
   }
 }
 void buttonOutCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    requestMove(-5);
+    requestMoveOut(5);
   }
 }
 void buttonUpdownCallback(Control *sender, int type) {
@@ -50,7 +50,7 @@ void buttonUpdownCallback(Control *sender, int type) {
     requestPlayStop();
   }
 }void buttonRepeatCallback(Control *sender, int type) {
-  //nothing yet
+  requestRepeat();
 }
 //Turntable ESPUI callback========================
 
@@ -168,6 +168,14 @@ void SerialSetup(String input) {
 
   else if (input.indexOf("report") > -1) {
     turntableReport();
+  }
+
+  else if (input.indexOf("quiet") > -1) {
+    highVerbosity = false;
+  }
+
+  else if (input.indexOf("verbose") > -1) {
+    highVerbosity = true;
   }
 
   else if (input.indexOf("info") > -1) {
