@@ -12,8 +12,9 @@
 */
 
 //Turntable config========
-uint16_t device_name_text;
+uint16_t device_name_text, highVerbosity_switch;
 String stored_devicename;
+bool highVerbosity;
 //Turntable config========
 
 //Web server==================================

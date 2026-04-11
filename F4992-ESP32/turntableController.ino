@@ -15,6 +15,7 @@ const uint16_t  positionTo30 = 200; //todo: determine
 const uint16_t  positionTo15 = 400; //todo: determine
 
 enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
+const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
 TurntableState currentState = IDLE;
 TurntableState nextState = IDLE;
 //prototype to make arduino IDE happy about the TurntableState
@@ -54,6 +55,7 @@ bool isOverPlatter() {
 }
 
 void changeState(TurntableState newState) {
+  if(highVerbosity) Serial.println(String("State: ") + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
   currentState = newState;
 }
 
@@ -163,50 +165,34 @@ void turntableSetup() {
   changeState(INITIAL);
 }
 
-String turntableReport() {
-  String report = "";
-  report += String("===============REPORT===============\n");
-  report += String("status: ") + turntableStatus() + "\n";
-  report += String("armPosition: ") + armPosition + "\n";
-  report += String("desiredPosition: ") + desiredPosition + "\n";
-  report += String("armPositionInitialized: ") + (armPositionInitialized ? "YES" : "NO") + "\n";
-  report += String("armLifter: ") + (armLifter ? "UP" : "DOWN") + "\n";
-  report += String("armReset: ") + (armReset ? "YES" : "NO") + "\n";
+void turntableReport() {
+  Serial.println("==========REPORT============");
+  Serial.print("status: "); Serial.println(TurntableStateDesc[currentState]);
+  Serial.print("armPosition: "); Serial.println(armPosition);
+  Serial.print("desired: "); Serial.println(desiredPosition);
+  Serial.print("armInitialized: "); Serial.println(armPositionInitialized ? "YES" : "NO");
+  Serial.print("armLifter: "); Serial.println(armLifter ? "UP" : "DOWN");
+  Serial.print("armReset: "); Serial.println(armReset ? "YES" : "NO");
 
-  report += String("DCM1: ") + (DCM1 ? "HI" : "LO");
-  report += String(" DCM2: ") + (DCM2 ? "HI" : "LO");
-  report += String(" DCM3: ") + (DCM3 ? "HI" : "LO") + "\n";
+  Serial.print("DCM    :");
+  Serial.print("  1-"); Serial.print (DCM1 ? "HI" : "LO");
+  Serial.print("  2-"); Serial.print (DCM2 ? "HI" : "LO");
+  Serial.print("  3-"); Serial.println(DCM3 ? "HI" : "LO");
 
-  report += String("DDSS: ") + (DDSS ? "HI" : "LO");
-  report += String(" DD30: ") + (DD30 ? "HI" : "LO");
-  report += String(" DD45: ") + (DD45 ? "HI" : "LO") + "\n";
-  report += String("sense30: ") + (sense30 ? "HI" : "LO");
-  report += String(" sense45: ") + (sense45 ? "HI" : "LO") + "\n\n";
-  return report;
+  Serial.print("DD     :");
+  Serial.print("  SS-"); Serial.print (DDSS ? "HI" : "LO");
+  Serial.print("  30-"); Serial.print (DD30 ? "HI" : "LO");
+  Serial.print("  45-"); Serial.println(DD45 ? "HI" : "LO");
+
+  Serial.print("Sensors:");
+  Serial.print("  30-"); Serial.print (sense30 ? "HI" : "LO");
+  Serial.print("  45-"); Serial.println(sense45 ? "HI" : "LO");
+  Serial.println("============================");
 }
 
-
+//for UI
 String turntableStatus() {
- switch (currentState) {
-    case IDLE:
-      return "Idle";
-      break;
-    case INITIAL:
-      return "Initialization";
-      break;
-    case GOHOME:
-      return "Going home";
-      break;
-    case MOVE:
-      return "Arm in motion";
-      break;
-    case DETECT:
-      return "Detection";
-      break;
-    case PLAY:
-      return "Playing";
-      break;
-    }
+ return TurntableStateDesc[currentState];
 }
 
 

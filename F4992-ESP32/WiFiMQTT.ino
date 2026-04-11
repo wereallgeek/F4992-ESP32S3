@@ -10,7 +10,8 @@ void wifi_init() {
   mqtt_enabled = preferences.getBool("mqtt_enabled", false);
 
   //devicename  
-  stored_devicename = preferences.getString("devicename", hostname);  
+  stored_devicename = preferences.getString("devicename", hostname); 
+  highVerbosity = preferences.getBool("highVerbosity", false);
 
   //Custom preferences............................................
   //Your code HERE !

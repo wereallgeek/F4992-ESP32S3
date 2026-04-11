@@ -60,8 +60,11 @@ void buttonUpdownCallback(Control *sender, int type) {
 void SaveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
     stored_devicename = String(ESPUI.getControl(device_name_text)->value);
+    highVerbosity = ESPUI.getControl(highVerbosity_switch)->value.toInt() ? true : false;
     preferences.putString("devicename", stored_devicename);
+    preferences.putBool("highVerbosity", highVerbosity);
     Serial.println(stored_devicename);
+    Serial.print("Verbosity ");  Serial.println(highVerbosity ? "HI" : "LO");
     Serial.println("Saving configuration");
   }
 }
@@ -164,7 +167,7 @@ void SerialSetup(String input) {
   }
 
   else if (input.indexOf("report") > -1) {
-    Serial.println(turntableReport());
+    turntableReport();
   }
 
   else if (input.indexOf("info") > -1) {
@@ -177,6 +180,7 @@ void SerialSetup(String input) {
     Serial.println("MQTT enabled " + String(mqtt_enabled));
     Serial.println("Topic IN " + stored_mqtt_topic_in);
     Serial.println("Topic OUT " + stored_mqtt_topic_out);
+    Serial.print("Verbosity ");  Serial.println(highVerbosity ? "HI" : "LO");
   }
 
   // else if (input.indexOf("custom_cmd") > -1) {

@@ -24,6 +24,7 @@ void espui_init() {
   //Turntable configuration..............................................................................
   auto configtab = ESPUI.addControl(Tab, "", "Configuration");
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Carrot, configtab, textCallback);
+  highVerbosity_switch = ESPUI.addControl(Switcher, "High Verbosity", String(highVerbosity), Carrot, configtab, textCallback);
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
   auto espreboot = ESPUI.addControl(Button, "", "Reboot ESP", None, configsave, ESPReset);
 
