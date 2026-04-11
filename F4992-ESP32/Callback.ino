@@ -33,15 +33,27 @@ void textCallback(Control *sender, int type) {
 //Turntable ESPUI callback========================
 void buttonInCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    updateArmPosition(getArmPosition() + 5);
+    requestMove(+5);
   }
 }
 void buttonOutCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    updateArmPosition(getArmPosition() - 5);
+    requestMove(-5);
   }
 }
+void buttonUpdownCallback(Control *sender, int type) {
+  if (type == B_DOWN) {
+    requestUpDown();
+  }
+}void buttonStartStopCallback(Control *sender, int type) {
+  if (type == B_DOWN) {
+    requestPlayStop();
+  }
+}void buttonRepeatCallback(Control *sender, int type) {
+  //nothing yet
+}
 //Turntable ESPUI callback========================
+
 
 
 //config settings callback
@@ -147,20 +159,12 @@ void SerialSetup(String input) {
     Serial.println("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
-  // temp fake status change
-  else if (input.indexOf("status") > -1) {
-    Serial.println(updateArmStatus(splitString(input, ' ', 1)));
-  }
-
-  // temp debug fake arm movement
-  else if (input.indexOf("arm") > -1) {
-    String armvalue = splitString(input, ' ', 1);
-    updateArmPosition(armvalue.toInt());
-    Serial.println(armPositionStatus(getArmPosition()));
-  }
-
   else if (input.indexOf("restart") > -1) {
     ESP.restart();
+  }
+
+  else if (input.indexOf("report") > -1) {
+    Serial.println(turntableReport());
   }
 
   else if (input.indexOf("info") > -1) {

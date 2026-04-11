@@ -10,10 +10,6 @@
 //    such as field ID
 //========================================
 
-uint16_t lastKnownArmPosition;
-String armStatus;
-bool armStatusDirty;
-
 
 // Turntable user interface ==============================================
 String armPositionStatus(uint16_t position) {
@@ -22,30 +18,12 @@ String armPositionStatus(uint16_t position) {
   return String(buffer);
 }
 
-String updateArmStatus(String newStatus) {
-  armStatus = newStatus;
-  armStatusDirty = true;
-  return armStatus;
-}
-
 void turntableUiSetup() {
-  //force redraw after initialization
-  lastKnownArmPosition = -1;
 }
 
 void turntableUiUpdate(uint16_t armPosition) {
   // conditionnal ui update
-  if (armStatusDirty) 
-    ESPUI.print(armStatusLabelId, armStatus);
-  if (armPosition != lastKnownArmPosition) 
-    ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
-
-  resyncUiStatusVariables(armPosition);
-}
-
-void resyncUiStatusVariables(uint16_t armPosition) {
-  //resync
-  lastKnownArmPosition = armPosition;
-  armStatusDirty = false;
+  ESPUI.print(armStatusLabelId, turntableStatus());  
+  ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
 }
 // Turntable user interface ==============================================
