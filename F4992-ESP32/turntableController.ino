@@ -24,8 +24,8 @@ const uint16_t  positionTo30 = 50; //todo: determine
 const uint16_t  positionTo15 = 100; //todo: determine
 const uint16_t  endPosition = 9000; //todo: determine
 
-enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
-const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
+enum TurntableState {IDLE, INITIAL, REPEAT, GOHOME, MOVE, DETECT, PLAY};
+const char* TurntableStateDesc[] = {"Idle", "Initialization", "Repeating", "Going home", "Arm in motion", "Detection", "Playing"};
 TurntableState currentState = IDLE;
 TurntableState nextState = IDLE;
 //prototype to make arduino IDE happy about the TurntableState
@@ -181,15 +181,15 @@ bool reachedEndPosition() {
 }
 
 void startDD() {
-  DDSS = true;
+  DDSS = DdActive;
 }
 
 void stopDD() {
-  DDSS = false;
+  DDSS = DdInactive;
 }
 
 bool isTurning() {
-  return DDSS == true;
+  return DDSS == DdActive;
 }
 
 void playRecord() {
@@ -199,33 +199,36 @@ void playRecord() {
 
 //Tonearm control=============================
 void turntableSetup() {
-  webSerialPrintln(String(millis()) + " - Waking up");
+  webSerialPrintln(String(millis()) + " - Starting initialization sequence");
   changeState(INITIAL);
 }
 
 void turntableReport() {
   webSerialPrintln("===========REPORT============");
-  webSerialPrint("timestamp:     "); webSerialPrintln(millis());
-  webSerialPrint("status:        "); webSerialPrintln(TurntableStateDesc[currentState]);
-  webSerialPrint("armPosition:   "); webSerialPrintln(armPosition);
-  webSerialPrint("desired:       "); webSerialPrintln(desiredPosition);
-  webSerialPrint("Init complete: "); webSerialPrintln(initializationCompleted ? "YES" : "NO");
-  webSerialPrint("armLifter:     "); webSerialPrintln(armLifter  == pressed ? "pressed" : "released");
-  webSerialPrint("armReset:      "); webSerialPrintln(armReset == pressed ? "pressed" : "released");
+  webSerialPrintln("timestamp:       " + millis());
+  webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
+  webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
+  webSerialPrintln(String("armPosition:     ") + armPosition + " (" + desiredPosition + ")");
+  webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
+  webSerialPrintln(String("arm lifter:      ") + (armLifter == armUp ? "armUp" : "armDown"));
+  webSerialPrintln(String("armReset switch: ") + (armReset == pressed ? "Pressed" : "Released"));
 
   webSerialPrint("DCM    :");
-  webSerialPrint("   1-"); webSerialPrint (DCM1 ? "HI" : "LO");
-  webSerialPrint("   2-"); webSerialPrint (DCM2 ? "HI" : "LO");
-  webSerialPrint("   3-"); webSerialPrintln(DCM3 ? "HI" : "LO");
+  webSerialPrint  ((String("   1-")) + (DCM1 == DcmActive ? "ON" : "--"));
+  webSerialPrint  ((String("   2-")) + (DCM2 == DcmActive ? "ON" : "--"));
+  webSerialPrintln((String("   3-")) + (DCM3 == DcmActive ? "ON" : "--"));
 
   webSerialPrint("DD     :");
-  webSerialPrint("  SS-"); webSerialPrint (DDSS ? "HI" : "LO");
-  webSerialPrint("  30-"); webSerialPrint (DD30 ? "HI" : "LO");
-  webSerialPrint("  45-"); webSerialPrintln(DD45 ? "HI" : "LO");
+  webSerialPrint  ((String("  SS-")) + (DDSS == DdActive ? "EN" : "--"));
+  webSerialPrint  ((String("  30-")) + (DD30 == DdActive ? "EN" : "--"));
+  webSerialPrintln((String("  45-")) + (DD45 == DdActive ? "EN" : "--"));
 
-  webSerialPrint("Sensors:");
-  webSerialPrint("  30-"); webSerialPrint (sense30 ? "HI" : "LO");
-  webSerialPrint("  45-"); webSerialPrintln(sense45 ? "HI" : "LO");
+  webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
+  webSerialPrint  ((String("  30-")) + (sense30 ? "HI" : "LO"));
+  webSerialPrintln((String("  45-")) + (sense45 ? "HI" : "LO"));
+
+  webSerialPrint("Various:"); //other data?
+  webSerialPrintln((String("  Repeat-")) + (repeat ? "YES" : "NO"));
   webSerialPrintln("=============================");
 }
 
@@ -258,10 +261,11 @@ void requestPlayStop() {
 
   if(highVerbosity)
   {
-    webSerialPrint(String(millis()));
-    webSerialPrint(" - L(31)="); webSerialPrint(armLifter ? "HI" : "LO");
-    webSerialPrint(" | A(25)="); webSerialPrint(armReset ? "HI" : "LO");
-    webSerialPrint(" | D(38)="); webSerialPrintln(DDSS ? "HI" : "LO");
+    webSerialPrintln("| Lifter |ArmReset |  DDSS  |"); 
+    webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
+    webSerialPrint  (armLifter == armDown ? "| DN (H) " : "| UP (L) ");
+    webSerialPrint  (armReset == pressed ? "| HOME(L) " : "| away(H) ");
+    webSerialPrintln(DDSS == DdInactive ? "| OFF(H) |" : "| ON (L) |");
   }
   // section 2-4 key operation
   // Start/Stop (pin24) key
@@ -286,11 +290,11 @@ void requestPlayStop() {
   //|During autoreturn operation|        ---      |  Clear |
   //|---------------------------|--------------------------|
   // * return after 2.5s via the key operation during the UP using the UP/DOWN key
-       if (!armLifter && !armReset &&  DDSS) startAutoOperation();
-  else if (!armLifter &&  armReset &&  DDSS) startDD();
-  else if ( armLifter &&  armReset &&  DDSS) startDD();
-  else if (!armLifter &&  armReset && !DDSS) returnAndClear();
-  else if ( armLifter &&  armReset && !DDSS) returnAndClear();
+       if (armLifter == armUp   && armReset == pressed  && DDSS == DdInactive) startAutoOperation();
+  else if (armLifter == armUp   && armReset == released && DDSS == DdInactive) startDD();
+  else if (armLifter == armDown && armReset == released && DDSS == DdInactive) startDD();
+  else if (armLifter == armUp   && armReset == released && DDSS == DdActive) returnAndClear();
+  else if (armLifter == armDown && armReset == released && DDSS == DdActive) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
 }
@@ -300,6 +304,34 @@ void requestHome() {
   if (!initializationCompleted) return;
   nextState = IDLE;
   changeState(GOHOME);
+}
+
+void requestGoEnd() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request GoEND");
+  if (!initializationCompleted) return;
+  nextState = IDLE;
+  requestMove(endPosition);
+}
+
+void requestGo30() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go30");
+  if (!initializationCompleted) return;
+  nextState = IDLE;
+  requestMove(positionTo30);
+}
+
+void requestGo15() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go15");
+  if (!initializationCompleted) return;
+  nextState = IDLE;
+  requestMove(positionTo15);
+}
+
+void requestGoStill() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Still");
+  if (!initializationCompleted) return;
+  nextState = IDLE;
+  requestMove(armPosition);
 }
 
 void requestUpDown() {
@@ -350,24 +382,39 @@ void turntableLoop() {
       moveArmRight();
       if (reachedArmReset()) changeState(IDLE);
       break;
+    case REPEAT:
+      raiseArm();
+      nextState = PLAY;
+      //todo: detect record size
+      desiredPosition = positionTo30;
+      moveArmTo(desiredPosition);//temp: put "detected record size"
+      if (reachedPosition()) changeState(nextState);
+      break;
     case GOHOME:
-      moveArmTo(positionHome);
-      if (reachedHome()) changeState(IDLE);
+      nextState = IDLE;
+      desiredPosition = positionHome;
+      moveArmTo(desiredPosition);
+      if (reachedHome()) changeState(nextState);
       break;
     case MOVE:
       moveArmTo(desiredPosition);
       if (reachedPosition()) changeState(nextState);
       break;
     case DETECT:
-      raiseArm();
       startDD();
-      //detect record size
+      nextState = PLAY;
+      //todo: detect record size
+      desiredPosition = positionTo30;
+      moveArmTo(desiredPosition);//temp: put "detected record size"
       //this takes a little time
       //set record speed and change state
       break;
     case PLAY:
       if (isOverPlatter() && isTurning()) playRecord();
       else changeState(DETECT);
+      if (armPosition >= endPosition) {
+        if (repeat) changeState(REPEAT); else changeState(GOHOME);
+      }
       break;
     }
   //handle sensors

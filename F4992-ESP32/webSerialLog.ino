@@ -2,32 +2,36 @@
 #include <deque>
 
 // Configuration 
-const int WS_MAX_LINES = 15;
+const int WS_MAX_LINES = 14;
 std::deque<String> webLog;
 
 SemaphoreHandle_t logMutex = xSemaphoreCreateMutex();
 
 void wsprint(String s) {
   Serial.print(s);
-  if (webLog.empty()) {
-    webLog.push_back(s);
-  } else {
-    webLog.back() += s;
+  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) { //no doubledipping
+    if (webLog.empty()) {
+      webLog.push_back(s);
+    } else {
+      webLog.back() += s;
+    }
+    xSemaphoreGive(logMutex); //unlock
+    wsMaintainWebLog();
   }
-  wsMaintainWebLog();
-  updatews();
 }
 
 void wsprintln(String s) {
   Serial.println(s);
-  if (webLog.empty()) {
-    webLog.push_back(s);
-  } else {
-    webLog.back() += s;
+  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) { //no doubledipping
+   if (webLog.empty()) {
+      webLog.push_back(s);
+    } else {
+      webLog.back() += s;
+    }
+    webLog.push_back("");
+    xSemaphoreGive(logMutex); //unlock
+    wsMaintainWebLog();
   }
-  webLog.push_back(""); 
-  wsMaintainWebLog();
-  updatews();
 }
 
 
@@ -51,15 +55,12 @@ void webSerialPrintln(IPAddress ip) { wsprintln(ip.toString()); }
 
 
 void wsMaintainWebLog() {
-  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) { //no doubledipping
-    while (webLog.size() > WS_MAX_LINES) {
-      webLog.pop_front();
-    }
-    xSemaphoreGive(logMutex); //unlock
+  while (webLog.size() > WS_MAX_LINES) {
+    webLog.pop_front();
   }
 }
 
-void updatews() {
+void updateWebSerial() {
   if (!firstPassCompleted) return;
 
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) {

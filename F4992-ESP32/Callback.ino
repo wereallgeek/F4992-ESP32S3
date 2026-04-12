@@ -42,15 +42,17 @@ void buttonOutCallback(Control *sender, int type) {
   }
 }
 void buttonUpdownCallback(Control *sender, int type) {
-  if (type == B_DOWN) {
+  if (type == B_UP) {
     requestUpDown();
   }
 }void buttonStartStopCallback(Control *sender, int type) {
-  if (type == B_DOWN) {
+  if (type == B_UP) {
     requestPlayStop();
   }
 }void buttonRepeatCallback(Control *sender, int type) {
-  requestRepeat();
+  if (type == B_UP) {
+    requestRepeat();
+  }
 }
 //Turntable ESPUI callback========================
 
@@ -176,6 +178,26 @@ void SerialSetup(String input) {
 
   else if (input.indexOf("verbose") > -1) {
     highVerbosity = true;
+  }
+
+  else if (input.indexOf("gohome") > -1) {
+    requestHome();
+  }
+
+  else if (input.indexOf("goend") > -1) {
+    requestGoEnd();
+  }
+
+  else if (input.indexOf("go30") > -1) {
+    requestGo30();
+  }
+
+  else if (input.indexOf("go15") > -1) {
+    requestGo15();
+  }
+
+  else if (input.indexOf("gostill") > -1) {
+    requestGoStill();
   }
 
   else if (input.indexOf("info") > -1) {

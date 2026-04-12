@@ -24,10 +24,11 @@ void turntableUiSetup() {
 
 void turntableUiUpdate(uint16_t armPosition) {
   // conditionnal ui update
-  if (millis() - lastUpdateMillis >= 500) {
-    lastUpdateMillis += 500;
+  if (millis() - lastUpdateMillis >= 750) {
+    lastUpdateMillis = millis();
     ESPUI.print(armStatusLabelId, turntableStatus());  
     ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+    updateWebSerial();
   }
 }
 // Turntable user interface ==============================================
