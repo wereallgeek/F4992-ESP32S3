@@ -20,9 +20,9 @@ const bool DcmActive = true;
 const bool DcmInactive = false;
 
 const uint16_t  positionHome = 0;
-const uint16_t  positionTo30 = 200; //todo: determine
-const uint16_t  positionTo15 = 400; //todo: determine
-const uint16_t  endPosition = 4000; //todo: determine
+const uint16_t  positionTo30 = 50; //todo: determine
+const uint16_t  positionTo15 = 100; //todo: determine
+const uint16_t  endPosition = 9000; //todo: determine
 
 enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
 const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
@@ -33,7 +33,7 @@ void changeState(TurntableState newState);
 bool isState(TurntableState state);
 
 //replace with counter
-uint16_t  armPosition = 2500; //temp debug value to have a fake "intiialization"
+uint16_t  armPosition = 7500; //temp debug value to have a fake "intiialization"
 uint16_t  desiredPosition = 0;
 bool initializationCompleted = false;
 
@@ -75,7 +75,7 @@ bool isAtEndPosition() {
 }
 
 void changeState(TurntableState newState) {
-  if(highVerbosity) Serial.println(String(millis()) + " - State: " + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - State: " + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
   currentState = newState;
 }
 
@@ -115,7 +115,7 @@ bool isArmReady() {
 
 void resetArmposition() {
   initializationCompleted = true;
-  if(highVerbosity && !armAlreadyReset) Serial.println(String(millis()) + " - Resetting armPosition");
+  if(highVerbosity && !armAlreadyReset) webSerialPrintln(String(millis()) + " - Resetting armPosition");
   armPosition = 0;
   initializationCompleted = true;
   armAlreadyReset = true;
@@ -199,34 +199,34 @@ void playRecord() {
 
 //Tonearm control=============================
 void turntableSetup() {
-  Serial.println(String(millis()) + " - Waking up [" + stored_devicename + "]");
+  webSerialPrintln(String(millis()) + " - Waking up");
   changeState(INITIAL);
 }
 
 void turntableReport() {
-  Serial.println("===========REPORT============");
-  Serial.print("timestamp:     "); Serial.println(millis());
-  Serial.print("status:        "); Serial.println(TurntableStateDesc[currentState]);
-  Serial.print("armPosition:   "); Serial.println(armPosition);
-  Serial.print("desired:       "); Serial.println(desiredPosition);
-  Serial.print("Init complete: "); Serial.println(initializationCompleted ? "YES" : "NO");
-  Serial.print("armLifter:     "); Serial.println(armLifter  == pressed ? "pressed" : "released");
-  Serial.print("armReset:      "); Serial.println(armReset == pressed ? "pressed" : "released");
+  webSerialPrintln("===========REPORT============");
+  webSerialPrint("timestamp:     "); webSerialPrintln(millis());
+  webSerialPrint("status:        "); webSerialPrintln(TurntableStateDesc[currentState]);
+  webSerialPrint("armPosition:   "); webSerialPrintln(armPosition);
+  webSerialPrint("desired:       "); webSerialPrintln(desiredPosition);
+  webSerialPrint("Init complete: "); webSerialPrintln(initializationCompleted ? "YES" : "NO");
+  webSerialPrint("armLifter:     "); webSerialPrintln(armLifter  == pressed ? "pressed" : "released");
+  webSerialPrint("armReset:      "); webSerialPrintln(armReset == pressed ? "pressed" : "released");
 
-  Serial.print("DCM    :");
-  Serial.print("   1-"); Serial.print (DCM1 ? "HI" : "LO");
-  Serial.print("   2-"); Serial.print (DCM2 ? "HI" : "LO");
-  Serial.print("   3-"); Serial.println(DCM3 ? "HI" : "LO");
+  webSerialPrint("DCM    :");
+  webSerialPrint("   1-"); webSerialPrint (DCM1 ? "HI" : "LO");
+  webSerialPrint("   2-"); webSerialPrint (DCM2 ? "HI" : "LO");
+  webSerialPrint("   3-"); webSerialPrintln(DCM3 ? "HI" : "LO");
 
-  Serial.print("DD     :");
-  Serial.print("  SS-"); Serial.print (DDSS ? "HI" : "LO");
-  Serial.print("  30-"); Serial.print (DD30 ? "HI" : "LO");
-  Serial.print("  45-"); Serial.println(DD45 ? "HI" : "LO");
+  webSerialPrint("DD     :");
+  webSerialPrint("  SS-"); webSerialPrint (DDSS ? "HI" : "LO");
+  webSerialPrint("  30-"); webSerialPrint (DD30 ? "HI" : "LO");
+  webSerialPrint("  45-"); webSerialPrintln(DD45 ? "HI" : "LO");
 
-  Serial.print("Sensors:");
-  Serial.print("  30-"); Serial.print (sense30 ? "HI" : "LO");
-  Serial.print("  45-"); Serial.println(sense45 ? "HI" : "LO");
-  Serial.println("=============================");
+  webSerialPrint("Sensors:");
+  webSerialPrint("  30-"); webSerialPrint (sense30 ? "HI" : "LO");
+  webSerialPrint("  45-"); webSerialPrintln(sense45 ? "HI" : "LO");
+  webSerialPrintln("=============================");
 }
 
 //for UI
@@ -235,33 +235,33 @@ String turntableStatus() {
 }
 
 void returnAndClear() {
-  if(highVerbosity) Serial.println(String(millis()) + " - Return (and clear)");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
   changeState(GOHOME);
   repeat = false;
 }
 
 void startAutoOperation() {
-  if(highVerbosity) Serial.println(String(millis()) + " - Start Operation");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Start Operation");
   changeState(DETECT);
 }
 
 void clearRepeat() {
-  if(highVerbosity) Serial.println(String(millis()) + " - Clear repeat");  
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
   repeat = false;
 }
 
 
 //the requests are for user interface & callbacks to interact
 void requestPlayStop() {
-  if(highVerbosity) Serial.println(String(millis()) + " - request Play/Stop");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
 
   if(highVerbosity)
   {
-    Serial.print(String(millis()));
-    Serial.print(" - L(31)="); Serial.print(armLifter ? "HI" : "LO");
-    Serial.print(" | A(25)="); Serial.print(armReset ? "HI" : "LO");
-    Serial.print(" | D(38)="); Serial.println(DDSS ? "HI" : "LO");
+    webSerialPrint(String(millis()));
+    webSerialPrint(" - L(31)="); webSerialPrint(armLifter ? "HI" : "LO");
+    webSerialPrint(" | A(25)="); webSerialPrint(armReset ? "HI" : "LO");
+    webSerialPrint(" | D(38)="); webSerialPrintln(DDSS ? "HI" : "LO");
   }
   // section 2-4 key operation
   // Start/Stop (pin24) key
@@ -296,39 +296,41 @@ void requestPlayStop() {
 }
 
 void requestHome() {
-  if(highVerbosity) Serial.println(String(millis()) + " - request HOME");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request HOME");
   if (!initializationCompleted) return;
   nextState = IDLE;
   changeState(GOHOME);
 }
 
 void requestUpDown() {
-  if(highVerbosity) Serial.println(String(millis()) + " - request UP/DOWN");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;
-       if (armLifter = released && !isHome()) changeState(PLAY);
-  else if (armLifter = pressed && !isHome()) changeState(IDLE);
+       if (armLifter == released && !isHome()) changeState(PLAY);
+  else if (armLifter == pressed && !isHome()) changeState(IDLE);
 }
 
 void requestMoveIn(uint16_t  delta) {
-  if(highVerbosity) Serial.println(String(millis()) + " - request Move IN");
+  if (armPosition > endPosition - delta) return; //no rollover
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
   if( !isAtEndPosition() && armLifter == released) requestMove(armPosition + delta);
 }
 
 void requestMoveOut(uint16_t  delta) {
-  if(highVerbosity) Serial.println(String(millis()) + " - request Move OUT");
+  if (armPosition < delta) return; //no rollover
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move OUT");
   if( !isHome() && armLifter == released) requestMove(armPosition - delta);
 }
 
 void requestMove(uint16_t  newPosition) {
   if (!initializationCompleted) return;
-  if(highVerbosity) Serial.println(String(millis()) + " - request Move to " + newPosition);
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move to " + newPosition);
   desiredPosition = newPosition;
   nextState = IDLE;
   changeState(MOVE);
 }
 
 void requestRepeat() {
-  if(highVerbosity) Serial.println(String(millis()) + " - request Repeat");
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Repeat");
   repeat = !repeat;
 }
 

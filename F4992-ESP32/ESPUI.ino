@@ -19,9 +19,10 @@ void espui_init() {
 
   //Debugtab-----------------------------------------------------------------------------------------------
   auto debugtab = ESPUI.addControl(Tab, "", "Debug");
-  serialLabelId = ESPUI.addControl(Label, "Serial", "Serial IN", Peterriver, debugtab, textCallback);
-  statusLabelId = ESPUI.addControl(Label, "", "Serial OUT", Peterriver, serialLabelId, textCallback);
-
+  serialLabelId = ESPUI.addControl(Label, "Serial", "Serial IN", Dark, debugtab, textCallback);
+  logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, textCallback);
+  ESPUI.setElementStyle(logLabelId, "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px;");
+  
   //Turntable configuration..............................................................................
   auto configtab = ESPUI.addControl(Tab, "", "Configuration");
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Carrot, configtab, textCallback);

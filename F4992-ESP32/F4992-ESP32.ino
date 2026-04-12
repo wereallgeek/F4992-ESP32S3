@@ -10,11 +10,13 @@
  This project is meant to function as a replacement F-4992 microcomputer board
   for a  linear tracking turntable model P-L45 or P-L55 (and perhaps others)
 */
+uint16_t logLabelId; 
 
 //Turntable config========
 uint16_t device_name_text, highVerbosity_switch;
 String stored_devicename;
 bool highVerbosity;
+bool firstPassCompleted = false;
 //Turntable config========
 
 //Web server==================================
@@ -63,7 +65,7 @@ uint16_t armStatusLabelId, armPositionLabelId;
 
 //SETUP=========================
 void setup() {
-
+  firstPassCompleted = false;
   Serial.begin(115200);
   Serial.println();
 
@@ -79,6 +81,9 @@ void setup() {
   espui_init();
 
   simpleOTAbegin();
+
+  firstPassCompleted = true;
+  webSerialPrintln(String(millis()) + " - [" + stored_devicename + "] awoken");
 }
 //SETUP=========================
 
