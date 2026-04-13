@@ -125,8 +125,20 @@ void ESPReset(Control *sender, int type) {
 }
 //ESP Reset=================================
 
+//ESPUI command===============================
+void commandCallback(Control* sender, int type) {
+    if (type == T_VALUE) {
+        SerialCommand(sender->value);
+        ESPUI.updateControlValue(sender->id, ""); 
+    }
+}
+//ESPUI command===============================
+
+
 //Serial setup===============================================================
-void SerialSetup(String input) {
+void SerialCommand(String input) {
+  ESPUI.print(serialLabelId, input);
+
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
     preferences.putString("ssid", stored_ssid);

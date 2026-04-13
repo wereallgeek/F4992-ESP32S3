@@ -63,6 +63,8 @@ const char* espuiIndicatorElementStyle = " !important; width: 15px !important; h
 const char* btnStyle = "background-color: #000 !important; color: #fff !important; font-size: 10px !important; min-width: 55px !important; height: 25px !important; padding: 0 5px !important; line-height: 25px !important; border: 1px solid #444 !important; display: inline-block !important; vertical-align: middle !important; text-align: center !important;";
 const char* swStyleOFF = "width: 40px !important; height: 22px !important; background-color: #000 !important; border: 1px solid #444 !important; border-radius: 11px !important; display: inline-block !important; vertical-align: top !important; transform: scale(0.8) !important; margin-top: -3px !important; margin-left: -5px !important; margin-right: -5px !important;";
 const char* swStyleON  = "width: 40px !important; height: 22px !important; background-color: #2ECC71 !important; border: 1px solid #27AE60 !important; border-radius: 11px !important; display: inline-block !important; vertical-align: top !important; transform: scale(0.8) !important; margin-top: -3px !important; margin-left: -5px !important; margin-right: -5px !important;";
+const char* commandConsoleStyle = "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px;";
+const char* commandInputStyle = "color: #000000 !important; background-color: #ffffff !important; text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px; border: 1px solid #444 !important;";
 
 //ESPUI turntable GUI fields
 uint16_t armStatusLabelId, armPositionLabelId, ledId;
@@ -98,8 +100,7 @@ void loop() {
   dnsServer.processNextRequest();
   if (Serial.available()) {
     String input = Serial.readStringUntil('\n');
-    ESPUI.print(serialLabelId, input);
-    SerialSetup(input);
+    SerialCommand(input);
   }
   mqtt_loop();
 

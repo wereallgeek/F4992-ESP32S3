@@ -29,9 +29,12 @@ void espui_init() {
 
   //Console debug tab--------------------------------------------------------------------------------------------------------------
   auto debugtab = ESPUI.addControl(Tab, "", "Debug");
-  serialLabelId = ESPUI.addControl(Label, "Serial", "Serial IN", Dark, debugtab, textCallback);
+  serialLabelId = ESPUI.addControl(Label, "Console", "last command", Dark, debugtab, textCallback);
+  ESPUI.setElementStyle(serialLabelId, commandConsoleStyle);
   logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, textCallback);
-  ESPUI.setElementStyle(logLabelId, "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px;");
+  ESPUI.setElementStyle(logLabelId, commandConsoleStyle);
+  auto cmd_input = ESPUI.addControl(Text, "Commande:", "", Dark, serialLabelId, commandCallback);
+  ESPUI.setElementStyle(cmd_input, commandInputStyle);
   
   //Turntable configuration--------------------------------------------------------------------------------------------------------
   auto configtab = ESPUI.addControl(Tab, "", "Configuration");
