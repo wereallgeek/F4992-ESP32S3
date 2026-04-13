@@ -474,7 +474,7 @@ void turntableLoop() {
   //15 & 30cm sensors -- may use hardware interrupt
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
   if (sense15) DetectionTime[DISC15] = millis();//todo: use actual sensor
-  computeAutoSpeed();
+  if (isTurning()) computeAutoSpeed();
 }
 
 
