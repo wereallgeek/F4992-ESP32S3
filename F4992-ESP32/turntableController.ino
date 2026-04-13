@@ -440,11 +440,12 @@ void turntableLoop() {
     case DETECT:
       startDD();
       setAutoDDspeed();
-      nextState = PLAY;
+      nextState = DETECT;
       desiredPosition = Steps[DiscSize];
       moveArmTo(Steps[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
-      if (sensortimer >= millis() -2500) {
+      if (millis() - sensortimer >= 2500) {
+        nextState = PLAY;
         moveArmTo(desiredPosition);
         changeState(MOVE); 
       }
