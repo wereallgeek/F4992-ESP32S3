@@ -99,6 +99,5 @@ void loop() {
   mqtt_loop();
 
   turntableLoop();
-  turntableUiUpdate(getArmPosition());
 }
 //LOOP==========================================

@@ -89,11 +89,6 @@ bool isState(TurntableState state) {
   return currentState == state;
 }
 
-uint16_t  getArmPosition() {
-  //todo: link with counter
-  return armPosition;
-}
-
 bool isArmUp() {
   return armLifter == armUp;
 }
@@ -402,7 +397,7 @@ String armPositionStatus(uint16_t position) {
   return String(buffer);
 }
 
-void turntableUiUpdate(uint16_t armPosition) {
+void turntableUiUpdate() {
   // conditionnal ui update
   if (millis() - lastUpdateMillis >= 750) {
     lastUpdateMillis = millis();
@@ -481,6 +476,8 @@ void turntableLoop() {
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
   if (sense15) DetectionTime[DISC15] = millis();//todo: use actual sensor
   if (isTurning()) computeAutoSpeed();
+
+  turntableUiUpdate();
 }
 
 
