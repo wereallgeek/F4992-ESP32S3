@@ -200,6 +200,15 @@ void SerialSetup(String input) {
     requestGoStill();
   }
 
+  //debug
+  else if (input.indexOf("sense15") > -1) {
+    toggleSensor15();
+  }
+  //debug
+  else if (input.indexOf("sense30") > -1) {
+    toggleSensor30();
+  }
+
   else if (input.indexOf("info") > -1) {
     webSerialPrintln("Device name " + stored_devicename);
     webSerialPrintln("SSID " + stored_ssid);

@@ -72,7 +72,6 @@ void setup() {
   //Custom setup...............
   simpleOTAsetup();
   turntableSetup();
-  turntableUiSetup();
   //Custom setup...............
 
   //pinMode(LED_BUILTIN, OUTPUT);

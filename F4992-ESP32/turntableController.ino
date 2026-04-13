@@ -5,6 +5,7 @@
 //    for full tonearm and platter control
 //
 //================================================
+unsigned long lastUpdateMillis = 0; 
 
 //todo: define appropriately for correct logic-level
 const bool armUp = false;
@@ -19,22 +20,25 @@ const bool DdInactive = true;
 const bool DcmActive = true;
 const bool DcmInactive = false;
 
-const uint16_t  positionHome = 0;
-const uint16_t  positionTo30 = 50; //todo: determine
-const uint16_t  positionTo15 = 100; //todo: determine
-const uint16_t  endPosition = 9000; //todo: determine
+//purposely match arm position and speed
+enum DetectedSize {NODISC, DISC30, DISC15};
+const char* sizename[] = {"NODISC", "30cm", "15cm"};
+DetectedSize DiscSize = NODISC;
+DetectedSize previousDiscSize = NODISC;
+enum ArmPosition {HOME, START30, START15, END};
+const uint16_t Steps[] = {0, 55, 110, 7500};//todo: determine 30, 15, end
+//replace with counter
+uint16_t  armPosition = Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
+uint16_t  desiredPosition = Steps[HOME];
 
-enum TurntableState {IDLE, INITIAL, REPEAT, GOHOME, MOVE, DETECT, PLAY};
-const char* TurntableStateDesc[] = {"Idle", "Initialization", "Repeating", "Going home", "Arm in motion", "Detection", "Playing"};
+enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
+const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
 TurntableState currentState = IDLE;
 TurntableState nextState = IDLE;
 //prototype to make arduino IDE happy about the TurntableState
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
 
-//replace with counter
-uint16_t  armPosition = 7500; //temp debug value to have a fake "intiialization"
-uint16_t  desiredPosition = 0;
 bool initializationCompleted = false;
 
 //output to arm lifter
@@ -48,14 +52,16 @@ bool DCM3 = DcmInactive;
 
 //outputs to DD
 bool DDSS = DdInactive;
-bool DD30 = DdInactive;
+bool DD33 = DdInactive;
 bool DD45 = DdInactive;
 
 //todo: replace with actual switch
 bool armReset = released;
 //todo: replace these with actual sensors
 bool sense30 = true;
-bool sense45 = true;
+bool sense15 = true;
+unsigned long sensortimer = 0;
+unsigned long  DetectionTime[3] = {0, 0, 0};
 
 bool repeat = false;
 
@@ -63,15 +69,15 @@ bool repeat = false;
 bool armAlreadyReset = false;
 
 bool isHome() {
-  return armPosition == positionHome;
+  return armPosition == Steps[HOME];
 }
 
 bool isOverPlatter() {
-  return armPosition >= positionTo30;
+  return armPosition >= Steps[START30];
 }
 
 bool isAtEndPosition() {
-  return armPosition >= endPosition;
+  return armPosition >= Steps[END];
 }
 
 void changeState(TurntableState newState) {
@@ -119,6 +125,24 @@ void resetArmposition() {
   armPosition = 0;
   initializationCompleted = true;
   armAlreadyReset = true;
+}
+
+void computeAutoSpeed() {
+  if (DetectionTime[DISC30] > millis() - 2500) DiscSize = DISC30;
+  else if (DetectionTime[DISC15] > millis() - 2500) DiscSize = DISC15;
+  else DiscSize = NODISC;
+  if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
+  previousDiscSize = DiscSize;
+  setAutoDDspeed();
+}
+
+bool discPresent() {
+  return DiscSize != NODISC;
+}
+
+void setAutoDDspeed() {
+  DD45 = (DiscSize == DISC15) ? DdActive : DdInactive; //if nodisc - 33rpm
+  DD33 = (DiscSize == DISC30 || DiscSize == NODISC) ? DdActive : DdInactive;
 }
 
 void setDCM(int DCMNumber) {  
@@ -177,7 +201,7 @@ bool reachedPosition() {
 }
 
 bool reachedEndPosition() {
-  return armPosition >= endPosition;
+  return armPosition >= Steps[END];
 }
 
 void startDD() {
@@ -203,8 +227,28 @@ void turntableSetup() {
   changeState(INITIAL);
 }
 
+void returnAndClear() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
+  changeState(GOHOME);
+  repeat = false;
+}
+
+void startAutoOperation() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Start Operation");
+  sensortimer = millis();
+  changeState(DETECT);
+}
+
+void clearRepeat() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
+  repeat = false;
+}
+
+//Tonearm control=============================
+
+// Turntable user interface ==============================================
 void turntableReport() {
-  webSerialPrintln("===========REPORT============");
+  webSerialPrintln("================REPORT=================");
   webSerialPrintln("timestamp:       " + millis());
   webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
@@ -220,40 +264,22 @@ void turntableReport() {
 
   webSerialPrint("DD     :");
   webSerialPrint  ((String("  SS-")) + (DDSS == DdActive ? "EN" : "--"));
-  webSerialPrint  ((String("  30-")) + (DD30 == DdActive ? "EN" : "--"));
+  webSerialPrint  ((String("  33-")) + (DD33 == DdActive ? "EN" : "--"));
   webSerialPrintln((String("  45-")) + (DD45 == DdActive ? "EN" : "--"));
 
   webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
-  webSerialPrint  ((String("  30-")) + (sense30 ? "HI" : "LO"));
-  webSerialPrintln((String("  45-")) + (sense45 ? "HI" : "LO"));
+  webSerialPrint  ((String("  30-")) + (sense30 ? "HI(" : "LO(") + DetectionTime[DISC30] + ")");
+  webSerialPrintln((String("  15-")) + (sense15 ? "HI(" : "LO(") + DetectionTime[DISC15] + ")");
 
   webSerialPrint("Various:"); //other data?
-  webSerialPrintln((String("  Repeat-")) + (repeat ? "YES" : "NO"));
-  webSerialPrintln("=============================");
+  webSerialPrintln((String("  Repeat-")) + (repeat ? "YES" : "NO") + " Size-" + sizename[DiscSize]);
+  webSerialPrintln("=======================================");
 }
 
 //for UI
 String turntableStatus() {
  return TurntableStateDesc[currentState];
 }
-
-void returnAndClear() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
-  changeState(GOHOME);
-  repeat = false;
-}
-
-void startAutoOperation() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Start Operation");
-  changeState(DETECT);
-}
-
-void clearRepeat() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
-  repeat = false;
-}
-
-
 //the requests are for user interface & callbacks to interact
 void requestPlayStop() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
@@ -310,21 +336,21 @@ void requestGoEnd() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request GoEND");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(endPosition);
+  requestMove(Steps[END]);
 }
 
 void requestGo30() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go30");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(positionTo30);
+  requestMove(Steps[START30]);
 }
 
 void requestGo15() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go15");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(positionTo15);
+  requestMove(Steps[START15]);
 }
 
 void requestGoStill() {
@@ -342,7 +368,7 @@ void requestUpDown() {
 }
 
 void requestMoveIn(uint16_t  delta) {
-  if (armPosition > endPosition - delta) return; //no rollover
+  if (armPosition > Steps[END] - delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
   if( !isAtEndPosition() && armLifter == released) requestMove(armPosition + delta);
 }
@@ -366,6 +392,24 @@ void requestRepeat() {
   repeat = !repeat;
 }
 
+String armPositionStatus(uint16_t position) {
+  char buffer[25];
+  snprintf(buffer, sizeof(buffer), "Arm position: %u", position);
+  return String(buffer);
+}
+
+void turntableUiUpdate(uint16_t armPosition) {
+  // conditionnal ui update
+  if (millis() - lastUpdateMillis >= 750) {
+    lastUpdateMillis = millis();
+    ESPUI.print(armStatusLabelId, turntableStatus());  
+    ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+    updateWebSerial();
+  }
+}
+// Turntable user interface ==============================================
+
+
 void turntableLoop() {
   switch (currentState) {
     case IDLE:
@@ -382,38 +426,43 @@ void turntableLoop() {
       moveArmRight();
       if (reachedArmReset()) changeState(IDLE);
       break;
-    case REPEAT:
-      raiseArm();
-      nextState = PLAY;
-      //todo: detect record size
-      desiredPosition = positionTo30;
-      moveArmTo(desiredPosition);//temp: put "detected record size"
-      if (reachedPosition()) changeState(nextState);
-      break;
     case GOHOME:
       nextState = IDLE;
-      desiredPosition = positionHome;
+      desiredPosition = Steps[HOME];
       moveArmTo(desiredPosition);
       if (reachedHome()) changeState(nextState);
       break;
     case MOVE:
+      setAutoDDspeed();
       moveArmTo(desiredPosition);
       if (reachedPosition()) changeState(nextState);
       break;
     case DETECT:
       startDD();
+      setAutoDDspeed();
       nextState = PLAY;
-      //todo: detect record size
-      desiredPosition = positionTo30;
-      moveArmTo(desiredPosition);//temp: put "detected record size"
-      //this takes a little time
+      desiredPosition = Steps[DiscSize];
+      moveArmTo(desiredPosition);
+      //section 2 automatic disk selection timing says Input for 2.5 sec
+      if (sensortimer >= millis() -2500) { 
+        changeState(MOVE); 
+      }
       //set record speed and change state
       break;
     case PLAY:
+      setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
-      else changeState(DETECT);
-      if (armPosition >= endPosition) {
-        if (repeat) changeState(REPEAT); else changeState(GOHOME);
+      if (!discPresent()) changeState(GOHOME);
+      else if (armPosition >= Steps[END]) {
+        if (repeat) {
+          nextState = PLAY;
+          desiredPosition = Steps[DiscSize];
+          repeat = false; //no infinite repeat
+          changeState(MOVE); 
+        }
+        else {
+          changeState(GOHOME);
+        }
       }
       break;
     }
@@ -422,7 +471,17 @@ void turntableLoop() {
   armReset = (armPosition == 0) ? pressed : released;//temp debug reading
   //process armReset
   if (armReset == pressed) resetArmposition(); else armAlreadyReset = false;
-  //15 & 30cm sensors
-  //buttons are handled in the UI
+  //15 & 30cm sensors -- may use hardware interrupt
+  if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
+  if (sense15) DetectionTime[DISC15] = millis();//todo: use actual sensor
+  computeAutoSpeed();
 }
-//Tonearm control=============================
+
+
+//DEBUG
+void toggleSensor15() {
+  sense15 = !sense15;
+}
+void toggleSensor30() {
+  sense30 = !sense30;
+}
