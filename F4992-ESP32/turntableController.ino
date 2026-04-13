@@ -33,6 +33,7 @@ uint16_t  desiredPosition = Steps[HOME];
 
 enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
 const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
+const ControlColor statusColor[] = {Dark, Sunflower, Carrot, Carrot, Sunflower, Peterriver};
 TurntableState currentState = IDLE;
 TurntableState nextState = IDLE;
 //prototype to make arduino IDE happy about the TurntableState
@@ -397,11 +398,18 @@ String armPositionStatus(uint16_t position) {
   return String(buffer);
 }
 
+void changeEspuiPanelColor(uint16_t id, ControlColor newColor) {
+    Control* panel = ESPUI.getControl(id);
+    panel->color = newColor;
+    ESPUI.updateControl(id);
+}
+
 void turntableUiUpdate() {
   // conditionnal ui update
   if (millis() - lastUpdateMillis >= 750) {
     lastUpdateMillis = millis();
-    ESPUI.print(armStatusLabelId, turntableStatus());  
+    ESPUI.print(armStatusLabelId, turntableStatus());
+    changeEspuiPanelColor(armStatusLabelId, statusColor[currentState]);
     ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
     updateWebSerial();
   }
