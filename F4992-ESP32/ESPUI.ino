@@ -2,35 +2,37 @@
 void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
   
-  //Tonearm UI..............................................................................
-  auto tonearmtab = ESPUI.addControl(Tab, "", "Tonearm control");
-  armStatusLabelId = ESPUI.addControl(Label, "Status", "status", Carrot, tonearmtab, textCallback);
-  armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusLabelId, textCallback);
-  auto in_button = ESPUI.addControl(Button, "Controls", "<- Left", None, tonearmtab, buttonInCallback);
+  //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
+  auto in_button =ESPUI.button("Controls", buttonInCallback, None, "<- Left");
+  //auto in_button = ESPUI.addControl(Button, "Controls", "<- Left", None, 0, buttonInCallback);
   auto out_button = ESPUI.addControl(Button, "", "Right ->", None, in_button, buttonOutCallback);
   auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, in_button, buttonUpdownCallback);
   auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, in_button, buttonStartStopCallback);
   auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, in_button, buttonRepeatCallback);
-  //todo: add speed inversion.
+    //todo: add speed inversion.
+  //Turntable Controls-------------------------------------------------------------------------------------------------------------
 
-  //auto demo_tab = ESPUI.addControl(Tab, "", "demo");
-  //auto demo_button = ESPUI.addControl(Button, "", "Button", None, demo_tab, textCallback);
-  //Tonearm UI..............................................................................
 
-  //Debugtab-----------------------------------------------------------------------------------------------
+  //Tonearm Status-----------------------------------------------------------------------------------------------------------------
+  auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
+  armStatusLabelId = ESPUI.addControl(Label, "Status", "status", Carrot, tonearmtab, textCallback);
+  armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusLabelId, textCallback);
+  //Tonearm Status-----------------------------------------------------------------------------------------------------------------
+
+  //Console debug tab--------------------------------------------------------------------------------------------------------------
   auto debugtab = ESPUI.addControl(Tab, "", "Debug");
   serialLabelId = ESPUI.addControl(Label, "Serial", "Serial IN", Dark, debugtab, textCallback);
   logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, textCallback);
   ESPUI.setElementStyle(logLabelId, "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px;");
   
-  //Turntable configuration..............................................................................
+  //Turntable configuration--------------------------------------------------------------------------------------------------------
   auto configtab = ESPUI.addControl(Tab, "", "Configuration");
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Carrot, configtab, textCallback);
   highVerbosity_switch = ESPUI.addControl(Switcher, "High Verbosity", String(highVerbosity), Carrot, configtab, textCallback);
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
   auto espreboot = ESPUI.addControl(Button, "", "Reboot ESP", None, configsave, ESPReset);
 
-  //WiFi-------------------------------------------------------------------------------------------------------------------
+  //WiFi---------------------------------------------------------------------------------------------------------------------------
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
   wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Carrot, wifitab, textCallback);
   wifi_pass_text = ESPUI.addControl(Text, "Password", stored_pass, Carrot, wifitab, textCallback);
