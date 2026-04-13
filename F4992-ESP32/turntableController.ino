@@ -392,6 +392,7 @@ void requestRepeat() {
 }
 
 void requestInvert(bool invertRequested) {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
   softSpeedInverter = invertRequested;
 }
 
