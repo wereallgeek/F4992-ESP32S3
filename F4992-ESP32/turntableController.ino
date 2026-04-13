@@ -141,8 +141,8 @@ bool discPresent() {
 }
 
 void setAutoDDspeed() {
-  DD45 = (DiscSize == DISC15) ? DdActive : DdInactive; //if nodisc - 33rpm
-  DD33 = (DiscSize == DISC30 || DiscSize == NODISC) ? DdActive : DdInactive;
+  DD45 = ((DiscSize == DISC15) ^ softSpeedInverter) ? DdActive : DdInactive; //if nodisc - 33rpm
+  DD33 = ((DiscSize == DISC30 || DiscSize == NODISC) ^ softSpeedInverter) ? DdActive : DdInactive;
 }
 
 void setDCM(int DCMNumber) {  
@@ -271,8 +271,7 @@ void turntableReport() {
   webSerialPrint  ((String("  30-")) + (sense30 ? "HI(" : "LO(") + DetectionTime[DISC30] + ")");
   webSerialPrintln((String("  15-")) + (sense15 ? "HI(" : "LO(") + DetectionTime[DISC15] + ")");
 
-  webSerialPrint("Various:"); //other data?
-  webSerialPrintln((String("  Repeat-")) + (repeat ? "YES" : "NO") + " Size-" + sizename[DiscSize]);
+  webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");
 }
 
@@ -390,6 +389,10 @@ void requestMove(uint16_t  newPosition) {
 void requestRepeat() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Repeat");
   repeat = !repeat;
+}
+
+void requestInvert(bool invertRequested) {
+  softSpeedInverter = invertRequested;
 }
 
 String armPositionStatus(uint16_t position) {

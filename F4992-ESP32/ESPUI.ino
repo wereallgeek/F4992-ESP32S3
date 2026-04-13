@@ -9,7 +9,7 @@ void espui_init() {
   auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, in_button, buttonUpdownCallback);
   auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, in_button, buttonStartStopCallback);
   auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, in_button, buttonRepeatCallback);
-    //todo: add speed inversion.
+  auto mqtt_enabled_switch = ESPUI.addControl(Switcher, "Nor / Inv", String(softSpeedInverter), None, in_button, buttonInvertCallback);
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
 
 

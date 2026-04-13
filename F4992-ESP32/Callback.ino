@@ -36,23 +36,33 @@ void buttonInCallback(Control *sender, int type) {
     requestMoveIn(5);
   }
 }
+
 void buttonOutCallback(Control *sender, int type) {
   if (type == B_DOWN) {
     requestMoveOut(5);
   }
 }
+
 void buttonUpdownCallback(Control *sender, int type) {
   if (type == B_UP) {
     requestUpDown();
   }
-}void buttonStartStopCallback(Control *sender, int type) {
+}
+
+void buttonStartStopCallback(Control *sender, int type) {
   if (type == B_UP) {
     requestPlayStop();
   }
-}void buttonRepeatCallback(Control *sender, int type) {
+}
+
+void buttonRepeatCallback(Control *sender, int type) {
   if (type == B_UP) {
     requestRepeat();
   }
+}
+
+void buttonInvertCallback(Control *sender, int type) {
+  requestInvert(type == S_ACTIVE);
 }
 //Turntable ESPUI callback========================
 

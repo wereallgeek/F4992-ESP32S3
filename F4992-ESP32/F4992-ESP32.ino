@@ -57,6 +57,8 @@ String stored_ssid, stored_pass;
 String stored_mqtt_server, stored_mqtt_user, stored_mqtt_pass, stored_mqtt_topic_in, stored_mqtt_topic_out;
 bool mqtt_enabled = false;
 
+bool softSpeedInverter = false;
+
 //ESPUI turntable GUI fields
 uint16_t armStatusLabelId, armPositionLabelId;
 
