@@ -225,6 +225,7 @@ void playRecord() {
 void turntableSetup() {
   webSerialPrintln(String(millis()) + " - Starting initialization sequence");
   changeState(INITIAL);
+  setAutoDDspeed();
 }
 
 void returnAndClear() {
@@ -249,7 +250,6 @@ void clearRepeat() {
 // Turntable user interface ==============================================
 void turntableReport() {
   webSerialPrintln("================REPORT=================");
-  webSerialPrintln("timestamp:       " + millis());
   webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
   webSerialPrintln(String("armPosition:     ") + armPosition + " (" + desiredPosition + ")");
