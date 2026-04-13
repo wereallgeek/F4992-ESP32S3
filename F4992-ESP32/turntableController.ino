@@ -34,6 +34,8 @@ uint16_t  desiredPosition = Steps[HOME];
 enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
 const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
 const ControlColor statusColor[] = {Dark, Sunflower, Carrot, Carrot, Sunflower, Peterriver};
+const char* statusHexColor[]     = {"#2c3e50", "#f1c40f", "#e67e22", "#e67e22", "#f1c40f", "#3498db"};
+
 TurntableState currentState = IDLE;
 TurntableState nextState = IDLE;
 //prototype to make arduino IDE happy about the TurntableState
@@ -400,7 +402,16 @@ String armPositionStatus(uint16_t position) {
 
 void changeEspuiPanelColor(uint16_t id, ControlColor newColor) {
     Control* panel = ESPUI.getControl(id);
-    panel->color = newColor;
+    if (panel != nullptr) {
+      panel->color = newColor;
+      ESPUI.updateControl(id);
+    }
+}
+
+void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
+    String circleStyle = "background-color: " + String(colorHex) + espuiIndicatorElementStyle;
+
+    ESPUI.setElementStyle(id, circleStyle.c_str());
     ESPUI.updateControl(id);
 }
 
@@ -410,6 +421,7 @@ void turntableUiUpdate() {
     lastUpdateMillis = millis();
     ESPUI.print(armStatusLabelId, turntableStatus());
     changeEspuiPanelColor(armStatusLabelId, statusColor[currentState]);
+    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);    
     ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
     updateWebSerial();
   }

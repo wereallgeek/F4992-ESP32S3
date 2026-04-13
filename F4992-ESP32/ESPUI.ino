@@ -3,13 +3,21 @@ void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
   
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
-  auto in_button =ESPUI.button("Controls", buttonInCallback, None, "<- Left");
-  //auto in_button = ESPUI.addControl(Button, "Controls", "<- Left", None, 0, buttonInCallback);
-  auto out_button = ESPUI.addControl(Button, "", "Right ->", None, in_button, buttonOutCallback);
-  auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, in_button, buttonUpdownCallback);
-  auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, in_button, buttonStartStopCallback);
-  auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, in_button, buttonRepeatCallback);
-  auto mqtt_enabled_switch = ESPUI.addControl(Switcher, "Nor / Inv", String(softSpeedInverter), None, in_button, buttonInvertCallback);
+  ledId = ESPUI.label("Controls", Dark, "");
+  ESPUI.setElementStyle(ledId, String("background-color: #2c3e50") + espuiIndicatorElementStyle);
+  auto in_button = ESPUI.addControl(Button, "", "< Left ", None, ledId, buttonInCallback);
+  ESPUI.setElementStyle(in_button, btnStyle);
+  auto out_button = ESPUI.addControl(Button, "", "Right >", None, ledId, buttonOutCallback);
+  ESPUI.setElementStyle(out_button, btnStyle);
+  auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, ledId, buttonUpdownCallback);
+  ESPUI.setElementStyle(up_button, btnStyle);
+  auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, ledId, buttonStartStopCallback);
+  ESPUI.setElementStyle(ss_button, btnStyle);
+  auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, ledId, buttonRepeatCallback);
+  ESPUI.setElementStyle(rpt_button, btnStyle);
+  auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
+  ESPUI.setElementStyle(spd_switch, swStyleOFF);
+
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
 
 
