@@ -66,7 +66,7 @@ void updateWebSerial() {
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 
     String buffer = "";
-    buffer.reserve(800); 
+    buffer.reserve(1200); 
 
     for (const String& s : webLog) {
       buffer += s + "\n";
