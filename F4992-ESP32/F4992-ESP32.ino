@@ -91,7 +91,8 @@ void setup() {
   simpleOTAbegin();
 
   firstPassCompleted = true;
-  webSerialPrintln(String(millis()) + " - [" + stored_devicename + "] awoken");
+  if(highVerbosity) webSerialPrint(String(millis()) + " - ");
+  webSerialPrintln(String("[") + stored_devicename + "] awoken");
 }
 //SETUP=========================
 

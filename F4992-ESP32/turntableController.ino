@@ -84,7 +84,8 @@ bool isAtEndPosition() {
 }
 
 void changeState(TurntableState newState) {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - State: " + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
+  if(firstPassCompleted && highVerbosity) webSerialPrint(String(millis()) + " - "); //state change remains in low verbosity
+  if(firstPassCompleted) webSerialPrintln(String("State: ") + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
   currentState = newState;
 }
 
@@ -221,7 +222,7 @@ void playRecord() {
 
 //Tonearm control=============================
 void turntableSetup() {
-  webSerialPrintln(String(millis()) + " - Starting initialization sequence");
+  webSerialPrintln(String("Starting initialization sequence\nTimestamp: ") + millis());
   changeState(INITIAL);
   setAutoDDspeed();
 }
@@ -361,7 +362,7 @@ void requestUpDown() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;
        if (armLifter == released && !isHome()) changeState(PLAY);
-  else if (armLifter == pressed && !isHome()) changeState(IDLE);
+  else if (armLifter == pressed && !isHome())  changeState(IDLE);
 }
 
 void requestMoveIn(uint16_t  delta) {
@@ -377,8 +378,8 @@ void requestMoveOut(uint16_t  delta) {
 }
 
 void requestMove(uint16_t  newPosition) {
-  if (!initializationCompleted) return;
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move to " + newPosition);
+  if (!initializationCompleted) return;
   desiredPosition = newPosition;
   nextState = IDLE;
   changeState(MOVE);
