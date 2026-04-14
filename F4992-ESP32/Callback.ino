@@ -62,8 +62,8 @@ void buttonRepeatCallback(Control *sender, int type) {
 }
 
 void buttonInvertCallback(Control *sender, int type) {
-  requestInvert(type == S_ACTIVE);
-  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
+  requestInvert(type != S_ACTIVE);
+  ESPUI.setElementStyle(sender->id, (type != S_ACTIVE) ? swStyleON : swStyleOFF);
 }
 //Turntable ESPUI callback========================
 

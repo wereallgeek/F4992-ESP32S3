@@ -57,7 +57,7 @@ String stored_ssid, stored_pass;
 String stored_mqtt_server, stored_mqtt_user, stored_mqtt_pass, stored_mqtt_topic_in, stored_mqtt_topic_out;
 bool mqtt_enabled = false;
 
-bool softSpeedInverter = false;
+bool softSpeedInverter = true;
 
 const char* espuiIndicatorElementStyle = " !important; width: 15px !important; height: 15px !important; border-radius: 50% !important; display: inline-block !important; vertical-align: middle !important; margin: 5px !important; border: 1px solid #222 !important;";
 const char* btnStyle = "background-color: #000 !important; color: #fff !important; font-size: 10px !important; min-width: 55px !important; height: 25px !important; padding: 0 5px !important; line-height: 25px !important; border: 1px solid #444 !important; display: inline-block !important; vertical-align: middle !important; text-align: center !important;";
