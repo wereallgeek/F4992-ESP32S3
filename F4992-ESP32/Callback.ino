@@ -143,7 +143,7 @@ void commandCallback(Control* sender, int type) {
 void SerialCommand(String input) {
   ESPUI.print(serialLabelId, input);
   input.toLowerCase();
-  
+
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
     preferences.putString("ssid", stored_ssid);
