@@ -72,7 +72,6 @@ void verbosityCallback(Control *sender, int type) {
 //Turntable ESPUI callback========================
 
 
-
 //config settings callback
 void SaveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
