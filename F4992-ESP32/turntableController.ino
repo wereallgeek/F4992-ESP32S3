@@ -5,44 +5,67 @@
 //    for full tonearm and platter control
 //
 //================================================
+#include <Bounce2.h>
+
 unsigned long lastUpdateMillis = 0; 
 
 //============================ hardware interface =============================
 //here declaration for the hardware pins.
 
+// Switches (Inputs)
+#define PIN_SW1              5
+#define PIN_SW2              7
+#define PIN_SW3              8
+#define PIN_SW4              9
+#define PIN_SW5              10
+#define PIN_ARMRESET         16
+
+// LEDs (Outputs)
+#define PIN_LED1             39
+#define PIN_LED2             40
+#define PIN_LED3             42
+#define PIN_LED4             41
+
+enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
+const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
+const byte switchpins[] =    {PIN_ARMRESET, PIN_SW2,  PIN_SW3,    PIN_SW4,    PIN_SW4,    PIN_SW5};
+Bounce debouncedButtons[MAXSWITCH]; 
 //============================ state machine logic ============================
 
 //todo: define appropriately for correct logic-level
-const bool armUp = false;
-const bool armDown = true;
+const bool armUp =       false;
+const bool armDown =     true;
 
-const bool released = false;
-const bool pressed = true;
+const int released =     HIGH;
+const int pressed =      LOW;
 
-const bool DdActive = false;
-const bool DdInactive = true;
+const bool DdActive =    false;
+const bool DdInactive =  true;
 
-const bool DcmActive = true;
+const bool DcmActive =   true;
 const bool DcmInactive = false;
 
 //purposely match arm position and speed
-enum DetectedSize {NODISC, DISC30, DISC17};
-const char* sizename[] = {"NODISC", "30cm", "17cm"};
-DetectedSize DiscSize = NODISC;
+enum DetectedSize               {NODISC, DISC30, DISC17};
+const char* sizename[] =        {"NODISC", "30cm", "17cm"};
+DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
-enum ArmPosition {HOME, START30, START17, END};
-const uint16_t Steps[] = {0, 55, 110, 7500};//todo: determine 30, 17, end
+enum ArmPosition                {HOME, START30, START17, END};
+const uint16_t Steps[] =        {0,    55,      110,    7500};//todo: determine 30, 17, end
 //replace with counter
-uint16_t  armPosition = Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
-uint16_t  desiredPosition = Steps[HOME];
+uint16_t  armPosition =         Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
+uint16_t  desiredPosition =     Steps[HOME];
 
-enum TurntableState {IDLE, INITIAL, GOHOME, MOVE, DETECT, PLAY};
-const char* TurntableStateDesc[] = {"Idle", "Initialization", "Going home", "Arm in motion", "Detection", "Playing"};
-const ControlColor statusColor[] = {Dark, Sunflower, Carrot, Carrot, Sunflower, Peterriver};
-const char* statusHexColor[]     = {"#2c3e50", "#f1c40f", "#e67e22", "#e67e22", "#f1c40f", "#3498db"};
+enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
+const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Moving",  "Detecting", "Playing"};
+const ControlColor statusColor[] = {Dark,      Sunflower,      Carrot,      Carrot,    Sunflower,   Peterriver};
+const char* statusHexColor[] =     {"#2c3e50", "#f1c40f",      "#e67e22",   "#e67e22", "#f1c40f",   "#3498db"};
 
-TurntableState currentState = IDLE;
-TurntableState nextState = IDLE;
+TurntableState currentState =      IDLE;
+TurntableState nextState =         IDLE;
+
+const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
+
 //prototype to make arduino IDE happy about the TurntableState
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
@@ -50,7 +73,7 @@ bool isState(TurntableState state);
 bool initializationCompleted = false;
 
 //output to arm lifter
-bool armLifter = released;
+bool armLifter = armUp;
 
 
 //outputs to DCM
@@ -64,7 +87,7 @@ bool DD33 = DdInactive;
 bool DD45 = DdInactive;
 
 //todo: replace with actual switch
-bool armReset = released;
+int armReset = released;
 //todo: replace these with actual sensors
 bool sense30 = true;
 bool sense17 = true;
@@ -72,20 +95,46 @@ unsigned long sensortimer = 0;
 unsigned long  DetectionTime[3] = {0, 0, 0};
 
 bool repeat = false;
+bool armAlreadyReset = false;
 
 //============================ hardware interface =============================
-void turntablePeripheralsSetup () {
-  //hardware pin setup
+void turntableSwitchSetup () {
+  // switch INPUTS
+  for (int pinnumber = 0; pinnumber < MAXSWITCH; pinnumber++) {
+    pinMode(switchpins[pinnumber], INPUT);
+    debouncedButtons[pinnumber].attach(switchpins[pinnumber]);
+    debouncedButtons[pinnumber].interval(80);
+    debouncedButtons[pinnumber].update();
+  }
 }
 
-void turntablePeripheralUpdate () {
-  //for the loop
+void turntableLedSetup() {
+  // Freeing Pins 39, 40, 41, 42
+  gpio_reset_pin((gpio_num_t)PIN_LED1);
+  gpio_reset_pin((gpio_num_t)PIN_LED2);
+  gpio_reset_pin((gpio_num_t)PIN_LED3);
+  gpio_reset_pin((gpio_num_t)PIN_LED4);
+}
+
+void turntablePeripheralUpdate() {
+  //read arm reset
+  armReset = (armPosition == 0) ? pressed : released;//temp debug reading
+  //process armReset
+  if (armReset == pressed) resetArmposition(); else armAlreadyReset = false;
+  //17 & 30cm sensors -- may use hardware interrupt
+  if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
+  if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
+  if (isTurning()) computeAutoSpeed();
+}
+
+//switches
+bool SW(int switchNumber) {
+  if (switchNumber >= MAXSWITCH) return false;
+  if (switchNumber < 0) return false;
+  return debouncedButtons[switchNumber].read() == pressed;
 }
 
 //============================ state machine logic ============================
-
-//for console
-bool armAlreadyReset = false;
 
 bool isHome() {
   return armPosition == Steps[HOME];
@@ -239,12 +288,16 @@ void playRecord() {
 
 //Tonearm control=============================
 void turntableSetup() {
-  webSerialPrintln(String("Starting initialization sequence\nTimestamp: ") + millis());
+  webSerialPrintln("Starting initialization sequence");
+
+  turntableLedSetup();
+
   changeState(INITIAL);
   setAutoDDspeed();
-  turntablePeripheralsSetup();
 
-  webSerialPrintln(String("Peripheral configuration completed\nTimestamp: ") + millis());
+  turntableSwitchSetup();
+
+  webSerialPrintln("Peripheral configuration completed");
 }
 
 void returnAndClear() {
@@ -298,7 +351,18 @@ void turntableReport() {
 String turntableStatus() {
  return TurntableStateDesc[currentState];
 }
-//the requests are for user interface & callbacks to interact
+
+void updateKeys() {
+  for (int pinnumber = 0; pinnumber < MAXSWITCH; pinnumber++) {
+    debouncedButtons[pinnumber].update();
+  }
+}
+
+void computeKeys() {
+  if (debouncedButtons[SWITCH5].fell()) { requestPlayStop(); };
+  if (debouncedButtons[SWITCH4].fell()) { requestUpDown(); };
+}
+
 void requestPlayStop() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
@@ -381,20 +445,20 @@ void requestGoStill() {
 void requestUpDown() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;
-       if (armLifter == released && !isHome()) changeState(PLAY);
-  else if (armLifter == pressed && !isHome())  changeState(IDLE);
+       if (armLifter == armUp && !isHome()) changeState(PLAY);
+  else if (armLifter == armDown && !isHome())  changeState(IDLE);
 }
 
 void requestMoveIn(uint16_t  delta) {
   if (armPosition > Steps[END] - delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
-  if( !isAtEndPosition() && armLifter == released) requestMove(armPosition + delta);
+  if( !isAtEndPosition() && armLifter == armUp) requestMove(armPosition + delta);
 }
 
 void requestMoveOut(uint16_t  delta) {
   if (armPosition < delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move OUT");
-  if( !isHome() && armLifter == released) requestMove(armPosition - delta);
+  if( !isHome() && armLifter == armUp) requestMove(armPosition - delta);
 }
 
 void requestMove(uint16_t  newPosition) {
@@ -467,7 +531,7 @@ void turntableLoop() {
       break;
     case INITIAL:
       moveArmRight();
-      if (reachedArmReset()) changeState(IDLE);
+      if (reachedArmReset()) changeState(IDLE);//TODO: link to actual switch after debug
       break;
     case GOHOME:
       nextState = IDLE;
@@ -511,16 +575,12 @@ void turntableLoop() {
       }
       break;
     }
+  //handle inputs
+  updateKeys();
+  computeKeys();
   //handle sensors
-  //read arm reset
-  armReset = (armPosition == 0) ? pressed : released;//temp debug reading
-  //process armReset
-  if (armReset == pressed) resetArmposition(); else armAlreadyReset = false;
-  //17 & 30cm sensors -- may use hardware interrupt
-  if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
-  if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
-  if (isTurning()) computeAutoSpeed();
-
+  turntablePeripheralUpdate();
+  //update GUI
   turntableUiUpdate();
 }
 

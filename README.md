@@ -38,6 +38,7 @@ When the ESP is powered ON, it will :
  - [LittleFS](https://github.com/lorol/LITTLEFS)
  - [Preferences](https://github.com/vshymanskyy/Preferences) (for ESP8266)
  - [PubSubClient](https://github.com/knolleary/pubsubclient)
+ - [Bounce2](https://github.com/thomasfredericks/Bounce2) hardware switch debouncer
 
 ## Default GUI
 
