@@ -79,11 +79,9 @@ void setup() {
   Serial.println();
 
   //Custom setup...............
-  simpleOTAsetup();
   turntableSetup();
-  //Custom setup...............
+  simpleOTAsetup();
 
-  //pinMode(LED_BUILTIN, OUTPUT);
   preferences.begin("Settings");
   wifi_init();
   espui_init();

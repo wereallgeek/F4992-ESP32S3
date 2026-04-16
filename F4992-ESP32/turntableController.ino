@@ -7,6 +7,11 @@
 //================================================
 unsigned long lastUpdateMillis = 0; 
 
+//============================ hardware interface =============================
+//here declaration for the hardware pins.
+
+//============================ state machine logic ============================
+
 //todo: define appropriately for correct logic-level
 const bool armUp = false;
 const bool armDown = true;
@@ -21,12 +26,12 @@ const bool DcmActive = true;
 const bool DcmInactive = false;
 
 //purposely match arm position and speed
-enum DetectedSize {NODISC, DISC30, DISC15};
-const char* sizename[] = {"NODISC", "30cm", "15cm"};
+enum DetectedSize {NODISC, DISC30, DISC17};
+const char* sizename[] = {"NODISC", "30cm", "17cm"};
 DetectedSize DiscSize = NODISC;
 DetectedSize previousDiscSize = NODISC;
-enum ArmPosition {HOME, START30, START15, END};
-const uint16_t Steps[] = {0, 55, 110, 7500};//todo: determine 30, 15, end
+enum ArmPosition {HOME, START30, START17, END};
+const uint16_t Steps[] = {0, 55, 110, 7500};//todo: determine 30, 17, end
 //replace with counter
 uint16_t  armPosition = Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
 uint16_t  desiredPosition = Steps[HOME];
@@ -62,13 +67,24 @@ bool DD45 = DdInactive;
 bool armReset = released;
 //todo: replace these with actual sensors
 bool sense30 = true;
-bool sense15 = true;
+bool sense17 = true;
 unsigned long sensortimer = 0;
 unsigned long  DetectionTime[3] = {0, 0, 0};
 
 bool repeat = false;
 
-//for debug
+//============================ hardware interface =============================
+void turntablePeripheralsSetup () {
+  //hardware pin setup
+}
+
+void turntablePeripheralUpdate () {
+  //for the loop
+}
+
+//============================ state machine logic ============================
+
+//for console
 bool armAlreadyReset = false;
 
 bool isHome() {
@@ -127,9 +143,10 @@ void resetArmposition() {
 }
 
 void computeAutoSpeed() {
-  if (DetectionTime[DISC30] > millis() - 2500) DiscSize = DISC30;
-  else if (DetectionTime[DISC15] > millis() - 2500) DiscSize = DISC15;
-  else DiscSize = NODISC;
+  if      (DetectionTime[DISC30] > millis() - 2500) DiscSize = DISC30;
+  else if (DetectionTime[DISC17] > millis() - 2500) DiscSize = DISC17;
+  else                                              DiscSize = NODISC;
+
   if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
   previousDiscSize = DiscSize;
   setAutoDDspeed();
@@ -140,7 +157,7 @@ bool discPresent() {
 }
 
 void setAutoDDspeed() {
-  DD45 = ((DiscSize == DISC15) ^ softSpeedInverter) ? DdActive : DdInactive; //if nodisc - 33rpm
+  DD45 = ((DiscSize == DISC17) ^ softSpeedInverter) ? DdActive : DdInactive; //if nodisc - 33rpm
   DD33 = ((DiscSize == DISC30 || DiscSize == NODISC) ^ softSpeedInverter) ? DdActive : DdInactive;
 }
 
@@ -225,6 +242,9 @@ void turntableSetup() {
   webSerialPrintln(String("Starting initialization sequence\nTimestamp: ") + millis());
   changeState(INITIAL);
   setAutoDDspeed();
+  turntablePeripheralsSetup();
+
+  webSerialPrintln(String("Peripheral configuration completed\nTimestamp: ") + millis());
 }
 
 void returnAndClear() {
@@ -268,7 +288,7 @@ void turntableReport() {
 
   webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
   webSerialPrint  ((String("  30-")) + (sense30 ? "HI(" : "LO(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  15-")) + (sense15 ? "HI(" : "LO(") + DetectionTime[DISC15] + ")");
+  webSerialPrintln((String("  17-")) + (sense17 ? "HI(" : "LO(") + DetectionTime[DISC17] + ")");
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");
@@ -344,11 +364,11 @@ void requestGo30() {
   requestMove(Steps[START30]);
 }
 
-void requestGo15() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go15");
+void requestGo17() {
+  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go17");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(Steps[START15]);
+  requestMove(Steps[START17]);
 }
 
 void requestGoStill() {
@@ -421,9 +441,12 @@ void turntableUiUpdate() {
   if (millis() - lastUpdateMillis >= 750) {
     lastUpdateMillis = millis();
     ESPUI.print(armStatusLabelId, turntableStatus());
+
     changeEspuiPanelColor(armStatusLabelId, statusColor[currentState]);
     changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);    
+
     ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+
     updateWebSerial();
   }
 }
@@ -493,9 +516,9 @@ void turntableLoop() {
   armReset = (armPosition == 0) ? pressed : released;//temp debug reading
   //process armReset
   if (armReset == pressed) resetArmposition(); else armAlreadyReset = false;
-  //15 & 30cm sensors -- may use hardware interrupt
+  //17 & 30cm sensors -- may use hardware interrupt
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
-  if (sense15) DetectionTime[DISC15] = millis();//todo: use actual sensor
+  if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
   if (isTurning()) computeAutoSpeed();
 
   turntableUiUpdate();
@@ -503,8 +526,8 @@ void turntableLoop() {
 
 
 //DEBUG
-void toggleSensor15() {
-  sense15 = !sense15;
+void toggleSensor17() {
+  sense17 = !sense17;
 }
 void toggleSensor30() {
   sense30 = !sense30;

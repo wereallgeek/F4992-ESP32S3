@@ -219,8 +219,8 @@ void SerialCommand(String input) {
     requestGo30();
   }
 
-  else if (input.indexOf("go15") > -1) {
-    requestGo15();
+  else if (input.indexOf("go17") > -1) {
+    requestGo17();
   }
 
   else if (input.indexOf("gostill") > -1) {
@@ -228,8 +228,8 @@ void SerialCommand(String input) {
   }
 
   //debug
-  else if (input.indexOf("sense15") > -1) {
-    toggleSensor15();
+  else if (input.indexOf("sense17") > -1) {
+    toggleSensor17();
   }
   //debug
   else if (input.indexOf("sense30") > -1) {
