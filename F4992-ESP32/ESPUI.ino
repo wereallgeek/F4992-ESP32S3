@@ -15,6 +15,8 @@ void espui_init() {
   ESPUI.setElementStyle(ss_button, btnStyle);
   auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, ledId, buttonRepeatCallback);
   ESPUI.setElementStyle(rpt_button, btnStyle);
+  repeatId = ESPUI.addControl(Label, "", "", Dark, ledId, textCallback);
+  ESPUI.setElementStyle(repeatId, String("background-color: #2c3e50") + espuiIndicatorElementStyle);
   auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
   ESPUI.setElementStyle(spd_switch, swStyleOFF);
 

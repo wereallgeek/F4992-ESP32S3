@@ -67,7 +67,7 @@ const char* commandConsoleStyle = "text-align: left; font-family: 'Courier New',
 const char* commandInputStyle = "color: #000000 !important; background-color: #ffffff !important; text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px; border: 1px solid #444 !important;";
 
 //ESPUI turntable GUI fields
-uint16_t armStatusLabelId, armPositionLabelId, ledId;
+uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId;
 
 //ESPUI==================================================================================================================
 

@@ -538,7 +538,8 @@ void turntableUiUpdate() {
     ESPUI.print(armStatusLabelId, turntableStatus());
 
     changeEspuiPanelColor(armStatusLabelId, statusColor[currentState]);
-    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);    
+    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);
+    changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]);
 
     ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
 
