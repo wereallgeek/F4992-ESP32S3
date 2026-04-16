@@ -228,14 +228,14 @@ void setDCM(int DCMNumber) {
   DCM3 = (DCMNumber == 3) ? DcmActive : DcmInactive;
 }
 
-void moveArmRight() {
+void moveArmOut() {
   raiseArm();
   setDCM(3);
   //temp debug
   if (millis() % 100 == 0 && armPosition>0) armPosition--;//temp debug
 }
 
-void moveArmLeft() {
+void moveArmIn() {
   raiseArm();
   setDCM(1);
   //temp debug
@@ -254,10 +254,10 @@ void dontMove()
 
 void moveArmTo(uint16_t  position) {
   if (armPosition > position) {
-  	moveArmRight();
+  	moveArmOut();
   }
   else if (armPosition < position) {
-    moveArmLeft();
+    moveArmIn();
   }
   else {
     dontMove();
@@ -374,8 +374,16 @@ void updateKeys() {
 }
 
 void computeKeys() {
-  if (debouncedButtons[SWITCH5].fell()) { requestPlayStop(); };
-  if (debouncedButtons[SWITCH4].fell()) { requestUpDown(); };
+  if (debouncedButtons[SWITCH1].fell()) requestRepeat();
+
+  if (highVerbosity && debouncedButtons[SWITCH2].fell()) webSerialPrintln(String(millis()) + " - request Move IN");
+  if (debouncedButtons[SWITCH2].read() == pressed) stepTonearmIn();
+
+  if (highVerbosity && debouncedButtons[SWITCH3].fell()) webSerialPrintln(String(millis()) + " - request Move OUT");
+  if (debouncedButtons[SWITCH3].read() == pressed) stepTonearmOut();
+
+  if (debouncedButtons[SWITCH4].fell()) requestUpDown();
+  if (debouncedButtons[SWITCH5].fell()) requestPlayStop();
 }
 
 void requestPlayStop() {
@@ -476,6 +484,14 @@ void requestMoveOut(uint16_t  delta) {
   if( !isHome() && armLifter == armUp) requestMove(armPosition - delta);
 }
 
+void stepTonearmOut() {
+  if( !isHome() && armLifter == armUp) moveArmOut();
+}
+
+void stepTonearmIn() {
+  if( !isHome() && armLifter == armUp) moveArmIn();
+}
+
 void requestMove(uint16_t  newPosition) {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move to " + newPosition);
   if (!initializationCompleted) return;
@@ -545,7 +561,7 @@ void turntableLoop() {
       dontMove();
       break;
     case INITIAL:
-      moveArmRight();
+      moveArmOut();
       if (reachedArmReset()) changeState(IDLE);//TODO: link to actual switch after debug
       break;
     case GOHOME:
