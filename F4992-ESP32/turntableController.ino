@@ -48,6 +48,7 @@ const bool DcmInactive = false;
 //purposely match arm position and speed
 enum DetectedSize               {NODISC, DISC30, DISC17};
 const char* sizename[] =        {"NODISC", "30cm", "17cm"};
+const char* recordStyles[] =    { recordNodiscStyle, record33style, record45style };
 DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
 enum ArmPositions               {HOME, START30, START17, END};
@@ -75,6 +76,8 @@ bool initializationCompleted = false;
 //output to arm lifter
 bool armLifter = armUp;
 
+const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
+const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
 
 //outputs to DCM
 bool DCM1 = DcmInactive;
@@ -222,10 +225,17 @@ void setAutoDDspeed() {
   DD33 = ((DiscSize == DISC30 || DiscSize == NODISC) ^ softSpeedInverter) ? DdActive : DdInactive;
 }
 
-void setDCM(int DCMNumber) {  
+void setDCM(int DCMNumber) {
   DCM1 = (DCMNumber == 1) ? DcmActive : DcmInactive;
   DCM2 = (DCMNumber == 2) ? DcmActive : DcmInactive;
   DCM3 = (DCMNumber == 3) ? DcmActive : DcmInactive;
+}
+
+int getDCM() {
+  if (DCM1 == DcmActive) return 1;
+  if (DCM2 == DcmActive) return 2;
+  if (DCM3 == DcmActive) return 3;
+  return 0;
 }
 
 void moveArmOut() {
@@ -383,10 +393,10 @@ void computeKeys() {
   if (debouncedButtons[SWITCH3].read() == pressed) stepTonearmOut();
 
   if (debouncedButtons[SWITCH4].fell()) requestUpDown();
-  if (debouncedButtons[SWITCH5].fell()) requestPlayStop();
+  if (debouncedButtons[SWITCH5].fell()) requestStartStop();
 }
 
-void requestPlayStop() {
+void requestStartStop() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
 
@@ -544,6 +554,11 @@ void turntableUiUpdate() {
 
     ESPUI.print(armPositionLabelId, String(armPosition));
 
+    ESPUI.updateControlValue(recordsizeLabelId, (DD33 == DdActive) ? "33" : "45");    
+    ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);
+
+    ESPUI.print(lifterStatusId, (armLifter == armUp) ? armIcons[1] : armIcons[0]);
+    ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
     updateWebSerial();
   }
 }
@@ -584,7 +599,7 @@ void turntableLoop() {
       desiredPosition = Steps[DiscSize];
       moveArmTo(Steps[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
-      if (millis() - sensortimer >= 2500) {
+      if (millis() - sensortimer >= 7500) {
         nextState = PLAY;
         moveArmTo(desiredPosition);
         changeState(MOVE); 

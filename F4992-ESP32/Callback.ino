@@ -51,7 +51,7 @@ void buttonUpdownCallback(Control *sender, int type) {
 
 void buttonStartStopCallback(Control *sender, int type) {
   if (type == B_UP) {
-    requestPlayStop();
+    requestStartStop();
   }
 }
 
@@ -225,6 +225,10 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("gostill") > -1) {
     requestGoStill();
+  }
+
+  else if (input.indexOf("startstop") > -1) {
+    requestStartStop();
   }
 
   //debug
