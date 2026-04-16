@@ -50,7 +50,7 @@ enum DetectedSize               {NODISC, DISC30, DISC17};
 const char* sizename[] =        {"NODISC", "30cm", "17cm"};
 DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
-enum ArmPosition                {HOME, START30, START17, END};
+enum ArmPositions               {HOME, START30, START17, END};
 const uint16_t Steps[] =        {0,    55,      110,    7500};//todo: determine 30, 17, end
 //replace with counter
 uint16_t  armPosition =         Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
@@ -510,18 +510,19 @@ void requestInvert(bool invertRequested) {
   softSpeedInverter = invertRequested;
 }
 
-String armPositionStatus(uint16_t position) {
-  char buffer[25];
-  snprintf(buffer, sizeof(buffer), "Arm position: %u", position);
-  return String(buffer);
-}
-
 void changeEspuiPanelColor(uint16_t id, ControlColor newColor) {
     Control* panel = ESPUI.getControl(id);
     if (panel != nullptr) {
       panel->color = newColor;
       ESPUI.updateControl(id);
     }
+}
+
+void changeEspuiLabelColor(uint16_t id, const char* colorHex) {
+    String circleStyle = "background-color: " + String(colorHex) + espuiStatusStyle;
+
+    ESPUI.setElementStyle(id, circleStyle.c_str());
+    ESPUI.updateControl(id);
 }
 
 void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
@@ -537,11 +538,11 @@ void turntableUiUpdate() {
     lastUpdateMillis = millis();
     ESPUI.print(armStatusLabelId, turntableStatus());
 
-    changeEspuiPanelColor(armStatusLabelId, statusColor[currentState]);
+    changeEspuiLabelColor(armStatusLabelId, statusHexColor[currentState]);
     changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);
     changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]);
 
-    ESPUI.print(armPositionLabelId, armPositionStatus(armPosition));
+    ESPUI.print(armPositionLabelId, String(armPosition));
 
     updateWebSerial();
   }

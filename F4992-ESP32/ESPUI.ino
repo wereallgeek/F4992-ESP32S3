@@ -25,8 +25,15 @@ void espui_init() {
 
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
   auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
-  armStatusLabelId = ESPUI.addControl(Label, "Status", "status", Dark, tonearmtab, textCallback);
-  armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusLabelId, textCallback);
+  //status
+  auto armStatusTitleId = ESPUI.addControl(Text, "Status", "Status: ", None, tonearmtab, textCallback);
+  ESPUI.setElementStyle(armStatusTitleId, espuiTitleStyle);
+  armStatusLabelId = ESPUI.addControl(Label, "", "status", Dark, armStatusTitleId, textCallback);
+  ESPUI.setElementStyle(armStatusLabelId, String("background-color: #2c3e50") + espuiStatusStyle);
+  auto armPositionTitleId = ESPUI.addControl(Text, "", "ArmPosition: ", None, armStatusTitleId, textCallback);
+  ESPUI.setElementStyle(armPositionTitleId, espuiTitleStyle);
+  armPositionLabelId = ESPUI.addControl(Text, "", "position", None, armStatusTitleId, textCallback);
+  ESPUI.setElementStyle(armPositionLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
 
   //Console debug tab--------------------------------------------------------------------------------------------------------------
