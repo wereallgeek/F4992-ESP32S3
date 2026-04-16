@@ -108,6 +108,18 @@ void turntableSwitchSetup () {
   }
 }
 
+void turntableDcmSetup() {
+
+}
+
+void turntableDdSetup() {
+
+}
+
+void turntableSensorSetup() {
+  
+}
+
 void turntableLedSetup() {
   // Freeing Pins 39, 40, 41, 42
   gpio_reset_pin((gpio_num_t)PIN_LED1);
@@ -293,9 +305,12 @@ void turntableSetup() {
   turntableLedSetup();
 
   changeState(INITIAL);
+  turntableDdSetup();
   setAutoDDspeed();
 
   turntableSwitchSetup();
+  turntableDcmSetup();
+  turntableSensorSetup();
 
   webSerialPrintln("Peripheral configuration completed");
 }
