@@ -141,7 +141,6 @@ void commandCallback(Control* sender, int type) {
 //Serial setup===============================================================
 void SerialCommand(String input) {
   ESPUI.print(serialLabelId, input);
-  input.toLowerCase();
 
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
@@ -191,7 +190,9 @@ void SerialCommand(String input) {
     webSerialPrintln("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
-  else if (input.indexOf("restart") > -1) {
+  input.toLowerCase();
+  //handle lowercase entries to match with cellphone autocorrect
+  if (input.indexOf("restart") > -1) {
     ESP.restart();
   }
 
