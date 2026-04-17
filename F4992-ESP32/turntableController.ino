@@ -30,6 +30,9 @@ enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SW
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
 const byte switchpins[] =    {PIN_ARMRESET, PIN_SW2,  PIN_SW3,    PIN_SW4,    PIN_SW4,    PIN_SW5};
 Bounce debouncedButtons[MAXSWITCH]; 
+
+enum Hardwareled             {LED1,         LED2,      LED3,      LED4,       MAXLED};
+const byte ledpins[] =       {PIN_LED1,     PIN_LED2,  PIN_LED3,  PIN_LED4};
 //============================ state machine logic ============================
 
 //todo: define appropriately for correct logic-level
@@ -124,11 +127,11 @@ void turntableSensorSetup() {
 }
 
 void turntableLedSetup() {
-  // Freeing Pins 39, 40, 41, 42
-  gpio_reset_pin((gpio_num_t)PIN_LED1);
-  gpio_reset_pin((gpio_num_t)PIN_LED2);
-  gpio_reset_pin((gpio_num_t)PIN_LED3);
-  gpio_reset_pin((gpio_num_t)PIN_LED4);
+  for (int pinnumber = 0; pinnumber < MAXLED; pinnumber++) {
+    gpio_reset_pin((gpio_num_t)ledpins[pinnumber]);
+    pinMode(ledpins[pinnumber], OUTPUT);
+    digitalWrite(ledpins[pinnumber], LOW);
+  }
 }
 
 void turntablePeripheralUpdate() {
@@ -140,6 +143,8 @@ void turntablePeripheralUpdate() {
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
   if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
   if (isTurning()) computeAutoSpeed();
+  //LEDS -- P-L55
+  updateLeds();
 }
 
 //switches
@@ -147,6 +152,15 @@ bool SW(int switchNumber) {
   if (switchNumber >= MAXSWITCH) return false;
   if (switchNumber < 0) return false;
   return debouncedButtons[switchNumber].read() == pressed;
+}
+
+//THIS METHOD IS NOT REALLY TESTED
+//LEDs are not present on P-L45 but schematic of P-L55 show the signals pass to transistor.
+//The daughterboard adds a MOSFET level shifter to trigger these transistor.
+void LD(int ledNumber, bool illuminate) {
+  if (ledNumber >= MAXLED) return;
+  if (ledNumber < 0) return;
+  digitalWrite(ledpins[ledNumber], illuminate? HIGH : LOW);
 }
 
 //============================ state machine logic ============================
@@ -375,6 +389,13 @@ void turntableReport() {
 //for UI
 String turntableStatus() {
  return TurntableStateDesc[currentState];
+}
+
+void updateLeds() {
+  LD(1, !(isState(IDLE) || isState(PLAY))); //Compute - all but play&idle is "I am doing something"
+  LD(2, repeat); //Repeat
+  LD(3, DiscSize == DISC17); //17cm
+  LD(4, DiscSize == DISC30); //30cm
 }
 
 void updateKeys() {
@@ -628,6 +649,7 @@ void turntableLoop() {
   computeKeys();
   //handle sensors
   turntablePeripheralUpdate();
+
   //update GUI
   turntableUiUpdate();
 }
