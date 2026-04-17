@@ -53,6 +53,7 @@ void espui_init() {
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
   auto espreboot = ESPUI.addControl(Button, "", "Reboot ESP", None, configsave, ESPReset);
 
+
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
   wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Dark, wifitab, textCallback);
