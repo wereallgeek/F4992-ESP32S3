@@ -227,8 +227,16 @@ void SerialCommand(String input) {
     requestGoStill();
   }
 
-  else if (input.indexOf("startstop") > -1) {
+  else if (input.indexOf("stop") > -1 || input.indexOf("start") > -1 || input.indexOf("play") > -1) {
     requestStartStop();
+  }
+
+  else if (input.indexOf("up") > -1 || input.indexOf("down") > -1 || input.indexOf("pause") > -1) {
+    requestUpDown();
+  }
+
+  else if (input.indexOf("repeat") > -1) {
+    requestRepeat();
   }
 
   //debug
@@ -252,11 +260,5 @@ void SerialCommand(String input) {
     webSerialPrintln("Topic OUT " + stored_mqtt_topic_out);
     webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
   }
-
-  // else if (input.indexOf("custom_cmd") > -1) {
-  //   String demo_cmd = splitString(input, ' ', 1);
-  //   webSerialPrintln(demo_cmd);
-  //   preferences.putString("demo", "demo_cmd");
-  // }
 }
 //Serial setup===================================================================
