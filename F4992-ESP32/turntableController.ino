@@ -104,7 +104,7 @@ bool armAlreadyReset = false;
 void turntableSwitchSetup () {
   // switch INPUTS
   for (int pinnumber = 0; pinnumber < MAXSWITCH; pinnumber++) {
-    pinMode(switchpins[pinnumber], INPUT);
+    pinMode(switchpins[pinnumber], INPUT_PULLUP);
     debouncedButtons[pinnumber].attach(switchpins[pinnumber]);
     debouncedButtons[pinnumber].interval(80);
     debouncedButtons[pinnumber].update();
