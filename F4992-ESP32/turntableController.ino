@@ -20,24 +20,42 @@ unsigned long lastUpdateMillis = 0;
 #define PIN_SW5              10
 #define PIN_ARMRESET         16
 
+// DCM Arm tray (Outputs)
+#define PIN_DCM1             17  
+#define PIN_DCM2             14
+#define PIN_DCM3             4   
+#define PIN_LIFTER           13
+#define PIN_MUTING           18  
+
 // LEDs (Outputs)
 #define PIN_LED1             39
 #define PIN_LED2             40
 #define PIN_LED3             42
 #define PIN_LED4             41
 
+//todo: properly define
+#define DETECTIONDURATION    2500
+#define MUTEPOSTDOWN         1000
+
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
 const byte switchpins[] =    {PIN_ARMRESET, PIN_SW2,  PIN_SW3,    PIN_SW4,    PIN_SW4,    PIN_SW5};
 Bounce debouncedButtons[MAXSWITCH]; 
 
-enum Hardwareled             {LED1,         LED2,      LED3,      LED4,       MAXLED};
-const byte ledpins[] =       {PIN_LED1,     PIN_LED2,  PIN_LED3,  PIN_LED4};
+//align hardware number with logical number and add minimum and maximum values.
+enum Hardwareled             {NOLED,        LED1,         LED2,      LED3,      LED4,       MAXLED};
+const byte ledpins[] =       {0,            PIN_LED1,     PIN_LED2,  PIN_LED3,  PIN_LED4};
+
+enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      MAXDCM};
+const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
 //============================ state machine logic ============================
 
 //todo: define appropriately for correct logic-level
-const bool armUp =       false;
-const bool armDown =     true;
+const int armUp =        LOW;
+const int armDown =      HIGH;
+
+const int mutesound =    LOW;
+const int playsound =    HIGH;
 
 const int released =     HIGH;
 const int pressed =      LOW;
@@ -45,8 +63,8 @@ const int pressed =      LOW;
 const bool DdActive =    false;
 const bool DdInactive =  true;
 
-const bool DcmActive =   true;
-const bool DcmInactive = false;
+const bool DcmActive =   HIGH;
+const bool DcmInactive = LOW;
 
 //purposely match arm position and speed
 enum DetectedSize               {NODISC, DISC30, DISC17};
@@ -76,16 +94,8 @@ bool isState(TurntableState state);
 
 bool initializationCompleted = false;
 
-//output to arm lifter
-bool armLifter = armUp;
-
 const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
-
-//outputs to DCM
-bool DCM1 = DcmInactive;
-bool DCM2 = DcmInactive;
-bool DCM3 = DcmInactive;
 
 //outputs to DD
 bool DDSS = DdInactive;
@@ -98,7 +108,8 @@ int armReset = released;
 bool sense30 = true;
 bool sense17 = true;
 unsigned long sensortimer = 0;
-unsigned long  DetectionTime[3] = {0, 0, 0};
+unsigned long DetectionTime[3] = {0, 0, 0};
+unsigned long armdowntime = 0;
 
 bool repeat = false;
 bool armAlreadyReset = false;
@@ -106,7 +117,7 @@ bool armAlreadyReset = false;
 //============================ hardware interface =============================
 void turntableSwitchSetup () {
   // switch INPUTS
-  for (int pinnumber = 0; pinnumber < MAXSWITCH; pinnumber++) {
+  for (int pinnumber = ARM; pinnumber < MAXSWITCH; pinnumber++) {
     pinMode(switchpins[pinnumber], INPUT_PULLUP);
     debouncedButtons[pinnumber].attach(switchpins[pinnumber]);
     debouncedButtons[pinnumber].interval(80);
@@ -114,8 +125,18 @@ void turntableSwitchSetup () {
   }
 }
 
-void turntableDcmSetup() {
+void turntableArmtrayperipheralsSetup() {
+  pinMode(PIN_LIFTER, OUTPUT);
+  pinMode(PIN_MUTING, OUTPUT);
+  setLifter(armUp);
+  setMute(mutesound);
+}
 
+void turntableDcmSetup() {
+  for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
+    pinMode(dcmpins[pinnumber], OUTPUT);
+    digitalWrite(dcmpins[pinnumber], DcmInactive);
+  }
 }
 
 void turntableDdSetup() {
@@ -127,7 +148,7 @@ void turntableSensorSetup() {
 }
 
 void turntableLedSetup() {
-  for (int pinnumber = 0; pinnumber < MAXLED; pinnumber++) {
+  for (int pinnumber = LED1; pinnumber < MAXLED; pinnumber++) {
     gpio_reset_pin((gpio_num_t)ledpins[pinnumber]);
     pinMode(ledpins[pinnumber], OUTPUT);
     digitalWrite(ledpins[pinnumber], LOW);
@@ -142,15 +163,31 @@ void turntablePeripheralUpdate() {
   //17 & 30cm sensors -- may use hardware interrupt
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
   if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
+  if (isArmDown()) armdowntime = millis(); //unmute timer.
   if (isTurning()) computeAutoSpeed();
+  //process Mute
+  setMute(armdowntime > millis() - MUTEPOSTDOWN);
   //LEDS -- P-L55
   updateLeds();
+}
+
+//lifter
+int armLifter() {
+  return digitalRead(PIN_LIFTER);
+}
+
+void setLifter(int armPosition) {
+  digitalWrite(PIN_LIFTER, armPosition);
+}
+
+void setMute(bool activateMute) {
+  digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
 }
 
 //switches
 bool SW(int switchNumber) {
   if (switchNumber >= MAXSWITCH) return false;
-  if (switchNumber < 0) return false;
+  if (switchNumber < ARM) return false;
   return debouncedButtons[switchNumber].read() == pressed;
 }
 
@@ -159,7 +196,7 @@ bool SW(int switchNumber) {
 //The daughterboard adds a MOSFET level shifter to trigger these transistor.
 void LD(int ledNumber, bool illuminate) {
   if (ledNumber >= MAXLED) return;
-  if (ledNumber < 0) return;
+  if (ledNumber < LED1) return;
   digitalWrite(ledpins[ledNumber], illuminate? HIGH : LOW);
 }
 
@@ -188,28 +225,28 @@ bool isState(TurntableState state) {
 }
 
 bool isArmUp() {
-  return armLifter == armUp;
+  return armLifter() == armUp;
 }
 
 bool isArmDown() {
-  return armLifter == armDown;
+  return armLifter() == armDown;
 }
 
 void raiseArm() {
-  armLifter = armUp;
+  setLifter(armUp);
 }
 
 void lowerArm() {
-  if (isOverPlatter()) armLifter = armDown;
+  if (isOverPlatter()) setLifter(armDown);
 }
 
 void toggleArm() {
-  if (armLifter == armUp) lowerArm();
+  if (armLifter() == armUp) lowerArm();
   else raiseArm();
 }
 
 bool isArmReady() {
-  return initializationCompleted && armLifter == armUp;
+  return initializationCompleted && armLifter() == armUp;
 }
 
 void resetArmposition() {
@@ -221,9 +258,9 @@ void resetArmposition() {
 }
 
 void computeAutoSpeed() {
-  if      (DetectionTime[DISC30] > millis() - 2500) DiscSize = DISC30;
-  else if (DetectionTime[DISC17] > millis() - 2500) DiscSize = DISC17;
-  else                                              DiscSize = NODISC;
+  if      (DetectionTime[DISC30] > millis() - DETECTIONDURATION) DiscSize = DISC30;
+  else if (DetectionTime[DISC17] > millis() - DETECTIONDURATION) DiscSize = DISC17;
+  else                                                           DiscSize = NODISC;
 
   if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
   previousDiscSize = DiscSize;
@@ -240,16 +277,23 @@ void setAutoDDspeed() {
 }
 
 void setDCM(int DCMNumber) {
-  DCM1 = (DCMNumber == 1) ? DcmActive : DcmInactive;
-  DCM2 = (DCMNumber == 2) ? DcmActive : DcmInactive;
-  DCM3 = (DCMNumber == 3) ? DcmActive : DcmInactive;
+  for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
+    digitalWrite(dcmpins[pinnumber], DCMNumber == pinnumber ? DcmActive : DcmInactive );
+  }
 }
 
 int getDCM() {
-  if (DCM1 == DcmActive) return 1;
-  if (DCM2 == DcmActive) return 2;
-  if (DCM3 == DcmActive) return 3;
+  for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
+    if (digitalRead(dcmpins[pinnumber]) == DcmActive) return pinnumber;
+  }
   return 0;
+}
+
+//switches
+bool DCM(int DCMNumber) {
+  if (DCMNumber >= MAXDCM) return false;
+  if (DCMNumber < DCM1) return false;
+  return digitalRead(dcmpins[DCMNumber]) == DcmActive;
 }
 
 void moveArmOut() {
@@ -328,14 +372,15 @@ void turntableSetup() {
 
   turntableLedSetup();
 
+  turntableDcmSetup();
   changeState(INITIAL);
   turntableDdSetup();
   setAutoDDspeed();
 
-  turntableSwitchSetup();
-  turntableDcmSetup();
+  turntableArmtrayperipheralsSetup();
   turntableSensorSetup();
-
+  turntableSwitchSetup();
+  
   webSerialPrintln("Peripheral configuration completed");
 }
 
@@ -365,13 +410,13 @@ void turntableReport() {
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
   webSerialPrintln(String("armPosition:     ") + armPosition + " (" + desiredPosition + ")");
   webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
-  webSerialPrintln(String("arm lifter:      ") + (armLifter == armUp ? "armUp" : "armDown"));
+  webSerialPrintln(String("arm lifter:      ") + (armLifter() == armUp ? "armUp" : "armDown"));
   webSerialPrintln(String("armReset switch: ") + (armReset == pressed ? "Pressed" : "Released"));
 
   webSerialPrint("DCM    :");
-  webSerialPrint  ((String("   1-")) + (DCM1 == DcmActive ? "ON" : "--"));
-  webSerialPrint  ((String("   2-")) + (DCM2 == DcmActive ? "ON" : "--"));
-  webSerialPrintln((String("   3-")) + (DCM3 == DcmActive ? "ON" : "--"));
+  webSerialPrint  ((String("   1-")) + (DCM(1) ? "ON" : "--"));
+  webSerialPrint  ((String("   2-")) + (DCM(2) ? "ON" : "--"));
+  webSerialPrintln((String("   3-")) + (DCM(3) ? "ON" : "--"));
 
   webSerialPrint("DD     :");
   webSerialPrint  ((String("  SS-")) + (DDSS == DdActive ? "EN" : "--"));
@@ -399,7 +444,7 @@ void updateLeds() {
 }
 
 void updateKeys() {
-  for (int pinnumber = 0; pinnumber < MAXSWITCH; pinnumber++) {
+  for (int pinnumber = ARM; pinnumber < MAXSWITCH; pinnumber++) {
     debouncedButtons[pinnumber].update();
   }
 }
@@ -425,7 +470,7 @@ void requestStartStop() {
   {
     webSerialPrintln("| Lifter |ArmReset |  DDSS  |"); 
     webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
-    webSerialPrint  (armLifter == armDown ? "| DN (H) " : "| UP (L) ");
+    webSerialPrint  (armLifter() == armDown ? "| DN (H) " : "| UP (L) ");
     webSerialPrint  (armReset == pressed ? "| HOME(L) " : "| away(H) ");
     webSerialPrintln(DDSS == DdInactive ? "| OFF(H) |" : "| ON (L) |");
   }
@@ -452,11 +497,11 @@ void requestStartStop() {
   //|During autoreturn operation|        ---      |  Clear |
   //|---------------------------|--------------------------|
   // * return after 2.5s via the key operation during the UP using the UP/DOWN key
-       if (armLifter == armUp   && armReset == pressed  && DDSS == DdInactive) startAutoOperation();
-  else if (armLifter == armUp   && armReset == released && DDSS == DdInactive) startDD();
-  else if (armLifter == armDown && armReset == released && DDSS == DdInactive) startDD();
-  else if (armLifter == armUp   && armReset == released && DDSS == DdActive) returnAndClear();
-  else if (armLifter == armDown && armReset == released && DDSS == DdActive) returnAndClear();
+       if (armLifter() == armUp   && armReset == pressed  && DDSS == DdInactive) startAutoOperation();
+  else if (armLifter() == armUp   && armReset == released && DDSS == DdInactive) startDD();
+  else if (armLifter() == armDown && armReset == released && DDSS == DdInactive) startDD();
+  else if (armLifter() == armUp   && armReset == released && DDSS == DdActive) returnAndClear();
+  else if (armLifter() == armDown && armReset == released && DDSS == DdActive) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
 }
@@ -499,28 +544,28 @@ void requestGoStill() {
 void requestUpDown() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;
-       if (armLifter == armUp && !isHome()) changeState(PLAY);
-  else if (armLifter == armDown && !isHome())  changeState(IDLE);
+       if (armLifter() == armUp && !isHome()) changeState(PLAY);
+  else if (armLifter() == armDown && !isHome())  changeState(IDLE);
 }
 
 void requestMoveIn(uint16_t  delta) {
   if (armPosition > Steps[END] - delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
-  if( !isAtEndPosition() && armLifter == armUp) requestMove(armPosition + delta);
+  if( !isAtEndPosition() && armLifter() == armUp) requestMove(armPosition + delta);
 }
 
 void requestMoveOut(uint16_t  delta) {
   if (armPosition < delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move OUT");
-  if( !isHome() && armLifter == armUp) requestMove(armPosition - delta);
+  if( !isHome() && armLifter() == armUp) requestMove(armPosition - delta);
 }
 
 void stepTonearmOut() {
-  if( !isHome() && armLifter == armUp) moveArmOut();
+  if( !isHome() && armLifter() == armUp) moveArmOut();
 }
 
 void stepTonearmIn() {
-  if( !isHome() && armLifter == armUp) moveArmIn();
+  if( !isHome() && armLifter() == armUp) moveArmIn();
 }
 
 void requestMove(uint16_t  newPosition) {
@@ -578,7 +623,7 @@ void turntableUiUpdate() {
     ESPUI.updateControlValue(recordsizeLabelId, (DD33 == DdActive) ? "33" : "45");    
     ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);
 
-    ESPUI.print(lifterStatusId, (armLifter == armUp) ? armIcons[1] : armIcons[0]);
+    ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
     ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
     updateWebSerial();
   }
