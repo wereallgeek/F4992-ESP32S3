@@ -7,7 +7,10 @@
 //================================================
 #include <Bounce2.h>
 
-unsigned long lastUpdateMillis = 0; 
+unsigned long lastUpdateCycle1 = 0; 
+unsigned long lastUpdateCycle2 = 0; 
+unsigned long lastUpdateCycle3 = 0; 
+unsigned long lastUpdateCycle4 = 0; 
 
 //============================ hardware interface =============================
 //here declaration for the hardware pins.
@@ -609,23 +612,28 @@ void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
 }
 
 void turntableUiUpdate() {
-  // conditionnal ui update
-  if (millis() - lastUpdateMillis >= 750) {
-    lastUpdateMillis = millis();
-    ESPUI.print(armStatusLabelId, turntableStatus());
-
+// conditionnal ui update separated to minimize ESPUI starvation on multiple instances
+  if (millis() - lastUpdateCycle1 >= 802) {
+    lastUpdateCycle1 = millis();
     changeEspuiLabelColor(armStatusLabelId, statusHexColor[currentState]);
-    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]);
-    changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]);
-
-    ESPUI.print(armPositionLabelId, String(armPosition));
-
-    ESPUI.updateControlValue(recordsizeLabelId, (DD33 == DdActive) ? "33" : "45");    
-    ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);
-
-    ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
+    changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]); //include CSS
     ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
-    updateWebSerial();
+  }
+  else if (millis() - lastUpdateCycle2 >= 872) {
+    lastUpdateCycle2 = millis();
+    updateWebSerial(); //serial has 15 lines of text
+  }
+  else if (millis() - lastUpdateCycle3 >= 955) {
+    lastUpdateCycle3 = millis();
+    ESPUI.updateControlValue(recordsizeLabelId, (DD33 == DdActive) ? "33" : "45");    
+    ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);  //include CSS
+    ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
+  }
+  else if (millis() - lastUpdateCycle4 >= 1024) {
+    lastUpdateCycle4 = millis();
+    ESPUI.print(armStatusLabelId, turntableStatus());
+    ESPUI.print(armPositionLabelId, String(armPosition));
+    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]); //include CSS
   }
 }
 // Turntable user interface ==============================================
