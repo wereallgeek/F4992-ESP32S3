@@ -69,6 +69,9 @@ const bool DdInactive =  true;
 const bool DcmActive =   HIGH;
 const bool DcmInactive = LOW;
 
+const bool IN =          true;
+const bool OUT =         false;
+
 //purposely match arm position and speed
 enum DetectedSize               {NODISC, DISC30, DISC17};
 const char* sizename[] =        {"NODISC", "30cm", "17cm"};
@@ -116,6 +119,7 @@ unsigned long armdowntime = 0;
 
 bool repeat = false;
 bool armAlreadyReset = false;
+bool armDirection = OUT;
 
 //============================ hardware interface =============================
 void turntableSwitchSetup () {
@@ -285,6 +289,7 @@ void setDCM(int DCMNumber) {
   for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
     digitalWrite(dcmpins[pinnumber], DCMNumber == pinnumber ? DcmActive : DcmInactive );
   }
+  armDirection = DCMNumber == 3 ? OUT : IN;
 }
 
 int getDCM() {
@@ -294,7 +299,6 @@ int getDCM() {
   return 0;
 }
 
-//switches
 bool DCM(int DCMNumber) {
   if (DCMNumber >= MAXDCM) return false;
   if (DCMNumber < DCM1) return false;
@@ -304,15 +308,13 @@ bool DCM(int DCMNumber) {
 void moveArmOut() {
   raiseArm();
   setDCM(3);
-  //temp debug
-  if (millis() % 100 == 0 && armPosition>0) armPosition--;//temp debug
+  if (millis() % 100 == 0 && armPosition>0) countOneStep();
 }
 
 void moveArmIn() {
   raiseArm();
   setDCM(1);
-  //temp debug
-  if (millis() % 100 == 0) armPosition++;//temp debug
+  if (millis() % 100 == 0) countOneStep();
 }
 
 void enableServo() {
@@ -376,6 +378,12 @@ bool isTurning() {
 void playRecord() {
   lowerArm();
   enableServo();
+}
+
+void countOneStep() {
+  //debug vatiant
+  armPosition += (armDirection == OUT ? -1 : 1);
+
 }
 
 //Tonearm control=============================
