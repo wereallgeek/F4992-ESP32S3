@@ -160,9 +160,18 @@ void turntableLedSetup() {
 
 void turntablePeripheralUpdate() {
   //read arm reset
+
+  //this block only kept to assist debugging please remove
   armReset = (armPosition == 0) ? pressed : released;//temp debug reading
   //process armReset
-  if (armReset == pressed) resetArmposition(); else armAlreadyReset = false;
+  if (reachedArmReset()) {
+    armPosition = 0; //kind of redundant while debugging but will make sense once the counter is implemented.
+    resetArmposition(); 
+  }
+  else armAlreadyReset = false;
+  //up to here
+
+
   //17 & 30cm sensors -- may use hardware interrupt
   if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
   if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
@@ -185,13 +194,6 @@ void setLifter(int armPosition) {
 
 void setMute(bool activateMute) {
   digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
-}
-
-//switches
-bool SW(int switchNumber) {
-  if (switchNumber >= MAXSWITCH) return false;
-  if (switchNumber < ARM) return false;
-  return debouncedButtons[switchNumber].read() == pressed;
 }
 
 //THIS METHOD IS NOT REALLY TESTED
@@ -335,8 +337,15 @@ void moveArmTo(uint16_t  position) {
   }
 }
 
+bool armResetNotActive() {
+  //return debouncedButtons[ARM].released() == pressed
+  //todo: remote the temp solution once debug is over
+  return armReset == released;
+}
+
 bool reachedArmReset() {
-  //todo: this needs to use the physical switch
+  //return debouncedButtons[ARM].read() == pressed
+  //todo: remote the temp solution once debug is over
   return armReset == pressed;
 }
 
@@ -414,7 +423,7 @@ void turntableReport() {
   webSerialPrintln(String("armPosition:     ") + armPosition + " (" + desiredPosition + ")");
   webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
   webSerialPrintln(String("arm lifter:      ") + (armLifter() == armUp ? "armUp" : "armDown"));
-  webSerialPrintln(String("armReset switch: ") + (armReset == pressed ? "Pressed" : "Released"));
+  webSerialPrintln(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
 
   webSerialPrint("DCM    :");
   webSerialPrint  ((String("   1-")) + (DCM(1) ? "ON" : "--"));
@@ -453,6 +462,13 @@ void updateKeys() {
 }
 
 void computeKeys() {
+  if (debouncedButtons[ARM].fell()) webSerialPrintln(String(millis()) + " - Resetting armPosition");
+  if (debouncedButtons[ARM].read() == pressed) {
+    //RESET THE COUNTER HERE
+    armPosition = 0; //kind of redundant while debugging but will make sense once the counter is implemented.
+    resetArmposition();
+  }
+
   if (debouncedButtons[SWITCH1].fell()) requestRepeat();
 
   if (highVerbosity && debouncedButtons[SWITCH2].fell()) webSerialPrintln(String(millis()) + " - request Move IN");
@@ -474,7 +490,7 @@ void requestStartStop() {
     webSerialPrintln("| Lifter |ArmReset |  DDSS  |"); 
     webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
     webSerialPrint  (armLifter() == armDown ? "| DN (H) " : "| UP (L) ");
-    webSerialPrint  (armReset == pressed ? "| HOME(L) " : "| away(H) ");
+    webSerialPrint  (reachedArmReset() ? "| HOME(L) " : "| away(H) ");
     webSerialPrintln(DDSS == DdInactive ? "| OFF(H) |" : "| ON (L) |");
   }
   // section 2-4 key operation
@@ -500,11 +516,11 @@ void requestStartStop() {
   //|During autoreturn operation|        ---      |  Clear |
   //|---------------------------|--------------------------|
   // * return after 2.5s via the key operation during the UP using the UP/DOWN key
-       if (armLifter() == armUp   && armReset == pressed  && DDSS == DdInactive) startAutoOperation();
-  else if (armLifter() == armUp   && armReset == released && DDSS == DdInactive) startDD();
-  else if (armLifter() == armDown && armReset == released && DDSS == DdInactive) startDD();
-  else if (armLifter() == armUp   && armReset == released && DDSS == DdActive) returnAndClear();
-  else if (armLifter() == armDown && armReset == released && DDSS == DdActive) returnAndClear();
+       if (armLifter() == armUp   && reachedArmReset()  && DDSS == DdInactive) startAutoOperation();
+  else if (armLifter() == armUp   && armResetNotActive() && DDSS == DdInactive) startDD();
+  else if (armLifter() == armDown && armResetNotActive() && DDSS == DdInactive) startDD();
+  else if (armLifter() == armUp   && armResetNotActive() && DDSS == DdActive) returnAndClear();
+  else if (armLifter() == armDown && armResetNotActive() && DDSS == DdActive) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
 }
