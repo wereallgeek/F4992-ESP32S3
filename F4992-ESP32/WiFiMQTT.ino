@@ -33,12 +33,14 @@ void wifi_init() {
     delay(100);
     WiFi.softAPConfig(apIP, apIP, IPAddress(255, 255, 255, 0));
     WiFi.softAP(stored_devicename.c_str());
+    dnsServer.start(DNS_PORT, "*", apIP);
   } else {
     wificonnected = true;
+    MDNS.begin(stored_devicename.c_str());
+    MDNS.addService("http", "tcp", 80);
     client.setServer(stored_mqtt_server.c_str(), 1883);
     client.setCallback(mqtt_callback);
   }
-  dnsServer.start(DNS_PORT, "*", apIP);
   webSerialPrint("\nIP address : ");
   webSerialPrintln(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 }

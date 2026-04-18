@@ -32,6 +32,7 @@ bool firstPassCompleted = false;
 #include <Preferences.h>
 Preferences preferences;
 #include <DNSServer.h>
+#include <ESPmDNS.h>
 #define DNS_PORT 53
 IPAddress apIP(192, 168, 4, 1);
 DNSServer dnsServer;
@@ -115,7 +116,7 @@ void setup() {
 
 //LOOP==========================================
 void loop() {
-  dnsServer.processNextRequest();
+  if (!wificonnected) dnsServer.processNextRequest();
   if (Serial.available()) {
     String input = Serial.readStringUntil('\n');
     SerialCommand(input);
