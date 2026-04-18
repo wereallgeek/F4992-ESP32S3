@@ -6,6 +6,7 @@
 //
 //================================================
 #include <Bounce2.h>
+#include "driver/pulse_cnt.h"
 
 unsigned long lastUpdateCycle1 = 0; 
 unsigned long lastUpdateCycle2 = 0; 
@@ -14,6 +15,9 @@ unsigned long lastUpdateCycle4 = 0;
 
 //============================ hardware interface =============================
 //here declaration for the hardware pins.
+
+// ARM POSITION COUNTER
+#define PIN_COUNTER          6   
 
 // Switches (Inputs)
 #define PIN_SW1              5
@@ -81,7 +85,6 @@ DetectedSize previousDiscSize = NODISC;
 enum ArmPositions               {HOME, START30, START17, END};
 const uint16_t Steps[] =        {0,    55,      110,    7500};//todo: determine 30, 17, end
 //replace with counter
-uint16_t  armPosition =         Steps[END]; //Steps[HOME];temp debug value to have a fake "intitalization"
 uint16_t  desiredPosition =     Steps[HOME];
 
 enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
@@ -119,9 +122,40 @@ unsigned long armdowntime = 0;
 
 bool repeat = false;
 bool armAlreadyReset = false;
-bool armDirection = OUT;
+
+pcnt_unit_handle_t counterUnit = NULL;
+pcnt_channel_handle_t counterChan = NULL;
 
 //============================ hardware interface =============================
+void turntableCounterSetup() {
+  //counter unit
+  pcnt_unit_config_t counterUnitCfg = {
+      .low_limit = -32768,
+      .high_limit = 32767,
+  };
+  pcnt_new_unit(&counterUnitCfg, &counterUnit);
+
+  //canal 
+  pcnt_chan_config_t  counterChanCfg = {
+    .edge_gpio_num = PIN_COUNTER,
+    .level_gpio_num = -1,
+    .flags = { .io_loop_back = 1 },  //DEBUG at 1 for loopback. change to 0 when ready ***TODO
+  };
+  pcnt_new_channel(counterUnit, &counterChanCfg, &counterChan);
+
+  //action
+  pcnt_channel_set_edge_action(counterChan, PCNT_CHANNEL_EDGE_ACTION_DECREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
+
+  //start
+  pcnt_unit_enable(counterUnit);
+  pcnt_unit_clear_count(counterUnit);
+  pcnt_unit_start(counterUnit);
+
+  //DEBUG REMOVE THIS WHEN READY *** TODO
+  pinMode(PIN_COUNTER, OUTPUT);
+  digitalWrite(PIN_COUNTER, LOW); // collaborate with physical pulldown
+}
+
 void turntableSwitchSetup () {
   // switch INPUTS
   for (int pinnumber = ARM; pinnumber < MAXSWITCH; pinnumber++) {
@@ -166,10 +200,9 @@ void turntablePeripheralUpdate() {
   //read arm reset
 
   //this block only kept to assist debugging please remove
-  armReset = (armPosition == 0) ? pressed : released;//temp debug reading
+  armReset = (armPosition() == 0) ? pressed : released;//temp debug reading
   //process armReset
   if (reachedArmReset()) {
-    armPosition = 0; //kind of redundant while debugging but will make sense once the counter is implemented.
     resetArmposition(); 
   }
   else armAlreadyReset = false;
@@ -192,12 +225,18 @@ int armLifter() {
   return digitalRead(PIN_LIFTER);
 }
 
-void setLifter(int armPosition) {
-  digitalWrite(PIN_LIFTER, armPosition);
+void setLifter(int lifterPosition) {
+  digitalWrite(PIN_LIFTER, lifterPosition);
 }
 
 void setMute(bool activateMute) {
   digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
+}
+
+int armPosition() {
+    int counterValue = 0;
+    pcnt_unit_get_count(counterUnit, &counterValue);
+    return counterValue;
 }
 
 //THIS METHOD IS NOT REALLY TESTED
@@ -212,15 +251,15 @@ void LD(int ledNumber, bool illuminate) {
 //============================ state machine logic ============================
 
 bool isHome() {
-  return armPosition == Steps[HOME];
+  return armPosition() == Steps[HOME];
 }
 
 bool isOverPlatter() {
-  return armPosition >= Steps[START30];
+  return armPosition() >= Steps[START30];
 }
 
 bool isAtEndPosition() {
-  return armPosition >= Steps[END];
+  return armPosition() >= Steps[END];
 }
 
 void changeState(TurntableState newState) {
@@ -259,11 +298,10 @@ bool isArmReady() {
 }
 
 void resetArmposition() {
+  if(highVerbosity && !armAlreadyReset) webSerialPrintln(String(millis()) + " - Resetting armPosition");//debug - this will be removed w/ hardware armreset switch implementation
+  pcnt_unit_clear_count(counterUnit);
   initializationCompleted = true;
-  if(highVerbosity && !armAlreadyReset) webSerialPrintln(String(millis()) + " - Resetting armPosition");
-  armPosition = 0;
-  initializationCompleted = true;
-  armAlreadyReset = true;
+  armAlreadyReset = true;  //debug - this will be removed w/ hardware armreset switch implementation
 }
 
 void computeAutoSpeed() {
@@ -286,10 +324,10 @@ void setAutoDDspeed() {
 }
 
 void setDCM(int DCMNumber) {
+  pcnt_channel_set_edge_action(counterChan, DCMNumber == 3 ? PCNT_CHANNEL_EDGE_ACTION_DECREASE : PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
   for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
     digitalWrite(dcmpins[pinnumber], DCMNumber == pinnumber ? DcmActive : DcmInactive );
   }
-  armDirection = DCMNumber == 3 ? OUT : IN;
 }
 
 int getDCM() {
@@ -308,7 +346,7 @@ bool DCM(int DCMNumber) {
 void moveArmOut() {
   raiseArm();
   setDCM(3);
-  if (millis() % 100 == 0 && armPosition>0) countOneStep();
+  if (millis() % 100 == 0 && armPosition() > 0) countOneStep();
 }
 
 void moveArmIn() {
@@ -328,10 +366,10 @@ void dontMove()
 
 
 void moveArmTo(uint16_t  position) {
-  if (armPosition > position) {
+  if (armPosition() > position) {
   	moveArmOut();
   }
-  else if (armPosition < position) {
+  else if (armPosition() < position) {
     moveArmIn();
   }
   else {
@@ -352,15 +390,15 @@ bool reachedArmReset() {
 }
 
 bool reachedHome() {
-  return armPosition == 0;
+  return armPosition() == 0;
 }
 
 bool reachedPosition() {
-  return armPosition == desiredPosition;
+  return armPosition() == desiredPosition;
 }
 
 bool reachedEndPosition() {
-  return armPosition >= Steps[END];
+  return armPosition() >= Steps[END];
 }
 
 void startDD() {
@@ -381,9 +419,9 @@ void playRecord() {
 }
 
 void countOneStep() {
-  //debug vatiant
-  armPosition += (armDirection == OUT ? -1 : 1);
-
+  digitalWrite(PIN_COUNTER, HIGH);
+  delayMicroseconds(2);
+  digitalWrite(PIN_COUNTER, LOW);
 }
 
 //Tonearm control=============================
@@ -400,6 +438,8 @@ void turntableSetup() {
   turntableArmtrayperipheralsSetup();
   turntableSensorSetup();
   turntableSwitchSetup();
+
+  turntableCounterSetup();
   
   webSerialPrintln("Peripheral configuration completed");
 }
@@ -428,7 +468,7 @@ void turntableReport() {
   webSerialPrintln("================REPORT=================");
   webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
-  webSerialPrintln(String("armPosition:     ") + armPosition + " (" + desiredPosition + ")");
+  webSerialPrintln(String("armPosition:     ") + armPosition() + " (" + desiredPosition + ")");
   webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
   webSerialPrintln(String("arm lifter:      ") + (armLifter() == armUp ? "armUp" : "armDown"));
   webSerialPrintln(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
@@ -471,11 +511,7 @@ void updateKeys() {
 
 void computeKeys() {
   if (debouncedButtons[ARM].fell()) webSerialPrintln(String(millis()) + " - Resetting armPosition");
-  if (debouncedButtons[ARM].read() == pressed) {
-    //RESET THE COUNTER HERE
-    armPosition = 0; //kind of redundant while debugging but will make sense once the counter is implemented.
-    resetArmposition();
-  }
+  if (debouncedButtons[ARM].read() == pressed) resetArmposition();
 
   if (debouncedButtons[SWITCH1].fell()) requestRepeat();
 
@@ -565,7 +601,7 @@ void requestGoStill() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Still");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(armPosition);
+  requestMove(armPosition());
 }
 
 void requestUpDown() {
@@ -576,15 +612,15 @@ void requestUpDown() {
 }
 
 void requestMoveIn(uint16_t  delta) {
-  if (armPosition > Steps[END] - delta) return; //no rollover
+  if (armPosition() > Steps[END] - delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
-  if( !isAtEndPosition() && armLifter() == armUp) requestMove(armPosition + delta);
+  if( !isAtEndPosition() && armLifter() == armUp) requestMove(armPosition() + delta);
 }
 
 void requestMoveOut(uint16_t  delta) {
-  if (armPosition < delta) return; //no rollover
+  if (armPosition() < delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move OUT");
-  if( !isHome() && armLifter() == armUp) requestMove(armPosition - delta);
+  if( !isHome() && armLifter() == armUp) requestMove(armPosition() - delta);
 }
 
 void stepTonearmOut() {
@@ -656,7 +692,7 @@ void turntableUiUpdate() {
   else if (millis() - lastUpdateCycle4 >= 1024) {
     lastUpdateCycle4 = millis();
     ESPUI.print(armStatusLabelId, turntableStatus());
-    ESPUI.print(armPositionLabelId, String(armPosition));
+    ESPUI.print(armPositionLabelId, String(armPosition()));
     changeEspuiIndicatorColor(ledId, statusHexColor[currentState]); //include CSS
   }
 }
@@ -708,7 +744,7 @@ void turntableLoop() {
       setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
       if (!discPresent()) changeState(GOHOME);
-      else if (armPosition >= Steps[END]) {
+      else if (armPosition() >= Steps[END]) {
         if (repeat) {
           nextState = PLAY;
           desiredPosition = Steps[DiscSize];
