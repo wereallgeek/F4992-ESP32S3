@@ -19,6 +19,10 @@ unsigned long lastUpdateCycle4 = 0;
 // ARM POSITION COUNTER
 #define PIN_COUNTER          6   
 
+//Infrared Sensors
+#define PIN_IR30             1
+#define PIN_IR17             21
+
 // Switches (Inputs)
 #define PIN_SW1              5
 #define PIN_SW2              7
@@ -39,6 +43,10 @@ unsigned long lastUpdateCycle4 = 0;
 #define PIN_LED2             40
 #define PIN_LED3             42
 #define PIN_LED4             41
+
+//compuselector. 
+#define PIN_COMPUSELECTOR    12
+
 
 //todo: properly define
 #define DETECTIONDURATION    2500
@@ -75,6 +83,12 @@ const bool DcmInactive = LOW;
 
 const bool IN =          true;
 const bool OUT =         false;
+
+const int irNotvitible = HIGH;
+const int irVisible =    LOW;
+
+const int bStop =        HIGH;
+const int bStart =        LOW;
 
 //purposely match arm position and speed
 enum DetectedSize               {NODISC, DISC30, DISC17};
@@ -113,9 +127,7 @@ bool DD45 = DdInactive;
 
 //todo: replace with actual switch
 int armReset = released;
-//todo: replace these with actual sensors
-bool sense30 = true;
-bool sense17 = true;
+
 unsigned long sensortimer = 0;
 unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
@@ -186,7 +198,8 @@ void turntableDdSetup() {
 }
 
 void turntableSensorSetup() {
-  
+  pinMode(PIN_IR30, INPUT);
+  pinMode(PIN_IR17, INPUT);
 }
 
 void turntableLedSetup() {
@@ -195,6 +208,11 @@ void turntableLedSetup() {
     pinMode(ledpins[pinnumber], OUTPUT);
     digitalWrite(ledpins[pinnumber], LOW);
   }
+}
+
+void turntableCompuselectorSetup() {
+  pinMode(PIN_COMPUSELECTOR, OUTPUT);
+  digitalWrite(PIN_COMPUSELECTOR, bStop);
 }
 
 void turntablePeripheralUpdate() {
@@ -210,13 +228,14 @@ void turntablePeripheralUpdate() {
   //up to here ***TODO
 
 
-  //17 & 30cm sensors -- may use hardware interrupt
-  if (sense30) DetectionTime[DISC30] = millis();//todo: use actual sensor
-  if (sense17) DetectionTime[DISC17] = millis();//todo: use actual sensor
+  //17 & 30cm sensors
+  if (sense30()) DetectionTime[DISC30] = millis();
+  if (sense17()) DetectionTime[DISC17] = millis();
   if (isArmDown()) armdowntime = millis(); //unmute timer.
-  if (isTurning()) computeAutoSpeed();
+  if (isTurning() && isState(DETECT)) computeAutoSpeed();
   //process Mute
   setMute(armdowntime > millis() - MUTEPOSTDOWN);
+  compuselect();
   //LEDS -- P-L55
   updateLeds();
 }
@@ -238,6 +257,19 @@ int armPosition() {
     int counterValue = 0;
     pcnt_unit_get_count(counterUnit, &counterValue);
     return counterValue;
+}
+
+//Sensors
+bool sense30() {
+  return digitalRead(PIN_IR30) == irVisible;
+}
+
+bool sense17() {
+  return digitalRead(PIN_IR17) == irVisible;
+}
+
+void compuselect() {
+  digitalWrite(PIN_COMPUSELECTOR, isTurning()? bStop : bStart);
 }
 
 //THIS METHOD IS NOT REALLY TESTED
@@ -310,6 +342,7 @@ void computeAutoSpeed() {
   else if (DetectionTime[DISC17] > millis() - DETECTIONDURATION) DiscSize = DISC17;
   else                                                           DiscSize = NODISC;
 
+  DiscSize = DISC30; //debugonly *** TODO REMOVE
   if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
   previousDiscSize = DiscSize;
   setAutoDDspeed();
@@ -430,6 +463,7 @@ void turntableSetup() {
   webSerialPrintln("Starting initialization sequence");
 
   turntableLedSetup();
+  turntableCompuselectorSetup();
 
   turntableDcmSetup();
   changeState(INITIAL);
@@ -485,8 +519,8 @@ void turntableReport() {
   webSerialPrintln((String("  45-")) + (DD45 == DdActive ? "EN" : "--"));
 
   webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
-  webSerialPrint  ((String("  30-")) + (sense30 ? "HI(" : "LO(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  17-")) + (sense17 ? "HI(" : "LO(") + DetectionTime[DISC17] + ")");
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");
@@ -766,13 +800,4 @@ void turntableLoop() {
 
   //update GUI
   turntableUiUpdate();
-}
-
-
-//DEBUG
-void toggleSensor17() {
-  sense17 = !sense17;
-}
-void toggleSensor30() {
-  sense30 = !sense30;
 }
