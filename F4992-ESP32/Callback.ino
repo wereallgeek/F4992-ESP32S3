@@ -240,15 +240,6 @@ void SerialCommand(String input) {
     requestRepeat();
   }
 
-  //debug
-  else if (input.indexOf("sense17") > -1) {
-    toggleSensor17();
-  }
-  //debug
-  else if (input.indexOf("sense30") > -1) {
-    toggleSensor30();
-  }
-
   else if (input.indexOf("info") > -1) {
     webSerialPrintln("Device name " + stored_devicename);
     webSerialPrintln("SSID " + stored_ssid);
