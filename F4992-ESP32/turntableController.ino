@@ -154,6 +154,7 @@ void turntableCounterSetup() {
   //DEBUG REMOVE THIS WHEN READY *** TODO
   pinMode(PIN_COUNTER, OUTPUT);
   digitalWrite(PIN_COUNTER, LOW); // collaborate with physical pulldown
+  ///up to here ***TODO
 }
 
 void turntableSwitchSetup () {
@@ -199,14 +200,14 @@ void turntableLedSetup() {
 void turntablePeripheralUpdate() {
   //read arm reset
 
-  //this block only kept to assist debugging please remove
+  //this block only kept to assist debugging please remove *** TODO
   armReset = (armPosition() == 0) ? pressed : released;//temp debug reading
   //process armReset
   if (reachedArmReset()) {
     resetArmposition(); 
   }
   else armAlreadyReset = false;
-  //up to here
+  //up to here ***TODO
 
 
   //17 & 30cm sensors -- may use hardware interrupt
