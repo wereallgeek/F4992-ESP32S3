@@ -38,6 +38,11 @@ unsigned long lastUpdateCycle4 = 0;
 #define PIN_LIFTER           13
 #define PIN_MUTING           18  
 
+// Direct Drive module
+#define PIN_DDSS             11
+#define PIN_DD33             15
+#define PIN_DD45             2
+
 // LEDs (Outputs)
 #define PIN_LED1             39
 #define PIN_LED2             40
@@ -75,8 +80,8 @@ const int playsound =    HIGH;
 const int released =     HIGH;
 const int pressed =      LOW;
 
-const bool DdActive =    false;
-const bool DdInactive =  true;
+const int DdActive =     LOW;
+const int DdInactive =   HIGH;
 
 const bool DcmActive =   HIGH;
 const bool DcmInactive = LOW;
@@ -119,11 +124,6 @@ bool initializationCompleted = false;
 
 const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
-
-//outputs to DD
-bool DDSS = DdInactive;
-bool DD33 = DdInactive;
-bool DD45 = DdInactive;
 
 //todo: replace with actual switch
 int armReset = released;
@@ -194,7 +194,12 @@ void turntableDcmSetup() {
 }
 
 void turntableDdSetup() {
-
+  pinMode(PIN_DDSS, OUTPUT);
+  pinMode(PIN_DD33, OUTPUT);
+  pinMode(PIN_DD45, OUTPUT);
+  digitalWrite(PIN_DDSS, DdInactive);
+  digitalWrite(PIN_DD33, DdInactive);
+  digitalWrite(PIN_DD45, DdInactive);
 }
 
 void turntableSensorSetup() {
@@ -353,8 +358,8 @@ bool discPresent() {
 }
 
 void setAutoDDspeed() {
-  DD45 = ((DiscSize == DISC17) ^ softSpeedInverter) ? DdActive : DdInactive; //if nodisc - 33rpm
-  DD33 = ((DiscSize == DISC30 || DiscSize == NODISC) ^ softSpeedInverter) ? DdActive : DdInactive;
+  digitalWrite(PIN_DD45, ((DiscSize == DISC17) ^ softSpeedInverter) ? DdActive : DdInactive); //if nodisc - 33rpm
+  digitalWrite(PIN_DD33, ((DiscSize == DISC30 || DiscSize == NODISC) ^ softSpeedInverter) ? DdActive : DdInactive);
 }
 
 void setDCM(int DCMNumber) {
@@ -436,15 +441,23 @@ bool reachedEndPosition() {
 }
 
 void startDD() {
-  DDSS = DdActive;
+  digitalWrite(PIN_DDSS, DdActive);
 }
 
 void stopDD() {
-  DDSS = DdInactive;
+  digitalWrite(PIN_DDSS, DdInactive);
 }
 
 bool isTurning() {
-  return DDSS == DdActive;
+  return digitalRead(PIN_DDSS) == DdActive;
+}
+
+bool dd33active() {
+  return digitalRead(PIN_DD33) == DdActive;
+}
+
+bool dd45active() {
+  return digitalRead(PIN_DD45) == DdActive;
 }
 
 void playRecord() {
@@ -514,9 +527,9 @@ void turntableReport() {
   webSerialPrintln((String("   3-")) + (DCM(3) ? "ON" : "--"));
 
   webSerialPrint("DD     :");
-  webSerialPrint  ((String("  SS-")) + (DDSS == DdActive ? "EN" : "--"));
-  webSerialPrint  ((String("  33-")) + (DD33 == DdActive ? "EN" : "--"));
-  webSerialPrintln((String("  45-")) + (DD45 == DdActive ? "EN" : "--"));
+  webSerialPrint  ((String("  SS-")) + (isTurning() ? "EN" : "--"));
+  webSerialPrint  ((String("  33-")) + (dd33active() ? "EN" : "--"));
+  webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
 
   webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
   webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
@@ -570,7 +583,7 @@ void requestStartStop() {
     webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
     webSerialPrint  (armLifter() == armDown ? "| DN (H) " : "| UP (L) ");
     webSerialPrint  (reachedArmReset() ? "| HOME(L) " : "| away(H) ");
-    webSerialPrintln(DDSS == DdInactive ? "| OFF(H) |" : "| ON (L) |");
+    webSerialPrintln(isTurning() ? "| ON (L) |" : "| OFF(H) |");
   }
   // section 2-4 key operation
   // Start/Stop (pin24) key
@@ -595,11 +608,11 @@ void requestStartStop() {
   //|During autoreturn operation|        ---      |  Clear |
   //|---------------------------|--------------------------|
   // * return after 2.5s via the key operation during the UP using the UP/DOWN key
-       if (armLifter() == armUp   && reachedArmReset()  && DDSS == DdInactive) startAutoOperation();
-  else if (armLifter() == armUp   && armResetNotActive() && DDSS == DdInactive) startDD();
-  else if (armLifter() == armDown && armResetNotActive() && DDSS == DdInactive) startDD();
-  else if (armLifter() == armUp   && armResetNotActive() && DDSS == DdActive) returnAndClear();
-  else if (armLifter() == armDown && armResetNotActive() && DDSS == DdActive) returnAndClear();
+       if (armLifter() == armUp   && reachedArmReset()  && !isTurning()) startAutoOperation();
+  else if (armLifter() == armUp   && armResetNotActive() && !isTurning()) startDD();
+  else if (armLifter() == armDown && armResetNotActive() && !isTurning()) startDD();
+  else if (armLifter() == armUp   && armResetNotActive() && isTurning()) returnAndClear();
+  else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
 }
@@ -720,7 +733,7 @@ void turntableUiUpdate() {
   }
   else if (millis() - lastUpdateCycle3 >= 955) {
     lastUpdateCycle3 = millis();
-    ESPUI.updateControlValue(recordsizeLabelId, (DD33 == DdActive) ? "33" : "45");    
+    ESPUI.updateControlValue(recordsizeLabelId, dd33active() ? "33" : "45");    
     ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);  //include CSS
     ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
   }
