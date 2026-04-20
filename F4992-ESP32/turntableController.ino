@@ -70,7 +70,6 @@ enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      
 const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
 //============================ state machine logic ============================
 
-//todo: define appropriately for correct logic-level
 const int armUp =        LOW;
 const int armDown =      HIGH;
 
@@ -120,20 +119,16 @@ const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
 
-bool initializationCompleted = false;
+bool initializationCompleted = true; //false; ***TODO early HW debuig skips init. revert this.
 
 const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
-
-//todo: replace with actual switch
-int armReset = released;
 
 unsigned long sensortimer = 0;
 unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
 
 bool repeat = false;
-bool armAlreadyReset = false;
 
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
@@ -151,7 +146,7 @@ void turntableCounterSetup() {
   pcnt_chan_config_t  counterChanCfg = {
     .edge_gpio_num = PIN_COUNTER,
     .level_gpio_num = -1,
-    .flags = { .io_loop_back = 1 },  //DEBUG at 1 for loopback. change to 0 when ready ***TODO
+    .flags = { .io_loop_back = 0 },
   };
   pcnt_new_channel(counterUnit, &counterChanCfg, &counterChan);
 
@@ -162,11 +157,6 @@ void turntableCounterSetup() {
   pcnt_unit_enable(counterUnit);
   pcnt_unit_clear_count(counterUnit);
   pcnt_unit_start(counterUnit);
-
-  //DEBUG REMOVE THIS WHEN READY *** TODO
-  pinMode(PIN_COUNTER, OUTPUT);
-  digitalWrite(PIN_COUNTER, LOW); // collaborate with physical pulldown
-  ///up to here ***TODO
 }
 
 void turntableSwitchSetup () {
@@ -221,18 +211,6 @@ void turntableCompuselectorSetup() {
 }
 
 void turntablePeripheralUpdate() {
-  //read arm reset
-
-  //this block only kept to assist debugging please remove *** TODO
-  armReset = (armPosition() == 0) ? pressed : released;//temp debug reading
-  //process armReset
-  if (reachedArmReset()) {
-    resetArmposition(); 
-  }
-  else armAlreadyReset = false;
-  //up to here ***TODO
-
-
   //17 & 30cm sensors
   if (sense30()) DetectionTime[DISC30] = millis();
   if (sense17()) DetectionTime[DISC17] = millis();
@@ -331,15 +309,9 @@ void toggleArm() {
   else raiseArm();
 }
 
-bool isArmReady() {
-  return initializationCompleted && armLifter() == armUp;
-}
-
 void resetArmposition() {
-  if(highVerbosity && !armAlreadyReset) webSerialPrintln(String(millis()) + " - Resetting armPosition");//debug - this will be removed w/ hardware armreset switch implementation
   pcnt_unit_clear_count(counterUnit);
   initializationCompleted = true;
-  armAlreadyReset = true;  //debug - this will be removed w/ hardware armreset switch implementation
 }
 
 void computeAutoSpeed() {
@@ -347,7 +319,6 @@ void computeAutoSpeed() {
   else if (DetectionTime[DISC17] > millis() - DETECTIONDURATION) DiscSize = DISC17;
   else                                                           DiscSize = NODISC;
 
-  DiscSize = DISC30; //debugonly *** TODO REMOVE
   if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
   previousDiscSize = DiscSize;
   setAutoDDspeed();
@@ -385,13 +356,11 @@ bool DCM(int DCMNumber) {
 void moveArmOut() {
   raiseArm();
   setDCM(3);
-  if (millis() % 100 == 0 && armPosition() > 0) countOneStep();
 }
 
 void moveArmIn() {
   raiseArm();
   setDCM(1);
-  if (millis() % 100 == 0) countOneStep();
 }
 
 void enableServo() {
@@ -417,15 +386,11 @@ void moveArmTo(uint16_t  position) {
 }
 
 bool armResetNotActive() {
-  //return debouncedButtons[ARM].released() == pressed
-  //todo: remote the temp solution once debug is over
-  return armReset == released;
+  return debouncedButtons[ARM].read() == released;
 }
 
 bool reachedArmReset() {
-  //return debouncedButtons[ARM].read() == pressed
-  //todo: remote the temp solution once debug is over
-  return armReset == pressed;
+  return debouncedButtons[ARM].read() ==  pressed;
 }
 
 bool reachedHome() {
@@ -465,12 +430,6 @@ void playRecord() {
   enableServo();
 }
 
-void countOneStep() {
-  digitalWrite(PIN_COUNTER, HIGH);
-  delayMicroseconds(2);
-  digitalWrite(PIN_COUNTER, LOW);
-}
-
 //Tonearm control=============================
 void turntableSetup() {
   webSerialPrintln("Starting initialization sequence");
@@ -479,7 +438,7 @@ void turntableSetup() {
   turntableCompuselectorSetup();
 
   turntableDcmSetup();
-  changeState(INITIAL);
+  changeState(IDLE);//changeState(INITIAL); ***TODO setup to initialization; idle as early HW debug only.
   turntableDdSetup();
   setAutoDDspeed();
 
@@ -531,7 +490,7 @@ void turntableReport() {
   webSerialPrint  ((String("  33-")) + (dd33active() ? "EN" : "--"));
   webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
 
-  webSerialPrint("Sensors:");  //todo: add logic to enable proper sensing
+  webSerialPrint("Sensors:");
   webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
   webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
 
@@ -574,10 +533,10 @@ void computeKeys() {
 }
 
 void requestStartStop() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
+  if (highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
 
-  if(highVerbosity)
+  if (highVerbosity)
   {
     webSerialPrintln("| Lifter |ArmReset |  DDSS  |"); 
     webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
@@ -615,6 +574,7 @@ void requestStartStop() {
   else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
+  else if (highVerbosity) webSerialPrintln(String(millis()) + " - nogood, undetermined state");
 }
 
 void requestHome() {
@@ -761,7 +721,7 @@ void turntableLoop() {
       break;
     case INITIAL:
       moveArmOut();
-      if (reachedArmReset()) changeState(IDLE);//TODO: link to actual switch after debug
+      if (reachedArmReset()) changeState(IDLE);
       break;
     case GOHOME:
       nextState = IDLE;
