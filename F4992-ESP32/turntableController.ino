@@ -119,7 +119,7 @@ const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
 
-bool initializationCompleted = true; //false; ***TODO early HW debuig skips init. revert this.
+bool initializationCompleted = false;
 
 const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
@@ -438,7 +438,7 @@ void turntableSetup() {
   turntableCompuselectorSetup();
 
   turntableDcmSetup();
-  changeState(IDLE);//changeState(INITIAL); ***TODO setup to initialization; idle as early HW debug only.
+  changeState(INITIAL);
   turntableDdSetup();
   setAutoDDspeed();
 
@@ -523,10 +523,14 @@ void computeKeys() {
   if (debouncedButtons[SWITCH1].fell()) requestRepeat();
 
   if (highVerbosity && debouncedButtons[SWITCH2].fell()) webSerialPrintln(String(millis()) + " - request Move IN");
-  if (debouncedButtons[SWITCH2].read() == pressed) stepTonearmIn();
+  if (debouncedButtons[SWITCH2].read() == pressed) {
+    moveArmIn();// stepTonearmIn(); //DEBUG REPLACE THE STEP WHICH ACTUALLY HAS VALIDATION ***TODO
+  }
 
   if (highVerbosity && debouncedButtons[SWITCH3].fell()) webSerialPrintln(String(millis()) + " - request Move OUT");
-  if (debouncedButtons[SWITCH3].read() == pressed) stepTonearmOut();
+  if (debouncedButtons[SWITCH3].read() == pressed) {
+    moveArmOut();// stepTonearmOut(); //DEBUG REPLACE THE STEP WHICH ACTUALLY HAS VALIDATION ***TODO
+  }
 
   if (debouncedButtons[SWITCH4].fell()) requestUpDown();
   if (debouncedButtons[SWITCH5].fell()) requestStartStop();
