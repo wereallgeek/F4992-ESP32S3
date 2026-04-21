@@ -59,7 +59,7 @@ unsigned long lastUpdateCycle4 = 0;
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
-const byte switchpins[] =    {PIN_ARMRESET, PIN_SW2,  PIN_SW3,    PIN_SW4,    PIN_SW4,    PIN_SW5};
+const byte switchpins[] =    {PIN_ARMRESET, PIN_SW1,  PIN_SW2,    PIN_SW3,    PIN_SW4,    PIN_SW5};
 Bounce debouncedButtons[MAXSWITCH]; 
 
 //align hardware number with logical number and add minimum and maximum values.
