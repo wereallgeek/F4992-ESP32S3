@@ -244,11 +244,11 @@ int armPosition() {
 
 //Sensors
 bool sense30() {
-  return digitalRead(PIN_IR30) == irVisible;
+  return digitalRead(PIN_IR30) == irNotvitible;
 }
 
 bool sense17() {
-  return digitalRead(PIN_IR17) == irVisible;
+  return digitalRead(PIN_IR17) == irNotvitible;
 }
 
 void compuselect() {
@@ -394,7 +394,7 @@ bool reachedArmReset() {
 }
 
 bool reachedHome() {
-  return armPosition() == 0;
+  return reachedArmReset();
 }
 
 bool reachedPosition() {
