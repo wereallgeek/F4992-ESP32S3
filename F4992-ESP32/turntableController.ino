@@ -54,7 +54,7 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 //todo: properly define
-#define DETECTIONDURATION    2500
+#define DETECTIONDURATION    250
 #define MUTEPOSTDOWN         1000
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
@@ -90,6 +90,8 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
+const int irTreshold   = 1800;//TODO: tweak try these values 2978 (2.4V) (3.3v CMOS high treshold) - 3475 (2.8V)
+
 
 const int bStop =        HIGH;
 const int bStart =        LOW;
@@ -243,12 +245,22 @@ int armPosition() {
 }
 
 //Sensors
-bool sense30() {
-  return digitalRead(PIN_IR30) == irVisible;
+//debug analog
+int value30cm() {
+  return analogRead(PIN_IR30);
 }
 
+int value17cm() {
+  return analogRead(PIN_IR17);
+}
+
+bool sense30() {
+  return analogRead(PIN_IR30) < irTreshold;
+}
+
+//issues with pin 21 has no analog
 bool sense17() {
-  return digitalRead(PIN_IR17) == irVisible;
+  return digitalRead(PIN_IR17) == irVisible; //until the design is adjusted, the two won't have the same method.
 }
 
 void compuselect() {
@@ -493,8 +505,8 @@ void turntableReport() {
   webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
 
   webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")=" + value30cm());
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")=" + value17cm());
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");
@@ -580,12 +592,11 @@ void requestStartStop() {
   else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
   else if (isState(GOHOME)) clearRepeat();
-  else if (highVerbosity) webSerialPrintln(String(millis()) + " - nogood, undetermined state");
+  else changeState(GOHOME); //undetermined state, going home.
 }
 
 void requestHome() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request HOME");
-  if (!initializationCompleted) return;
   nextState = IDLE;
   changeState(GOHOME);
 }
@@ -732,7 +743,7 @@ void turntableLoop() {
     case GOHOME:
       nextState = IDLE;
       desiredPosition = Steps[HOME];
-      moveArmTo(desiredPosition);
+      moveArmOut();
       if (reachedHome()) changeState(nextState);
       break;
     case MOVE:
