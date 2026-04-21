@@ -244,11 +244,11 @@ int armPosition() {
 
 //Sensors
 bool sense30() {
-  return digitalRead(PIN_IR30) == irNotvitible;
+  return digitalRead(PIN_IR30) == irVisible;
 }
 
 bool sense17() {
-  return digitalRead(PIN_IR17) == irNotvitible;
+  return digitalRead(PIN_IR17) == irVisible;
 }
 
 void compuselect() {
@@ -315,9 +315,11 @@ void resetArmposition() {
 }
 
 void computeAutoSpeed() {
-  if      (DetectionTime[DISC30] > millis() - DETECTIONDURATION) DiscSize = DISC30;
-  else if (DetectionTime[DISC17] > millis() - DETECTIONDURATION) DiscSize = DISC17;
-  else                                                           DiscSize = NODISC;
+  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - DETECTIONDURATION);
+  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - DETECTIONDURATION);
+  if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
+  else if (recent30cmSensed)                DiscSize = DISC17;
+  else                                      DiscSize = DISC30;
 
   if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
   previousDiscSize = DiscSize;
