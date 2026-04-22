@@ -17,7 +17,7 @@ void espui_init() {
   ESPUI.setElementStyle(rpt_button, btnStyle);
   repeatId = ESPUI.addControl(Label, "", "", Dark, ledId, textCallback);
   ESPUI.setElementStyle(repeatId, String("background-color: #2c3e50") + espuiIndicatorElementStyle);
-  auto spd_switch = ESPUI.addControl(Switcher, "", String(!softSpeedInverter), None, ledId, buttonInvertCallback);
+  auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
   ESPUI.setElementStyle(spd_switch, swStyleOFF);
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
 
