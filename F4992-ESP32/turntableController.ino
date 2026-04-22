@@ -54,7 +54,8 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 //todo: properly define
-#define DETECTIONDURATION    800
+#define IRCYCLEDURATION      800
+#define DETECTIONDURATION    2500
 #define MUTEPOSTDOWN         1000
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
@@ -91,8 +92,6 @@ const bool OUT =         false;
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
 const int irTreshold   = 1024;//TODO: make this a configurable value for future tuning possibilities
-const int irMinimum    = 1;//TODO: make this a configurable value for future tuning possibilities
-
 
 const int bStop =        HIGH;
 const int bStart =        LOW;
@@ -255,13 +254,11 @@ int value17cm() {
 }
 
 bool sense30() {
-  int currentValue = value30cm(); //filter garbage out
-  return currentValue > irMinimum && currentValue < irTreshold;
+  return analogRead(PIN_IR30) < irTreshold;
 }
 
 bool sense17() {
-  int currentValue = value17cm(); //filter garbage out
-  return currentValue > irMinimum && currentValue < irTreshold;
+  return analogRead(PIN_IR17) < irTreshold;
 }
 
 void compuselect() {
@@ -328,8 +325,8 @@ void resetArmposition() {
 }
 
 void computeAutoSpeed() {
-  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - DETECTIONDURATION);
-  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - DETECTIONDURATION);
+  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - IRCYCLEDURATION);
+  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - IRCYCLEDURATION);
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
@@ -773,7 +770,7 @@ void turntableLoop() {
       moveArmTo(Steps[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // two detection cycles should suffice
-      if (millis() - sensortimer >= (2 * DETECTIONDURATION)) {
+      if (millis() - sensortimer >= (DETECTIONDURATION)) {
         nextState = PLAY;
         moveArmTo(desiredPosition);
         changeState(MOVE); 
