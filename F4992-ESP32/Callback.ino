@@ -1,8 +1,21 @@
-//Custom callback================================
-void CustomCallback(Control *sender, int type) {
-  //Your code HERE !
+//kitchenware
+String firmwareVersion() {
+  static String version = ""; 
+  if (version != "") return version; //compute once print many
+
+  static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+  version = String(__DATE__ + 7); 
+  int m = (String(months).indexOf(String(__DATE__).substring(0, 3)) / 3) + 1;
+  if (m < 10) version += "0";
+  version += m;
+  version += (__DATE__[4] == ' ') ? "0" : String(__DATE__[4]);
+  version += __DATE__[5];
+  version += "-";
+  version += String(__TIME__).substring(0, 2);
+  version += String(__TIME__).substring(3, 5);
+
+  return version;
 }
-//Custom callback================================
 
 //MQTT CALLBACK===================================================
 void mqtt_callback(String topic, byte *message, unsigned int length) {
@@ -246,6 +259,7 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("info") > -1) {
     webSerialPrintln("Device name " + stored_devicename);
+    webSerialPrintln("Firmware " + firmwareVersion());
     webSerialPrintln("SSID " + stored_ssid);
     webSerialPrint("IP :");
     webSerialPrintln(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());

@@ -112,7 +112,7 @@ void setup() {
 
   firstPassCompleted = true;
   if(highVerbosity) webSerialPrint(String(millis()) + " - ");
-  webSerialPrintln(String("[") + stored_devicename + "] awoken");
+  webSerialPrintln(String("[") + stored_devicename + "] awoken w/ FW ver " + firmwareVersion());
 }
 //SETUP=========================
 
