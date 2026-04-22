@@ -41,6 +41,7 @@ void wifi_init() {
     client.setServer(stored_mqtt_server.c_str(), 1883);
     client.setCallback(mqtt_callback);
   }
+  WiFi.setSleep(false);
   webSerialPrint("\nIP address : ");
   webSerialPrintln(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 }

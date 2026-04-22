@@ -91,7 +91,8 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-const int irTreshold   = 1024;//TODO: make this a configurable value for future tuning possibilities
+const int irTreshold =   1024;//TODO: make this a configurable value for future tuning possibilities
+const int irMinimum =    1;//TODO: make this a configurable value for future tuning possibilities
 
 const int bStop =        HIGH;
 const int bStart =        LOW;
@@ -246,19 +247,25 @@ int armPosition() {
 
 //Sensors
 int value30cm() {
+  analogRead(PIN_IR30); //wake up!
+  delayMicroseconds(50);
   return analogRead(PIN_IR30);
 }
 
 int value17cm() {
+  analogRead(PIN_IR17); //wake up!
+  delayMicroseconds(50);
   return analogRead(PIN_IR17);
 }
 
 bool sense30() {
-  return analogRead(PIN_IR30) < irTreshold;
+  int sensed30value = value30cm();
+  return irMinimum < sensed30value && sensed30value < irTreshold;
 }
 
 bool sense17() {
-  return analogRead(PIN_IR17) < irTreshold;
+  int sensed17value = value17cm();
+  return irMinimum < sensed17value && sensed17value < irTreshold;
 }
 
 void compuselect() {

@@ -98,6 +98,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println();
 
+  analogSetAttenuation(ADC_11db);
+  
   //Custom setup...............
   turntableSetup();
   simpleOTAsetup();
