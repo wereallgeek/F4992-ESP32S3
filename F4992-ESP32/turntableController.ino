@@ -21,7 +21,7 @@ unsigned long lastUpdateCycle4 = 0;
 
 //Infrared Sensors
 #define PIN_IR30             1
-#define PIN_IR17             21
+#define PIN_IR17             3
 
 // Switches (Inputs)
 #define PIN_SW1              5
@@ -54,7 +54,7 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 //todo: properly define
-#define DETECTIONDURATION    250
+#define DETECTIONDURATION    800
 #define MUTEPOSTDOWN         1000
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
@@ -90,7 +90,7 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-const int irTreshold   = 1800;//TODO: tweak try these values 2978 (2.4V) (3.3v CMOS high treshold) - 3475 (2.8V)
+const int irTreshold   = 1800;//TODO: make this a configurable value for future tuning possibilities
 
 
 const int bStop =        HIGH;
@@ -258,9 +258,8 @@ bool sense30() {
   return analogRead(PIN_IR30) < irTreshold;
 }
 
-//issues with pin 21 has no analog
 bool sense17() {
-  return digitalRead(PIN_IR17) == irVisible; //until the design is adjusted, the two won't have the same method.
+  return analogRead(PIN_IR17) < irTreshold;
 }
 
 void compuselect() {
@@ -505,8 +504,8 @@ void turntableReport() {
   webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
 
   webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")=" + value30cm());
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")=" + value17cm());
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");
@@ -758,7 +757,8 @@ void turntableLoop() {
       desiredPosition = Steps[DiscSize];
       moveArmTo(Steps[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
-      if (millis() - sensortimer >= 7500) {
+      // two detection cycles should suffice
+      if (millis() - sensortimer >= (2 * DETECTIONDURATION)) {
         nextState = PLAY;
         moveArmTo(desiredPosition);
         changeState(MOVE); 
