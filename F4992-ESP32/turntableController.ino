@@ -104,7 +104,7 @@ const char* recordStyles[] =    { recordNodiscStyle, record33style, record45styl
 DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
 enum ArmPositions               {HOME, START30, START17, END};
-const uint16_t Steps[] =        {0,    55,      110,    7500};//todo: determine 30, 17, end
+const uint16_t Steps[] =        {0,    1024,    6800,   12000}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
 //replace with counter
 uint16_t  desiredPosition =     Steps[HOME];
 
@@ -118,9 +118,10 @@ TurntableState nextState =         IDLE;
 
 const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
 
-//prototype to make arduino IDE happy about the TurntableState
+//prototypes to make arduino IDE happy 
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
+static bool IRAM_ATTR pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t *edata, void *user_ctx);
 
 bool initializationCompleted = false;
 
@@ -133,8 +134,11 @@ unsigned long armdowntime = 0;
 
 bool repeat = false;
 
+
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
+portMUX_TYPE armmutex = portMUX_INITIALIZER_UNLOCKED;
+volatile int32_t overflow_count = 0; 
 
 //============================ hardware interface =============================
 void turntableCounterSetup() {
@@ -155,6 +159,10 @@ void turntableCounterSetup() {
 
   //action
   pcnt_channel_set_edge_action(counterChan, PCNT_CHANNEL_EDGE_ACTION_DECREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
+
+  //overflow
+  pcnt_event_callbacks_t cbs = { .on_reach = pcnt_on_reach };
+  pcnt_unit_register_event_callbacks(counterUnit, &cbs, NULL);
 
   //start
   pcnt_unit_enable(counterUnit);
@@ -213,6 +221,16 @@ void turntableCompuselectorSetup() {
   digitalWrite(PIN_COMPUSELECTOR, bStop);
 }
 
+//interrupts
+static bool IRAM_ATTR pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t *edata, void *user_ctx) {
+    if (edata->watch_point_value > 0) {
+        overflow_count += 32767;
+    }
+    return false; 
+}
+
+
+//update
 void turntablePeripheralUpdate() {
   //17 & 30cm sensors
   if (sense30()) DetectionTime[DISC30] = millis();
@@ -239,10 +257,13 @@ void setMute(bool activateMute) {
   digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
 }
 
-int armPosition() {
+int32_t armPosition() {
     int counterValue = 0;
+    portENTER_CRITICAL(&armmutex); 
     pcnt_unit_get_count(counterUnit, &counterValue);
-    return counterValue;
+    int32_t current_overflow_count = overflow_count;
+    portEXIT_CRITICAL(&armmutex);
+    return (int32_t)counterValue + current_overflow_count;
 }
 
 //Sensors
@@ -334,7 +355,9 @@ void toggleArm() {
 
 void resetArmposition() {
   pcnt_unit_clear_count(counterUnit);
+  overflow_count = 0;
   initializationCompleted = true;
+  if (isMovingOut()) changeState(IDLE);
 }
 
 void computeAutoSpeed() {
@@ -376,6 +399,10 @@ bool DCM(int DCMNumber) {
   if (DCMNumber >= MAXDCM) return false;
   if (DCMNumber < DCM1) return false;
   return digitalRead(dcmpins[DCMNumber]) == DcmActive;
+}
+
+bool isMovingOut() {
+  return DCM(3);
 }
 
 void moveArmOut() {
@@ -557,17 +584,18 @@ void updateKeys() {
 void computeKeys() {
   if (debouncedButtons[ARM].fell()) webSerialPrintln(String(millis()) + " - Resetting armPosition");
   if (debouncedButtons[ARM].read() == pressed) resetArmposition();
+  if (debouncedButtons[ARM].rose()) resetArmposition();
 
   if (debouncedButtons[SWITCH1].fell()) requestRepeat();
 
   if (highVerbosity && debouncedButtons[SWITCH2].fell()) webSerialPrintln(String(millis()) + " - request Move IN");
   if (debouncedButtons[SWITCH2].read() == pressed) {
-    moveArmIn();// stepTonearmIn(); //DEBUG REPLACE THE STEP WHICH ACTUALLY HAS VALIDATION ***TODO
+    stepTonearmIn();
   }
 
   if (highVerbosity && debouncedButtons[SWITCH3].fell()) webSerialPrintln(String(millis()) + " - request Move OUT");
   if (debouncedButtons[SWITCH3].read() == pressed) {
-    moveArmOut();// stepTonearmOut(); //DEBUG REPLACE THE STEP WHICH ACTUALLY HAS VALIDATION ***TODO
+    stepTonearmOut();
   }
 
   if (debouncedButtons[SWITCH4].fell()) requestUpDown();
