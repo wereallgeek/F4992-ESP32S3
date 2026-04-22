@@ -90,7 +90,8 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-const int irTreshold   = 1800;//TODO: make this a configurable value for future tuning possibilities
+const int irTreshold   = 1024;//TODO: make this a configurable value for future tuning possibilities
+const int irMinimum    = 1;//TODO: make this a configurable value for future tuning possibilities
 
 
 const int bStop =        HIGH;
@@ -245,7 +246,6 @@ int armPosition() {
 }
 
 //Sensors
-//debug analog
 int value30cm() {
   return analogRead(PIN_IR30);
 }
@@ -255,11 +255,13 @@ int value17cm() {
 }
 
 bool sense30() {
-  return analogRead(PIN_IR30) < irTreshold;
+  int currentValue = value30cm(); //filter garbage out
+  return currentValue > irMinimum && currentValue < irTreshold;
 }
 
 bool sense17() {
-  return analogRead(PIN_IR17) < irTreshold;
+  int currentValue = value17cm(); //filter garbage out
+  return currentValue > irMinimum && currentValue < irTreshold;
 }
 
 void compuselect() {
@@ -482,6 +484,21 @@ void clearRepeat() {
 }
 
 //Tonearm control=============================
+void turntableSensorReport() {
+  webSerialPrint("Sensors:");
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
+}
+
+void turntableIrReport() {
+  webSerialPrintln("================REPORT=================");
+  webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
+  turntableSensorReport();
+  webSerialPrint("IR value:");
+  webSerialPrint  ((String("  30-")) + value30cm());
+  webSerialPrintln((String("  17-")) + value17cm());
+  webSerialPrintln("=======================================");
+}
 
 // Turntable user interface ==============================================
 void turntableReport() {
@@ -503,9 +520,7 @@ void turntableReport() {
   webSerialPrint  ((String("  33-")) + (dd33active() ? "EN" : "--"));
   webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
 
-  webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
+  turntableSensorReport();
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
   webSerialPrintln("=======================================");

@@ -200,6 +200,10 @@ void SerialCommand(String input) {
     turntableReport();
   }
 
+  else if (input.indexOf("sensor") > -1) {
+    turntableIrReport();
+  }
+
   else if (input.indexOf("quiet") > -1) {
     highVerbosity = false;
   }
