@@ -246,16 +246,22 @@ int armPosition() {
 }
 
 //Sensors
+int analogWakeAndRead(int pinNumber) {
+  int analogValue = analogRead(pinNumber); //wake up!
+  for (int i = 0; i < 3; i++) {
+    if (analogValue != 0) break; 
+    delayMicroseconds(18);
+    analogValue = analogRead(pinNumber);
+  }
+  return analogValue;
+}
+
 int value30cm() {
-  analogRead(PIN_IR30); //wake up!
-  delayMicroseconds(50);
-  return analogRead(PIN_IR30);
+  return analogWakeAndRead(PIN_IR30);
 }
 
 int value17cm() {
-  analogRead(PIN_IR17); //wake up!
-  delayMicroseconds(50);
-  return analogRead(PIN_IR17);
+  return analogWakeAndRead(PIN_IR17);
 }
 
 bool sense30() {
