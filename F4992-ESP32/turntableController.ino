@@ -69,7 +69,6 @@ const byte ledpins[] =       {0,            PIN_LED1,     PIN_LED2,  PIN_LED3,  
 
 enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      MAXDCM};
 const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
-//============================ state machine logic ============================
 
 const int armUp =        LOW;
 const int armDown =      HIGH;
@@ -91,7 +90,7 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-const int irTreshold =   1024;//TODO: make this a configurable value for future tuning possibilities
+const int irTreshold =   1800;//TODO: make this a configurable value for future tuning possibilities
 const int irMinimum =    1;//TODO: make this a configurable value for future tuning possibilities
 
 const int bStop =        HIGH;
@@ -104,7 +103,7 @@ const char* recordStyles[] =    { recordNodiscStyle, record33style, record45styl
 DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
 enum ArmPositions               {HOME, START30, START17, END};
-const uint16_t Steps[] =        {0,    1024,    6800,   12000}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
+const uint16_t Steps[] =        {0,    215,     1100,    1500}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
 //replace with counter
 uint16_t  desiredPosition =     Steps[HOME];
 
@@ -121,7 +120,6 @@ const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
 //prototypes to make arduino IDE happy 
 void changeState(TurntableState newState); 
 bool isState(TurntableState state);
-static bool IRAM_ATTR pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t *edata, void *user_ctx);
 
 bool initializationCompleted = false;
 
@@ -152,17 +150,18 @@ void turntableCounterSetup() {
   //canal 
   pcnt_chan_config_t  counterChanCfg = {
     .edge_gpio_num = PIN_COUNTER,
-    .level_gpio_num = -1,
+    .level_gpio_num = PIN_DCM3,
     .flags = { .io_loop_back = 0 },
   };
   pcnt_new_channel(counterUnit, &counterChanCfg, &counterChan);
 
   //action
-  pcnt_channel_set_edge_action(counterChan, PCNT_CHANNEL_EDGE_ACTION_DECREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
+  pcnt_channel_set_edge_action(counterChan, PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
+  pcnt_channel_set_level_action(counterChan, PCNT_CHANNEL_LEVEL_ACTION_INVERSE, PCNT_CHANNEL_LEVEL_ACTION_KEEP);
 
-  //overflow
-  pcnt_event_callbacks_t cbs = { .on_reach = pcnt_on_reach };
-  pcnt_unit_register_event_callbacks(counterUnit, &cbs, NULL);
+  //glitch filtering
+  pcnt_glitch_filter_config_t filter_config = { .max_glitch_ns = 300 };
+  pcnt_unit_set_glitch_filter(counterUnit, &filter_config);
 
   //start
   pcnt_unit_enable(counterUnit);
@@ -220,15 +219,6 @@ void turntableCompuselectorSetup() {
   pinMode(PIN_COMPUSELECTOR, OUTPUT);
   digitalWrite(PIN_COMPUSELECTOR, bStop);
 }
-
-//interrupts
-static bool IRAM_ATTR pcnt_on_reach(pcnt_unit_handle_t unit, const pcnt_watch_event_data_t *edata, void *user_ctx) {
-    if (edata->watch_point_value > 0) {
-        overflow_count += 32767;
-    }
-    return false; 
-}
-
 
 //update
 void turntablePeripheralUpdate() {
@@ -382,7 +372,6 @@ void setAutoDDspeed() {
 }
 
 void setDCM(int DCMNumber) {
-  pcnt_channel_set_edge_action(counterChan, DCMNumber == 3 ? PCNT_CHANNEL_EDGE_ACTION_DECREASE : PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
   for (int pinnumber = DCM1; pinnumber < MAXDCM; pinnumber++) {
     digitalWrite(dcmpins[pinnumber], DCMNumber == pinnumber ? DcmActive : DcmInactive );
   }
@@ -821,7 +810,7 @@ void turntableLoop() {
     case PLAY:
       setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
-      if (!discPresent()) changeState(GOHOME);
+      
       else if (armPosition() >= Steps[END]) {
         if (repeat) {
           nextState = PLAY;
