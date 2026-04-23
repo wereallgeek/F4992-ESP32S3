@@ -6,6 +6,7 @@ const int WS_MAX_LINES = 14;
 std::deque<String> webLog;
 
 SemaphoreHandle_t logMutex = xSemaphoreCreateMutex();
+bool haschanged = true;
 
 void wsprint(String s) {
   Serial.print(s);
@@ -18,6 +19,7 @@ void wsprint(String s) {
     xSemaphoreGive(logMutex); //unlock
     wsMaintainWebLog();
   }
+  haschanged = true;
 }
 
 void wsprintln(String s) {
@@ -32,6 +34,7 @@ void wsprintln(String s) {
     xSemaphoreGive(logMutex); //unlock
     wsMaintainWebLog();
   }
+  haschanged = true;
 }
 
 
@@ -53,6 +56,7 @@ void webSerialPrintln(long unsigned int l) { wsprintln(String(l)); }
 void webSerialPrint(IPAddress ip)   { wsprint(ip.toString()); }
 void webSerialPrintln(IPAddress ip) { wsprintln(ip.toString()); }
 
+bool webserialDirty() { return haschanged; }
 
 void wsMaintainWebLog() {
   while (webLog.size() > WS_MAX_LINES) {
@@ -66,7 +70,7 @@ void updateWebSerial() {
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 
     String buffer = "";
-    buffer.reserve(1200); 
+    buffer.reserve(2600); 
 
     for (const String& s : webLog) {
       buffer += s + "\n";
@@ -75,4 +79,5 @@ void updateWebSerial() {
 
     ESPUI.updateLabel(logLabelId, buffer);
   }
+  haschanged = false;
 }

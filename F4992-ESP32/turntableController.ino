@@ -53,8 +53,8 @@ unsigned long lastUpdateCycle4 = 0;
 #define PIN_COMPUSELECTOR    12
 
 
-//todo: properly define
-#define IRCYCLEDURATION      800
+//todo: properly define or add to GUI config page
+#define IRCYCLEDURATION      2500
 #define DETECTIONDURATION    2500
 #define MUTEPOSTDOWN         1000
 
@@ -69,6 +69,8 @@ const byte ledpins[] =       {0,            PIN_LED1,     PIN_LED2,  PIN_LED3,  
 
 enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      MAXDCM};
 const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
+
+int previousDcm = 0;
 
 const int armUp =        LOW;
 const int armDown =      HIGH;
@@ -102,8 +104,9 @@ const char* sizename[] =        {"NODISC", "30cm", "17cm"};
 const char* recordStyles[] =    { recordNodiscStyle, record33style, record45style };
 DetectedSize DiscSize =         NODISC;
 DetectedSize previousDiscSize = NODISC;
+DetectedSize printedDiscSize =  NODISC;
 enum ArmPositions               {HOME, START30, START17, END};
-const uint16_t Steps[] =        {0,    215,     1100,    1500}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
+const uint16_t Steps[] =        {0,    215,     1050,    1500}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
 //replace with counter
 uint16_t  desiredPosition =     Steps[HOME];
 
@@ -112,6 +115,9 @@ const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Mov
 const ControlColor statusColor[] = {Dark,      Sunflower,      Carrot,      Carrot,    Sunflower,   Peterriver};
 const char* statusHexColor[] =     {"#2c3e50", "#f1c40f",      "#e67e22",   "#e67e22", "#f1c40f",   "#3498db"};
 
+TurntableState previousArmState =  MOVE;
+TurntableState previousLedState =  MOVE;
+TurntableState previousTtState =   MOVE;
 TurntableState currentState =      IDLE;
 TurntableState nextState =         IDLE;
 
@@ -131,12 +137,13 @@ unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
 
 bool repeat = false;
-
+bool previousRepeat = false;
+bool previousDD33 = false;
+bool previousArmLifter = false;
+int32_t previousPosition = -1;
 
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
-portMUX_TYPE armmutex = portMUX_INITIALIZER_UNLOCKED;
-volatile int32_t overflow_count = 0; 
 
 //============================ hardware interface =============================
 void turntableCounterSetup() {
@@ -249,11 +256,8 @@ void setMute(bool activateMute) {
 
 int32_t armPosition() {
     int counterValue = 0;
-    portENTER_CRITICAL(&armmutex); 
     pcnt_unit_get_count(counterUnit, &counterValue);
-    int32_t current_overflow_count = overflow_count;
-    portEXIT_CRITICAL(&armmutex);
-    return (int32_t)counterValue + current_overflow_count;
+    return (int32_t)counterValue;
 }
 
 //Sensors
@@ -345,7 +349,6 @@ void toggleArm() {
 
 void resetArmposition() {
   pcnt_unit_clear_count(counterUnit);
-  overflow_count = 0;
   initializationCompleted = true;
   if (isMovingOut()) changeState(IDLE);
 }
@@ -737,29 +740,94 @@ void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
     ESPUI.updateControl(id);
 }
 
+//change indicators
+bool repeatDirty() {
+  bool haschanged = false;
+  if (previousRepeat != repeat) haschanged = true;
+  previousRepeat = repeat;
+  return haschanged;
+}
+
+bool dcmDirty() {
+  bool haschanged = false;
+  int currentDcm = getDCM();
+  if (previousDcm != currentDcm) haschanged = true;
+  previousDcm = currentDcm;
+  return haschanged;
+}
+
+bool armstateDirty() {
+  bool haschanged = false;
+  if (previousArmState != currentState) haschanged = true;
+  previousArmState = currentState;
+  return haschanged;
+}
+
+bool ttstateDirty() {
+  bool haschanged = false;
+  if (previousTtState != currentState) haschanged = true;
+  previousTtState = currentState;
+  return haschanged;
+}
+
+bool ledstateDirty() {
+  bool haschanged = false;
+  if (previousLedState != currentState) haschanged = true;
+  previousLedState = currentState;
+  return haschanged;
+}
+
+bool dd33Dirty() {
+  bool haschanged = false;
+  if (previousDD33 != dd33active()) haschanged=true;
+  previousDD33 = dd33active();
+  return haschanged;
+}
+
+bool disksizeDirty() {
+  bool haschanged = false;
+  if (printedDiscSize != DiscSize) haschanged = true;
+  printedDiscSize = DiscSize;
+  return haschanged;
+}
+
+bool armlifterDirty() {
+  bool haschanged = false;
+  if (previousArmLifter != armLifter()) haschanged = true;
+  previousArmLifter = armLifter();
+  return haschanged;
+}
+
+bool armpositionDirty() {
+  bool haschanged = false;
+  if (previousPosition != armPosition()) haschanged = true;
+  previousPosition = armPosition();
+  return haschanged;
+}
+
 void turntableUiUpdate() {
 // conditionnal ui update separated to minimize ESPUI starvation on multiple instances
   if (millis() - lastUpdateCycle1 >= 802) {
     lastUpdateCycle1 = millis();
-    changeEspuiLabelColor(armStatusLabelId, statusHexColor[currentState]);
-    changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]); //include CSS
-    ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
+    if(armstateDirty()) changeEspuiLabelColor(armStatusLabelId, statusHexColor[currentState]);
+    if(repeatDirty()) changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]); //include CSS
+    if(dcmDirty()) ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
   }
   else if (millis() - lastUpdateCycle2 >= 872) {
     lastUpdateCycle2 = millis();
-    updateWebSerial(); //serial has 15 lines of text
+    if(webserialDirty()) updateWebSerial(); //serial has 15 lines of text
   }
   else if (millis() - lastUpdateCycle3 >= 955) {
     lastUpdateCycle3 = millis();
-    ESPUI.updateControlValue(recordsizeLabelId, dd33active() ? "33" : "45");    
-    ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);  //include CSS
-    ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
+    if (dd33Dirty()) ESPUI.updateControlValue(recordsizeLabelId, dd33active() ? "33" : "45");    
+    if (disksizeDirty()) ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);  //include CSS
+    if (armlifterDirty()) ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
   }
   else if (millis() - lastUpdateCycle4 >= 1024) {
     lastUpdateCycle4 = millis();
-    ESPUI.print(armStatusLabelId, turntableStatus());
-    ESPUI.print(armPositionLabelId, String(armPosition()));
-    changeEspuiIndicatorColor(ledId, statusHexColor[currentState]); //include CSS
+    if (ttstateDirty()) ESPUI.print(armStatusLabelId, turntableStatus());
+    if (armpositionDirty()) ESPUI.print(armPositionLabelId, String(armPosition()));
+    if (ledstateDirty()) changeEspuiIndicatorColor(ledId, statusHexColor[currentState]); //include CSS
   }
 }
 // Turntable user interface ==============================================
