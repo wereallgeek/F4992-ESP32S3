@@ -53,10 +53,13 @@ unsigned long lastUpdateCycle4 = 0;
 #define PIN_COMPUSELECTOR    12
 
 
-//todo: properly define or add to GUI config page
-#define IRCYCLEDURATION      2500
-#define DETECTIONDURATION    2500
-#define MUTEPOSTDOWN         1000
+
+#define DEFIRCYCLEDURATION   2500
+#define DEFDETECTIONDURATION 2500
+#define DEFMUTEDURATION      1000
+int irCycleDuration =        2500;
+int detectionDuration =      2500;
+int muteDuration =           1000;
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
@@ -92,8 +95,9 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-const int irTreshold =   1800;//TODO: make this a configurable value for future tuning possibilities
-const int irMinimum =    1;//TODO: make this a configurable value for future tuning possibilities
+#define DEFIRTRESHOLD    1800
+int irTreshold =         DEFIRTRESHOLD;
+const int irMinimum =    1;
 
 const int bStop =        HIGH;
 const int bStart =        LOW;
@@ -167,7 +171,7 @@ void turntableCounterSetup() {
   pcnt_channel_set_level_action(counterChan, PCNT_CHANNEL_LEVEL_ACTION_INVERSE, PCNT_CHANNEL_LEVEL_ACTION_KEEP);
 
   //glitch filtering
-  pcnt_glitch_filter_config_t filter_config = { .max_glitch_ns = 300 };
+  pcnt_glitch_filter_config_t filter_config = { .max_glitch_ns = 20000 };
   pcnt_unit_set_glitch_filter(counterUnit, &filter_config);
 
   //start
@@ -235,7 +239,7 @@ void turntablePeripheralUpdate() {
   if (isArmDown()) armdowntime = millis(); //unmute timer.
   if (isTurning() && isState(DETECT)) computeAutoSpeed();
   //process Mute
-  setMute(armdowntime > millis() - MUTEPOSTDOWN);
+  setMute(armdowntime > millis() - muteDuration);
   compuselect();
   //LEDS -- P-L55
   updateLeds();
@@ -302,7 +306,55 @@ void LD(int ledNumber, bool illuminate) {
   digitalWrite(ledpins[ledNumber], illuminate? HIGH : LOW);
 }
 
-//==================== UI exposition of otherwise constants ===================
+//======================== UI exposition of constants =======================
+void readDetectionDuration() {
+  setDetectionDuration(ttConfig.getUShort("detectionDuration", DEFDETECTIONDURATION));
+}
+
+void setDetectionDuration(int duration) {
+  detectionDuration = duration;
+}
+
+int getDetectionDuration(){
+  return detectionDuration;
+}
+
+void readMuteDuration(){
+  setMuteDuration(ttConfig.getUShort("muteDuration", DEFMUTEDURATION));
+}
+
+void setMuteDuration(int duration) {
+  muteDuration = duration;
+}
+
+int getMuteDuration() {
+  return muteDuration;
+}
+
+void readIrCycleDuration() {
+  setMuteDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
+}
+
+void setIrCycleDuration(int duration) {
+  irCycleDuration = duration;
+}
+
+int getIrCycleDuration() {
+  return irCycleDuration;
+}
+
+void readIrTreshold() {
+  setMuteDuration(ttConfig.getUShort("irTreshold", DEFIRTRESHOLD));
+}
+
+void setIrTreshold(int treshold) {
+  irTreshold = treshold;
+}
+
+int getIrTreshold() {
+  return irTreshold;
+}
+
 void readArmPresetValues() {
   setArmPresetValues (PresetDefaults[HOME], 
                       ttConfig.getUShort("StepsValueFor30", PresetDefaults[START30]),
@@ -315,6 +367,14 @@ void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t val
   ArmPresets[START30] = valueFor30;
   ArmPresets[START17] = valueFor17;
   ArmPresets[END] = valueForEnd;
+}
+
+void realTurntablePresetValues() {
+  readArmPresetValues();
+  readDetectionDuration();
+  readMuteDuration();
+  readIrCycleDuration();
+  readIrTreshold();
 }
 
 //============================ state machine logic ============================
@@ -369,8 +429,8 @@ void resetArmposition() {
 }
 
 void computeAutoSpeed() {
-  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - IRCYCLEDURATION);
-  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - IRCYCLEDURATION);
+  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - irCycleDuration);
+  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - irCycleDuration);
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
@@ -498,7 +558,7 @@ void turntableSetup() {
 
   turntableDcmSetup();
 
-  readArmPresetValues();
+  realTurntablePresetValues();
   changeState(INITIAL);
   turntableDdSetup();
   setAutoDDspeed();
@@ -890,7 +950,7 @@ void turntableLoop() {
       moveArmTo(ArmPresets[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // two detection cycles should suffice
-      if (millis() - sensortimer >= (DETECTIONDURATION)) {
+      if (millis() - sensortimer >= (detectionDuration)) {
         nextState = PLAY;
         moveArmTo(desiredPosition);
         changeState(MOVE); 
