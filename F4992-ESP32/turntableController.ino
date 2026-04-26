@@ -99,16 +99,16 @@ const int bStop =        HIGH;
 const int bStart =        LOW;
 
 //purposely match arm position and speed
-enum DetectedSize               {NODISC, DISC30, DISC17};
-const char* sizename[] =        {"NODISC", "30cm", "17cm"};
-const char* recordStyles[] =    { recordNodiscStyle, record33style, record45style };
-DetectedSize DiscSize =         NODISC;
-DetectedSize previousDiscSize = NODISC;
-DetectedSize printedDiscSize =  NODISC;
-enum ArmPositions               {HOME, START30, START17, END};
-const uint16_t Steps[] =        {0,    215,     1050,    1500}; //TODO expose these values to ui. these are dependant on vr1 vr2 & pulse circuit
-//replace with counter
-uint16_t  desiredPosition =     Steps[HOME];
+enum DetectedSize                 {NODISC, DISC30, DISC17};
+const char* sizename[] =          {"NODISC", "30cm", "17cm"};
+const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
+DetectedSize DiscSize =           NODISC;
+DetectedSize previousDiscSize =   NODISC;
+DetectedSize printedDiscSize =    NODISC;
+enum ArmPositions                 {HOME, START30, START17, END};
+const uint16_t PresetDefaults[] = {0,    1600,    13000,   19000}; //default values
+uint16_t ArmPresets[] =           {0,    1600,    13000,   19000}; //used value as overwritten by preferences
+uint16_t  desiredPosition =       ArmPresets[HOME];
 
 enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
 const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Moving",  "Detecting", "Playing"};
@@ -302,18 +302,33 @@ void LD(int ledNumber, bool illuminate) {
   digitalWrite(ledpins[ledNumber], illuminate? HIGH : LOW);
 }
 
+//==================== UI exposition of otherwise constants ===================
+void readArmPresetValues() {
+  setArmPresetValues (PresetDefaults[HOME], 
+                      ttConfig.getUShort("StepsValueFor30", PresetDefaults[START30]),
+                      ttConfig.getUShort("StepsValueFor17", PresetDefaults[START17]),
+                      ttConfig.getUShort("StepsValueForEnd", PresetDefaults[END]));
+}
+
+void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
+  ArmPresets[HOME] = valueForHome;
+  ArmPresets[START30] = valueFor30;
+  ArmPresets[START17] = valueFor17;
+  ArmPresets[END] = valueForEnd;
+}
+
 //============================ state machine logic ============================
 
 bool isHome() {
-  return armPosition() == Steps[HOME];
+  return armPosition() == ArmPresets[HOME];
 }
 
 bool isOverPlatter() {
-  return armPosition() >= Steps[START30];
+  return armPosition() >= ArmPresets[START30];
 }
 
 bool isAtEndPosition() {
-  return armPosition() >= Steps[END];
+  return armPosition() >= ArmPresets[END];
 }
 
 void changeState(TurntableState newState) {
@@ -446,7 +461,7 @@ bool reachedPosition() {
 }
 
 bool reachedEndPosition() {
-  return armPosition() >= Steps[END];
+  return armPosition() >= ArmPresets[END];
 }
 
 void startDD() {
@@ -482,6 +497,8 @@ void turntableSetup() {
   turntableCompuselectorSetup();
 
   turntableDcmSetup();
+
+  readArmPresetValues();
   changeState(INITIAL);
   turntableDdSetup();
   setAutoDDspeed();
@@ -649,21 +666,21 @@ void requestGoEnd() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request GoEND");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(Steps[END]);
+  requestMove(ArmPresets[END]);
 }
 
 void requestGo30() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go30");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(Steps[START30]);
+  requestMove(ArmPresets[START30]);
 }
 
 void requestGo17() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go17");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(Steps[START17]);
+  requestMove(ArmPresets[START17]);
 }
 
 void requestGoStill() {
@@ -681,7 +698,7 @@ void requestUpDown() {
 }
 
 void requestMoveIn(uint16_t  delta) {
-  if (armPosition() > Steps[END] - delta) return; //no rollover
+  if (armPosition() > ArmPresets[END] - delta) return; //no rollover
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
   if( !isAtEndPosition() && armLifter() == armUp) requestMove(armPosition() + delta);
 }
@@ -716,6 +733,11 @@ void requestRepeat() {
 void requestInvert(bool invertRequested) {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
   softSpeedInverter = invertRequested;
+}
+
+void requestInitBypass() {
+  initializationCompleted = true;
+  changeState(IDLE);
 }
 
 void changeEspuiPanelColor(uint16_t id, ControlColor newColor) {
@@ -851,7 +873,7 @@ void turntableLoop() {
       break;
     case GOHOME:
       nextState = IDLE;
-      desiredPosition = Steps[HOME];
+      desiredPosition = ArmPresets[HOME];
       moveArmOut();
       if (reachedHome()) changeState(nextState);
       break;
@@ -864,8 +886,8 @@ void turntableLoop() {
       startDD();
       setAutoDDspeed();
       nextState = DETECT;
-      desiredPosition = Steps[DiscSize];
-      moveArmTo(Steps[DISC30]); // begin arm movement to larger disc
+      desiredPosition = ArmPresets[DiscSize];
+      moveArmTo(ArmPresets[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // two detection cycles should suffice
       if (millis() - sensortimer >= (DETECTIONDURATION)) {
@@ -879,10 +901,10 @@ void turntableLoop() {
       setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
       
-      else if (armPosition() >= Steps[END]) {
+      else if (reachedEndPosition()) {
         if (repeat) {
           nextState = PLAY;
-          desiredPosition = Steps[DiscSize];
+          desiredPosition = ArmPresets[DiscSize];
           repeat = false; //no infinite repeat
           changeState(MOVE); 
         }

@@ -1,22 +1,17 @@
 //WiFi================================================================================
 void wifi_init() {
-  stored_ssid = preferences.getString("ssid", "SSID");
-  stored_pass = preferences.getString("pass", "PASSWORD");
-  stored_mqtt_server = preferences.getString("mqtt_server", "192.168.0.10");
-  stored_mqtt_user = preferences.getString("mqtt_user", "");
-  stored_mqtt_pass = preferences.getString("mqtt_pass", "");
-  stored_mqtt_topic_in = preferences.getString("mqtt_topic_in", "demo/in");
-  stored_mqtt_topic_out = preferences.getString("mqtt_topic_out", "demo/out");
-  mqtt_enabled = preferences.getBool("mqtt_enabled", false);
+  stored_ssid = settings.getString("ssid", "SSID");
+  stored_pass = settings.getString("pass", "PASSWORD");
+  stored_mqtt_server = settings.getString("mqtt_server", "192.168.0.10");
+  stored_mqtt_user = settings.getString("mqtt_user", "");
+  stored_mqtt_pass = settings.getString("mqtt_pass", "");
+  stored_mqtt_topic_in = settings.getString("mqtt_topic_in", "demo/in");
+  stored_mqtt_topic_out = settings.getString("mqtt_topic_out", "demo/out");
+  mqtt_enabled = settings.getBool("mqtt_enabled", false);
 
   //devicename  
-  stored_devicename = preferences.getString("devicename", hostname); 
-  highVerbosity = preferences.getBool("highVerbosity", false);
-
-  //Custom preferences............................................
-  //Your code HERE !
-  //int demo_last_reading = preferences.getInt("last_reading", 0);
-  //Custom preferences............................................
+  stored_devicename = settings.getString("devicename", hostname); 
+  highVerbosity = settings.getBool("highVerbosity", false);
 
   webSerialPrintln("Connecting to : " + stored_ssid);
   WiFi.begin(stored_ssid.c_str(), stored_pass.c_str());

@@ -90,8 +90,8 @@ void SaveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
     stored_devicename = String(ESPUI.getControl(device_name_text)->value);
     highVerbosity = ESPUI.getControl(highVerbosity_switch)->value.toInt() ? true : false;
-    preferences.putString("devicename", stored_devicename);
-    preferences.putBool("highVerbosity", highVerbosity);
+    settings.putString("devicename", stored_devicename);
+    settings.putBool("highVerbosity", highVerbosity);
     webSerialPrintln(stored_devicename);
     webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
     webSerialPrintln("Saving configuration");
@@ -110,14 +110,14 @@ void SaveWifiDetailsCallback(Control *sender, int type) {
     stored_mqtt_pass = String(ESPUI.getControl(mqtt_pass_text)->value);
     mqtt_enabled = ESPUI.getControl(mqtt_enabled_switch)->value.toInt() ? true : false;
 
-    preferences.putString("ssid", stored_ssid);
-    preferences.putString("pass", stored_pass);
-    preferences.putString("mqtt_server", stored_mqtt_server);
-    preferences.putString("mqtt_user", stored_mqtt_user);
-    preferences.putString("mqtt_pass", stored_mqtt_pass);
-    preferences.putString("mqtt_topic_in", stored_mqtt_topic_in);
-    preferences.putString("mqtt_topic_out", stored_mqtt_topic_out);
-    preferences.putBool("mqtt_enabled", mqtt_enabled);
+    settings.putString("ssid", stored_ssid);
+    settings.putString("pass", stored_pass);
+    settings.putString("mqtt_server", stored_mqtt_server);
+    settings.putString("mqtt_user", stored_mqtt_user);
+    settings.putString("mqtt_pass", stored_mqtt_pass);
+    settings.putString("mqtt_topic_in", stored_mqtt_topic_in);
+    settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
+    settings.putBool("mqtt_enabled", mqtt_enabled);
 
     webSerialPrintln(stored_ssid);
     webSerialPrintln(stored_pass);
@@ -157,49 +157,49 @@ void SerialCommand(String input) {
 
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
-    preferences.putString("ssid", stored_ssid);
+    settings.putString("ssid", stored_ssid);
     webSerialPrintln("New SSID : " + stored_ssid);
   }
 
   else if (input.indexOf("password") > -1) {
     stored_pass = splitString(input, ' ', 1);
-    preferences.putString("pass", stored_pass);
+    settings.putString("pass", stored_pass);
     webSerialPrintln("New password : " + stored_pass);
   }
 
   else if (input.indexOf("mqtten") > -1) {
     mqtt_enabled = splitString(input, ' ', 1).toInt() ? true : false;
-    preferences.putBool("mqtt_enabled", mqtt_enabled);
+    settings.putBool("mqtt_enabled", mqtt_enabled);
     webSerialPrintln("MQTT enabled : " + String(mqtt_enabled));
   }
 
   else if (input.indexOf("mqttserver") > -1) {
     stored_mqtt_server = splitString(input, ' ', 1);
-    preferences.putString("mqtt_server", stored_mqtt_server);
+    settings.putString("mqtt_server", stored_mqtt_server);
     webSerialPrintln("New MQTT server : " + stored_mqtt_server);
   }
 
   else if (input.indexOf("mqttuser") > -1) {
     stored_mqtt_user = splitString(input, ' ', 1);
-    preferences.putString("mqtt_user", stored_mqtt_user);
+    settings.putString("mqtt_user", stored_mqtt_user);
     webSerialPrintln("New MQTT user : " + stored_mqtt_user);
   }
 
   else if (input.indexOf("mqttpass") > -1) {
     stored_mqtt_pass = splitString(input, ' ', 1);
-    preferences.putString("mqtt_pass", stored_mqtt_pass);
+    settings.putString("mqtt_pass", stored_mqtt_pass);
     webSerialPrintln("New MQTT pass : " + stored_mqtt_pass);
   }
 
   else if (input.indexOf("topicin") > -1) {
     stored_mqtt_topic_in = splitString(input, ' ', 1);
-    preferences.putString("mqtt_topic_in", stored_mqtt_topic_in);
+    settings.putString("mqtt_topic_in", stored_mqtt_topic_in);
     webSerialPrintln("New Topic IN : " + stored_mqtt_topic_in);
   }
 
   else if (input.indexOf("topicout") > -1) {
     stored_mqtt_topic_out = splitString(input, ' ', 1);
-    preferences.putString("mqtt_topic_out", stored_mqtt_topic_out);
+    settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
     webSerialPrintln("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
@@ -255,6 +255,10 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("repeat") > -1) {
     requestRepeat();
+  }
+
+  else if (input.indexOf("bypass") > -1 || input.indexOf("overrite") > -1 || input.indexOf("init") > -1) {
+    requestInitBypass();
   }
 
   else if (input.indexOf("info") > -1) {

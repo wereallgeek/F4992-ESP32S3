@@ -30,7 +30,8 @@ bool firstPassCompleted = false;
 #endif
 
 #include <Preferences.h>
-Preferences preferences;
+Preferences settings;
+Preferences ttConfig;
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #define DNS_PORT 53
@@ -100,11 +101,12 @@ void setup() {
 
   analogSetAttenuation(ADC_11db);
   
+  settings.begin("Settings");
+  ttConfig.begin("F4992");
   //Custom setup...............
   turntableSetup();
   simpleOTAsetup();
 
-  preferences.begin("Settings");
   wifi_init();
   espui_init();
 
