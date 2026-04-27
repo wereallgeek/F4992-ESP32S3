@@ -143,7 +143,7 @@ unsigned long armdowntime = 0;
 bool repeat = false;
 bool previousRepeat = false;
 bool previousDD33 = false;
-bool previousArmLifter = false;
+bool previousArmLifter = true;
 int32_t previousPosition = -1;
 
 pcnt_unit_handle_t counterUnit = NULL;
@@ -597,8 +597,7 @@ void turntableSensorReport() {
 }
 
 void turntableIrReport() {
-  webSerialPrintln("================REPORT=================");
-  webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
+  webSerialPrintln("========Infrared=sensor=report=========");
   turntableSensorReport();
   webSerialPrint("IR value:");
   webSerialPrint  ((String("  30-")) + value30cm());
@@ -608,7 +607,6 @@ void turntableIrReport() {
 
 // Turntable user interface ==============================================
 void turntableReport() {
-  webSerialPrintln("================REPORT=================");
   webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
   webSerialPrintln(String("armPosition:     ") + armPosition() + " (" + desiredPosition + ")");
@@ -629,7 +627,6 @@ void turntableReport() {
   turntableSensorReport();
 
   webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
-  webSerialPrintln("=======================================");
 }
 
 //for UI

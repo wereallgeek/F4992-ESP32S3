@@ -31,9 +31,6 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     webSerialPrintln("Hello World");
   }
 
-  //Custom action................................................
-  //Your code HERE !
-  //Custom action................................................
 }
 //MQTT CALLBACK===================================================
 

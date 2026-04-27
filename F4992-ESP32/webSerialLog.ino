@@ -2,7 +2,7 @@
 #include <deque>
 
 // Configuration 
-const int WS_MAX_LINES = 14;
+const int WS_MAX_LINES = 10;
 std::deque<String> webLog;
 
 SemaphoreHandle_t logMutex = xSemaphoreCreateMutex();
@@ -59,7 +59,7 @@ void webSerialPrintln(IPAddress ip) { wsprintln(ip.toString()); }
 bool webserialDirty() { return haschanged; }
 
 void wsMaintainWebLog() {
-  while (webLog.size() > WS_MAX_LINES) {
+  while (webLog.size() > (WS_MAX_LINES + 1)) { //+1 for last linefeed
     webLog.pop_front();
   }
 }
