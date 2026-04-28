@@ -64,6 +64,8 @@ bool softSpeedInverter = false;
 const char* espuiStatusStyle = " !important; width: 150px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
 const char* espuiNumberStyle = " !important; width: 75px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
 const char* espuiIconStyle = " !important; color: white !important; width: 41px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 2rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 20px !important;";
+const char* espuiLabelStyle = " !important; color: white !important; width: 60px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
+const char* espuiLongLabelStyle = " !important; color: white !important; width: 120px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
 
 const char* espuiIndicatorElementStyle = " !important; width: 15px !important; height: 15px !important; border-radius: 50% !important; display: inline-block !important; vertical-align: middle !important; margin: 5px !important; border: 1px solid #222 !important;";
 
@@ -89,7 +91,7 @@ const char* recordNodiscStyle =
 
 //ESPUI turntable GUI fields
 uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId;
-
+uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
 //ESPUI==================================================================================================================
 
 

@@ -78,6 +78,7 @@ void buttonInvertCallback(Control *sender, int type) {
 
 void verbosityCallback(Control *sender, int type) {
   highVerbosity = (type == S_ACTIVE);
+  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
 }
 //Turntable ESPUI callback========================
 

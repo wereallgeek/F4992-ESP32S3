@@ -332,7 +332,7 @@ int getMuteDuration() {
 }
 
 void readIrCycleDuration() {
-  setMuteDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
+  setIrCycleDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
 }
 
 void setIrCycleDuration(int duration) {
@@ -344,7 +344,7 @@ int getIrCycleDuration() {
 }
 
 void readIrTreshold() {
-  setMuteDuration(ttConfig.getUShort("irTreshold", DEFIRTRESHOLD));
+  setIrTreshold(ttConfig.getUShort("irTreshold", DEFIRTRESHOLD));
 }
 
 void setIrTreshold(int treshold) {
@@ -368,6 +368,13 @@ void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t val
   ArmPresets[START17] = valueFor17;
   ArmPresets[END] = valueForEnd;
 }
+
+uint16_t getArmPresetValue(int presetIndex) {
+  if (presetIndex < HOME) return 0;
+  if (presetIndex > END) return 0;
+  return ArmPresets[presetIndex];
+}
+
 
 void realTurntablePresetValues() {
   readArmPresetValues();
