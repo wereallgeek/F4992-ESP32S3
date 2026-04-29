@@ -1,7 +1,13 @@
 //ESPUI=====================================================================================================================
 void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
-  
+
+  //create tabs here to get urls with #1, #2, etc.  
+  auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
+  auto debugtab = ESPUI.addControl(Tab, "", "Debug");
+  auto configtab = ESPUI.addControl(Tab, "", "Configuration");
+  auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
+
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
   ledId = ESPUI.label(espuiMainpageStyle, Dark, "");
   ESPUI.setElementStyle(ledId, String("background-color: #2c3e50") + espuiIndElemStyle);
@@ -23,7 +29,6 @@ void espui_init() {
 
 
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
-  auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
   //status
   recordsizeLabelId = ESPUI.addControl(Label, "", "status", Dark, tonearmtab, textCallback);
   ESPUI.setElementStyle(recordsizeLabelId, record33style);
@@ -38,7 +43,6 @@ void espui_init() {
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
 
   //Console debug tab--------------------------------------------------------------------------------------------------------------
-  auto debugtab = ESPUI.addControl(Tab, "", "Debug");
   serialLabelId = ESPUI.addControl(Label, "Console", "last command", Dark, debugtab, textCallback);
   ESPUI.setElementStyle(serialLabelId, commandConsoleStyle);
   logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, textCallback);
@@ -51,7 +55,6 @@ void espui_init() {
   ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
   
   //Turntable configuration--------------------------------------------------------------------------------------------------------
-  auto configtab = ESPUI.addControl(Tab, "", "Configuration");
   auto durationLabel = ESPUI.addControl(Label, "Duration", "detection: ", None, configtab, textCallback);
   ESPUI.setElementStyle(durationLabel, espuiLongLabelStyle);  
   detectionDurationLabelId = ESPUI.addControl(Text, "", String(getDetectionDuration()), Dark, durationLabel, textCallback);
@@ -94,8 +97,6 @@ void espui_init() {
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, textCallback);
   
   //WiFi---------------------------------------------------------------------------------------------------------------------------
-  auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
-
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, textCallback);
   ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);
 
