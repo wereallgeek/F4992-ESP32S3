@@ -53,7 +53,9 @@ void espui_init() {
   ESPUI.setElementStyle(highVerboLabel, espuiSwtLabelStyle);  
   highVerbosity_switch = ESPUI.addControl(Switcher, "", String(highVerbosity), Dark, serialLabelId, verbosityCallback);
   ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
-  
+  auto firmwareversionLabel = ESPUI.addControl(Label, "", String("       FW ver ") + firmwareVersion(), None, serialLabelId, textCallback);
+  ESPUI.setElementStyle(firmwareversionLabel, espuiSwtLabelStyle);  
+
   //Turntable configuration--------------------------------------------------------------------------------------------------------
   auto durationLabel = ESPUI.addControl(Label, "Duration", "detection: ", None, configtab, textCallback);
   ESPUI.setElementStyle(durationLabel, espuiLongLabelStyle);  
@@ -102,11 +104,11 @@ void espui_init() {
   ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);
 
   auto wifiLabel = ESPUI.addControl(Label, "Wi-Fi setup", "SSID: ", None, wifitab, textCallback);
-  ESPUI.setElementStyle(wifiLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(wifiLabel, espuiTextLabelStyle);  
   wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Dark, wifiLabel, textCallback);
   ESPUI.setElementStyle(wifi_ssid_text, espuiTextSetupStyle);
   auto passLabel = ESPUI.addControl(Label, "", "password: ", None, wifiLabel, textCallback);
-  ESPUI.setElementStyle(passLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(passLabel, espuiTextLabelStyle);  
   wifi_pass_text = ESPUI.addControl(Text, "Password", stored_pass, Dark, wifiLabel, textCallback);
   ESPUI.setElementStyle(wifi_pass_text, espuiTextSetupStyle);
   ESPUI.setInputType(wifi_pass_text, "password");
@@ -114,15 +116,15 @@ void espui_init() {
   ESPUI.addControl(Max, "", "64", None, wifi_pass_text);
 
   auto mqttLabel = ESPUI.addControl(Label, "MQTT setup", "server IP: ", None, wifitab, textCallback);
-  ESPUI.setElementStyle(mqttLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(mqttLabel, espuiTextLabelStyle);  
   mqtt_server_text = ESPUI.addControl(Text, "MQTT server", stored_mqtt_server, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_server_text, espuiTextSetupStyle);
   auto mqttuserLabel = ESPUI.addControl(Label, "", "User: ", None, mqttLabel, textCallback);
-  ESPUI.setElementStyle(mqttuserLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(mqttuserLabel, espuiTextLabelStyle);  
   mqtt_user_text = ESPUI.addControl(Text, "MQTT user", stored_mqtt_user, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_user_text, espuiTextSetupStyle);
   auto mqttpasswordLabel = ESPUI.addControl(Label, "", "Password: ", None, mqttLabel, textCallback);
-  ESPUI.setElementStyle(mqttpasswordLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(mqttpasswordLabel, espuiTextLabelStyle);  
   mqtt_pass_text = ESPUI.addControl(Text, "MQTT password", stored_mqtt_pass, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_pass_text, espuiTextSetupStyle);
   ESPUI.setInputType(mqtt_pass_text, "password");
@@ -132,11 +134,11 @@ void espui_init() {
   ESPUI.setElementStyle(mqtt_enabled_switch, mqtt_enabled ? swStyleON : swStyleOFF);
 
   auto mqttTopicInLabel = ESPUI.addControl(Label, "MQTT Topics", "IN: ", None, wifitab, textCallback);
-  ESPUI.setElementStyle(mqttTopicInLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(mqttTopicInLabel, espuiTextLabelStyle);  
   mqtt_topic_in_text = ESPUI.addControl(Text, "MQTT topic IN", stored_mqtt_topic_in, Dark, mqttTopicInLabel, textCallback);
   ESPUI.setElementStyle(mqtt_topic_in_text, espuiTextSetupStyle);
   auto mqttTopicOutLabel = ESPUI.addControl(Label, "", "OUT: ", None, mqttTopicInLabel, textCallback);
-  ESPUI.setElementStyle(mqttTopicOutLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(mqttTopicOutLabel, espuiTextLabelStyle);  
   mqtt_topic_out_text = ESPUI.addControl(Text, "MQTT topic OUT", stored_mqtt_topic_out, Dark, mqttTopicInLabel, textCallback);
   ESPUI.setElementStyle(mqtt_topic_out_text, espuiTextSetupStyle);
 
