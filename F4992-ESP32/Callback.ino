@@ -140,15 +140,17 @@ void saveWifiDetailsCallback(Control *sender, int type) {
     settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
     settings.putBool("mqtt_enabled", mqtt_enabled);
 
-    webSerialPrintln(stored_devicename);
-    webSerialPrintln(stored_ssid);
-    webSerialPrintln(stored_pass);
-    webSerialPrintln(stored_mqtt_server);
-    webSerialPrintln(stored_mqtt_user);
-    webSerialPrintln(stored_mqtt_pass);
-    webSerialPrintln(stored_mqtt_topic_in);
-    webSerialPrintln(stored_mqtt_topic_out);
-    webSerialPrintln(mqtt_enabled);
+    if(highVerbosity) {
+      webSerialPrintln(stored_devicename);
+      webSerialPrintln(stored_ssid);
+      webSerialPrintln(stored_pass);
+      webSerialPrintln(stored_mqtt_server);
+      webSerialPrintln(stored_mqtt_user);
+      webSerialPrintln(stored_mqtt_pass);
+      webSerialPrintln(stored_mqtt_topic_in);
+      webSerialPrintln(stored_mqtt_topic_out);
+      webSerialPrintln(mqtt_enabled);
+    }
 
     webSerialPrintln("Saving settings");
   }

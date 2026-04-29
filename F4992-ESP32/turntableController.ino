@@ -608,11 +608,13 @@ void clearRepeat() {
 
 //Handling config changes
 void outputTurntableDetailsValues() {
+  if(highVerbosity) {
     webSerialPrintln(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
     webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
     webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
     webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
     webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
+  }
 }
 
 void resyncTurntableDetailsToScreen() {
