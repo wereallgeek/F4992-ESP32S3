@@ -308,8 +308,8 @@ void LD(int ledNumber, bool illuminate) {
 }
 
 //======================== UI exposition of constants =======================
-void readDetectionDuration() {
-  setDetectionDuration(ttConfig.getUShort("detectionDuration", DEFDETECTIONDURATION));
+void readDetectionDurationFromStorage() {
+  setDetectionDuration(ttConfig.getUShort("detectDuration", DEFDETECTIONDURATION));
 }
 
 void setDetectionDuration(int duration) {
@@ -320,7 +320,7 @@ int getDetectionDuration(){
   return detectionDuration;
 }
 
-void readMuteDuration(){
+void readMuteDurationFromStorage(){
   setMuteDuration(ttConfig.getUShort("muteDuration", DEFMUTEDURATION));
 }
 
@@ -332,7 +332,7 @@ int getMuteDuration() {
   return muteDuration;
 }
 
-void readIrCycleDuration() {
+void readIrCycleDurationFromStorage() {
   setIrCycleDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
 }
 
@@ -344,7 +344,7 @@ int getIrCycleDuration() {
   return irCycleDuration;
 }
 
-void readIrTreshold() {
+void readIrTresholdFromStorage() {
   setIrTreshold(ttConfig.getUShort("irTreshold", DEFIRTRESHOLD));
 }
 
@@ -356,11 +356,11 @@ int getIrTreshold() {
   return irTreshold;
 }
 
-void readArmPresetValues() {
+void readArmPresetValuesFromStorage() {
   setArmPresetValues (PresetDefaults[HOME], 
-                      ttConfig.getUShort("StepsValueFor30", PresetDefaults[START30]),
-                      ttConfig.getUShort("StepsValueFor17", PresetDefaults[START17]),
-                      ttConfig.getUShort("StepsValueForEnd", PresetDefaults[END]));
+                      ttConfig.getUShort("Steps30", PresetDefaults[START30]),
+                      ttConfig.getUShort("Steps17", PresetDefaults[START17]),
+                      ttConfig.getUShort("StepsEnd", PresetDefaults[END]));
 }
 
 void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
@@ -377,12 +377,12 @@ uint16_t getArmPresetValue(int presetIndex) {
 }
 
 
-void realTurntablePresetValues() {
-  readArmPresetValues();
-  readDetectionDuration();
-  readMuteDuration();
-  readIrCycleDuration();
-  readIrTreshold();
+void readTurntablePresetValuesFromStorage() {
+  readArmPresetValuesFromStorage();
+  readDetectionDurationFromStorage();
+  readMuteDurationFromStorage();
+  readIrCycleDurationFromStorage();
+  readIrTresholdFromStorage();
 }
 
 //============================ state machine logic ============================
@@ -575,7 +575,7 @@ void turntableSetup() {
 
   turntableDcmSetup();
 
-  realTurntablePresetValues();
+  readTurntablePresetValuesFromStorage();
   changeState(INITIAL);
   turntableDdSetup();
   setAutoDDspeed();
@@ -604,6 +604,45 @@ void startAutoOperation() {
 void clearRepeat() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
   repeat = false;
+}
+
+//Handling config changes
+void outputTurntableDetailsValues() {
+    webSerialPrintln(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
+    webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
+    webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
+    webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
+    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
+}
+
+void resyncTurntableDetailsToScreen() {
+  ESPUI.updateControlValue(detectionDurationLabelId, String(getDetectionDuration()));
+  ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
+  ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
+  ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
+  ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(START30)));
+  ESPUI.updateControlValue(armPresetValue17LabelId, String(getArmPresetValue(START17)));
+  ESPUI.updateControlValue(armPresetValueEndLabelId, String(getArmPresetValue(END)));
+}
+
+void applyTurntableDetailsToMemory() {
+  setDetectionDuration(ESPUI.getControl(detectionDurationLabelId)->value.toInt());
+  setMuteDuration(ESPUI.getControl(muteDurationLabelId)->value.toInt());
+  setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
+  setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
+  setArmPresetValues(0, ESPUI.getControl(armPresetValue30LabelId)->value.toInt(), 
+                        ESPUI.getControl(armPresetValue17LabelId)->value.toInt(),
+                        ESPUI.getControl(armPresetValueEndLabelId)->value.toInt());
+}
+
+void saveTurntableDetailsToConfig() {
+    ttConfig.putUShort("detectDuration", (uint16_t)getDetectionDuration());
+    ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
+    ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
+    ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
+    ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(START30));
+    ttConfig.putUShort("Steps17", (uint16_t)getArmPresetValue(START17));
+    ttConfig.putUShort("StepsEnd", (uint16_t)getArmPresetValue(END));
 }
 
 //Tonearm control=============================

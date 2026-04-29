@@ -85,17 +85,40 @@ void verbosityCallback(Control *sender, int type) {
   switchCallback(sender, type);
 }
 //Turntable ESPUI callback========================
-
-
 //config settings callback
-void SaveTurntableDetailsCallback(Control *sender, int type) {
+void saveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {    
-    webSerialPrintln("Saving configuration");
+    webSerialPrintln("Saving turntable configuration");
+    applyTurntableDetailsToMemory();
+    saveTurntableDetailsToConfig();
+    readTurntablePresetValuesFromStorage();
+    outputTurntableDetailsValues();
+    resyncTurntableDetailsToScreen();
+  }
+}
+
+void applyTurntableDetailsCallback(Control *sender, int type) {
+  if (type == B_UP) {    
+    webSerialPrintln("Applying turntable configuration");
+    applyTurntableDetailsToMemory();
+    outputTurntableDetailsValues();
+    resyncTurntableDetailsToScreen();
+  }
+}
+
+void resetTurntableDetailsCallback(Control *sender, int type) {
+  if (type == B_UP) {
+    webSerialPrintln("Reset turntable to default");
+    ttConfig.clear();
+    readTurntablePresetValuesFromStorage();
+    saveTurntableDetailsToConfig();
+    outputTurntableDetailsValues();
+    resyncTurntableDetailsToScreen();
   }
 }
 
 //WiFi settings callback=====================================================
-void SaveWifiDetailsCallback(Control *sender, int type) {
+void saveWifiDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
     stored_devicename = String(ESPUI.getControl(device_name_text)->value);
     stored_ssid = ESPUI.getControl(wifi_ssid_text)->value;

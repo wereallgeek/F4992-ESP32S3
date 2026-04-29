@@ -93,9 +93,10 @@ void espui_init() {
   ESPUI.setElementStyle(armPresetValueEndLabelId, espuiTelStyle);
   ESPUI.setInputType(armPresetValueEndLabelId, "tel");
   
-  auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
-  auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, textCallback);
-  
+  auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
+  auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
+  auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
+
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, textCallback);
   ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);
@@ -139,7 +140,7 @@ void espui_init() {
   mqtt_topic_out_text = ESPUI.addControl(Text, "MQTT topic OUT", stored_mqtt_topic_out, Dark, mqttTopicInLabel, textCallback);
   ESPUI.setElementStyle(mqtt_topic_out_text, espuiTextSetupStyle);
 
-  auto wifisave = ESPUI.addControl(Button, "Save", "Save", Peterriver, wifitab, SaveWifiDetailsCallback);
+  auto wifisave = ESPUI.addControl(Button, "Save", "Save", Peterriver, wifitab, saveWifiDetailsCallback);
   auto espreset = ESPUI.addControl(Button, "", "Reboot ESP", None, wifisave, ESPReset);
 
   ESPUI.setEnabled(wifi_ssid_text, true);
