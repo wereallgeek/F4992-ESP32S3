@@ -149,6 +149,10 @@ void commandCallback(Control* sender, int type) {
 }
 //ESPUI command===============================
 
+void refreshVerbosity() {
+  ESPUI.updateControlValue(highVerbosity_switch, highVerbosity ? "1" : "0");
+  ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
+}
 
 //Serial setup===============================================================
 void SerialCommand(String input) {
@@ -218,10 +222,12 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("quiet") > -1) {
     highVerbosity = false;
+    refreshVerbosity();
   }
 
   else if (input.indexOf("verbose") > -1) {
     highVerbosity = true;
+    refreshVerbosity();
   }
 
   else if (input.indexOf("gohome") > -1) {
@@ -272,6 +278,19 @@ void SerialCommand(String input) {
     webSerialPrintln("Topic IN " + stored_mqtt_topic_in);
     webSerialPrintln("Topic OUT " + stored_mqtt_topic_out);
     webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
+  }
+
+  else if (input.indexOf("help") > -1) {
+    webSerialPrintln("-ssid, password + argument = WIFI");
+    webSerialPrintln("-mqtten, mqttserver, mqttuser, mqttpass + argument = MQTT");
+    webSerialPrintln("-topicin, topicout + argument = MQTT TOPIC");
+    webSerialPrintln("-info, report, sensor = various reports");
+    webSerialPrintln("-verbose, quiet = debug verbosity");
+    webSerialPrintln("-go+ home/end/17/30/still move the arm");
+    webSerialPrintln("-bypass/overrite/init = skip initialization and go IDLE");
+    webSerialPrintln("-start/stop/play = start/stop button");
+    webSerialPrintln("-up/down/pause = up/down button");
+    webSerialPrintln("-repeat = repeat button  --  restart = reboot the device");
   }
 }
 //Serial setup===================================================================

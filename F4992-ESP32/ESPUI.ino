@@ -5,7 +5,7 @@ void espui_init() {
   //create tabs here to get urls with #1, #2, etc.  
   auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
   auto debugtab = ESPUI.addControl(Tab, "", "Debug");
-  auto configtab = ESPUI.addControl(Tab, "", "Configuration");
+  auto configtab = ESPUI.addControl(Tab, "", "Config");
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
 
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
