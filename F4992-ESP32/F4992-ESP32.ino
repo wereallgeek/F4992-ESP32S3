@@ -15,7 +15,7 @@ uint16_t logLabelId;
 //Turntable config========
 uint16_t device_name_text, highVerbosity_switch;
 String stored_devicename;
-bool highVerbosity;
+bool highVerbosity = false;
 bool firstPassCompleted = false;
 //Turntable config========
 

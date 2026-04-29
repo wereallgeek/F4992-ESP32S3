@@ -11,8 +11,7 @@ void wifi_init() {
 
   //devicename  
   stored_devicename = settings.getString("devicename", hostname); 
-  highVerbosity = settings.getBool("highVerbosity", false);
-
+  
   webSerialPrintln("Connecting to : " + stored_ssid);
   WiFi.begin(stored_ssid.c_str(), stored_pass.c_str());
   uint8_t timeout = 30;

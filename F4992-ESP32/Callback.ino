@@ -89,10 +89,7 @@ void verbosityCallback(Control *sender, int type) {
 
 //config settings callback
 void SaveTurntableDetailsCallback(Control *sender, int type) {
-  if (type == B_UP) {
-    highVerbosity = ESPUI.getControl(highVerbosity_switch)->value.toInt() ? true : false;
-    settings.putBool("highVerbosity", highVerbosity);
-    webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
+  if (type == B_UP) {    
     webSerialPrintln("Saving configuration");
   }
 }
