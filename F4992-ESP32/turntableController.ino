@@ -108,7 +108,7 @@ const char* sizename[] =          {"NODISC", "30cm", "17cm"};
 const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
 DetectedSize DiscSize =           NODISC;
 DetectedSize previousDiscSize =   NODISC;
-DetectedSize printedDiscSize =    NODISC;
+DetectedSize printedDiscSize =    DISC30;
 enum ArmPositions                 {HOME, START30, START17, END};
 const uint16_t PresetDefaults[] = {0,    1600,    13000,   19000}; //default values
 uint16_t ArmPresets[] =           {0,    1600,    13000,   19000}; //used value as overwritten by preferences
@@ -238,6 +238,7 @@ void turntablePeripheralUpdate() {
   if (sense17()) DetectionTime[DISC17] = millis();
   if (isArmDown()) armdowntime = millis(); //unmute timer.
   if (isTurning() && isState(DETECT)) computeAutoSpeed();
+  else if (isHome()) resetDiskSize();
   //process Mute
   setMute(armdowntime > millis() - muteDuration);
   compuselect();
@@ -435,6 +436,16 @@ void resetArmposition() {
   if (isMovingOut()) changeState(IDLE);
 }
 
+void verboseDiskChange() {
+  if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
+  previousDiscSize = DiscSize;
+}
+
+void resetDiskSize() {
+  DiscSize = NODISC;
+  verboseDiskChange();
+}
+
 void computeAutoSpeed() {
   bool recent30cmSensed = (DetectionTime[DISC30] > millis() - irCycleDuration);
   bool recent17cmSensed = (DetectionTime[DISC17] > millis() - irCycleDuration);
@@ -442,8 +453,7 @@ void computeAutoSpeed() {
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
 
-  if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
-  previousDiscSize = DiscSize;
+  verboseDiskChange();
   setAutoDDspeed();
 }
 
@@ -820,7 +830,7 @@ void changeEspuiLabelColor(uint16_t id, const char* colorHex) {
 }
 
 void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
-    String circleStyle = "background-color: " + String(colorHex) + espuiIndicatorElementStyle;
+    String circleStyle = "background-color: " + String(colorHex) + espuiIndElemStyle;
 
     ESPUI.setElementStyle(id, circleStyle.c_str());
     ESPUI.updateControl(id);

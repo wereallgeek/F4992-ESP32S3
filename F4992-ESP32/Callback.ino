@@ -71,14 +71,18 @@ void buttonRepeatCallback(Control *sender, int type) {
   }
 }
 
+void switchCallback(Control *sender, int type) {
+  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
+}
+
 void buttonInvertCallback(Control *sender, int type) {
   requestInvert(type == S_ACTIVE);
-  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
+  switchCallback(sender, type);
 }
 
 void verbosityCallback(Control *sender, int type) {
   highVerbosity = (type == S_ACTIVE);
-  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
+  switchCallback(sender, type);
 }
 //Turntable ESPUI callback========================
 
@@ -86,11 +90,8 @@ void verbosityCallback(Control *sender, int type) {
 //config settings callback
 void SaveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
-    stored_devicename = String(ESPUI.getControl(device_name_text)->value);
     highVerbosity = ESPUI.getControl(highVerbosity_switch)->value.toInt() ? true : false;
-    settings.putString("devicename", stored_devicename);
     settings.putBool("highVerbosity", highVerbosity);
-    webSerialPrintln(stored_devicename);
     webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
     webSerialPrintln("Saving configuration");
   }
@@ -99,6 +100,7 @@ void SaveTurntableDetailsCallback(Control *sender, int type) {
 //WiFi settings callback=====================================================
 void SaveWifiDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
+    stored_devicename = String(ESPUI.getControl(device_name_text)->value);
     stored_ssid = ESPUI.getControl(wifi_ssid_text)->value;
     stored_pass = ESPUI.getControl(wifi_pass_text)->value;
     stored_mqtt_topic_in = ESPUI.getControl(mqtt_topic_in_text)->value;
@@ -108,6 +110,7 @@ void SaveWifiDetailsCallback(Control *sender, int type) {
     stored_mqtt_pass = String(ESPUI.getControl(mqtt_pass_text)->value);
     mqtt_enabled = ESPUI.getControl(mqtt_enabled_switch)->value.toInt() ? true : false;
 
+    settings.putString("devicename", stored_devicename);
     settings.putString("ssid", stored_ssid);
     settings.putString("pass", stored_pass);
     settings.putString("mqtt_server", stored_mqtt_server);
@@ -117,6 +120,7 @@ void SaveWifiDetailsCallback(Control *sender, int type) {
     settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
     settings.putBool("mqtt_enabled", mqtt_enabled);
 
+    webSerialPrintln(stored_devicename);
     webSerialPrintln(stored_ssid);
     webSerialPrintln(stored_pass);
     webSerialPrintln(stored_mqtt_server);

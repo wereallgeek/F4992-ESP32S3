@@ -61,31 +61,30 @@ bool mqtt_enabled = false;
 
 bool softSpeedInverter = false;
 
-const char* espuiStatusStyle = " !important; width: 150px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
-const char* espuiNumberStyle = " !important; width: 75px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
-const char* espuiIconStyle = " !important; color: white !important; width: 41px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 2rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 20px !important;";
-const char* espuiLabelStyle = " !important; color: white !important; width: 60px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
-const char* espuiLongLabelStyle = " !important; color: white !important; width: 120px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
-
-const char* espuiIndicatorElementStyle = " !important; width: 15px !important; height: 15px !important; border-radius: 50% !important; display: inline-block !important; vertical-align: middle !important; margin: 5px !important; border: 1px solid #222 !important;";
-
+const char* espuiMainpageStyle =  "<style>body{background-color:black;color:white!important;}input{background-color:#333!important;color:white!important;border:1px solid #444!important;border-radius:4px!important;outline:none!important;box-sizing:border-box!important;padding:0 5px!important;}input:focus{background-color:#444!important;}</style>Controls";
+const char* espuiStatusStyle =    " !important; width: 150px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
+const char* espuiNumberStyle =    " !important; width: 75px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: top !important; margin-top: 20px !important;";
+const char* espuiIconStyle =      " color: white !important; width: 41px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 2rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 20px !important;";
+const char* espuiLabelStyle =     "color:white!important;width:60px!important;height:32px!important;display:inline-block!important;text-align:right!important;vertical-align:middle!important;padding-right:10px!important;margin-top:20px!important;line-height:32px!important;box-sizing:border-box!important;background-color:transparent!important;border:none!important;box-shadow:none!important;";
+const char* espuiLongLabelStyle = "color:white!important;width:45%!important;height:32px!important;display:inline-block!important;text-align:right!important;vertical-align:middle!important;padding-right:10px!important;margin-top:20px!important;line-height:32px!important;box-sizing:border-box!important;background-color:transparent!important;border:none!important;box-shadow:none!important;";
+const char* espuiSwtLabelStyle =  "color: white !important; width: 45% !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
+const char* espuiIndElemStyle =   " !important; width: 15px !important; height: 15px !important; border-radius: 50% !important; display: inline-block !important; vertical-align: middle !important; margin: 5px !important; border: 1px solid #222 !important;";
 const char* btnStyle =            "background-color: #000 !important; color: #fff !important; font-size: 10px !important; min-width: 55px !important; height: 25px !important; padding: 0 5px !important; line-height: 25px !important; border: 1px solid #444 !important; display: inline-block !important; vertical-align: middle !important; text-align: center !important;";
 const char* swStyleOFF =          "width: 40px !important; height: 22px !important; background-color: #000 !important; border: 1px solid #444 !important; border-radius: 11px !important; display: inline-block !important; vertical-align: top !important; transform: scale(0.8) !important; margin-top: -3px !important; margin-left: -5px !important; margin-right: -5px !important;";
 const char* swStyleON  =          "width: 40px !important; height: 22px !important; background-color: #2ECC71 !important; border: 1px solid #27AE60 !important; border-radius: 11px !important; display: inline-block !important; vertical-align: top !important; transform: scale(0.8) !important; margin-top: -3px !important; margin-left: -5px !important; margin-right: -5px !important;";
 const char* commandConsoleStyle = "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 10px;";
 const char* commandInputStyle =   "color: #000000 !important; background-color: #ffffff !important; text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px; border: 1px solid #444 !important;";
+const char* espuiTelStyle =       "width:75px!important;height:32px!important;display:inline-block!important;vertical-align:top!important;margin-top:20px!important;text-align:center!important;box-sizing:border-box!important;";
+const char* espuiTextSetupStyle = "width:50%!important;height:32px!important;display:inline-block!important;vertical-align:middle!important;margin-top:20px!important;box-sizing:border-box!important;padding-left:10px!important;";
 
-const char* record33style = 
-    "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,transparent 8%),radial-gradient(circle,#555 18%,#111 19%,#111 100%);border:4px double #222;"
-    "box-shadow:inset 0 0 10px #000,0 4px 10px rgba(0,0,0,0.5);color:rgba(255,255,255,0.8);line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
+const char* record33style =       "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,transparent 8%),radial-gradient(circle,#555 18%,#111 19%,#111 100%);border:4px double #222;"
+                                  "box-shadow:inset 0 0 10px #000,0 4px 10px rgba(0,0,0,0.5);color:rgba(255,255,255,0.8);line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
 
-const char* record45style = 
-    "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 25%,transparent 26%),radial-gradient(circle,#555 45%,#111 46%,#111 100%);border:4px solid #222;"
-    "box-shadow:inset 0 0 8px #000,0 3px 8px rgba(0,0,0,0.5);color:rgba(255,255,255,0.8);line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
+const char* record45style =       "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 25%,transparent 26%),radial-gradient(circle,#555 45%,#111 46%,#111 100%);border:4px solid #222;"
+                                  "box-shadow:inset 0 0 8px #000,0 3px 8px rgba(0,0,0,0.5);color:rgba(255,255,255,0.8);line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
 
-const char* recordNodiscStyle = 
-    "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 4%,transparent 5%),radial-gradient(circle,#777 5%,#333 6%,#333 100%);border:2px solid #444;"
-    "box-shadow:inset 0 0 15px #000;color:transparent;line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
+const char* recordNodiscStyle =   "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 4%,transparent 5%),radial-gradient(circle,#777 5%,#333 6%,#333 100%);border:2px solid #444;"
+                                  "box-shadow:inset 0 0 15px #000;color:transparent;line-height:80px;text-align:center;font-weight:bold;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px !important;";
 
 
 
@@ -116,7 +115,8 @@ void setup() {
 
   firstPassCompleted = true;
   if(highVerbosity) webSerialPrint(String(millis()) + " - ");
-  webSerialPrintln(String("[") + stored_devicename + "] awoken w/ FW ver " + firmwareVersion());
+  webSerialPrintln(String("FW ver ") + firmwareVersion());
+  webSerialPrintln(String("[") + stored_devicename + "] awoken");
 }
 //SETUP=========================
 

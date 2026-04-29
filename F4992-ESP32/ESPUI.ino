@@ -3,8 +3,8 @@ void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
   
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
-  ledId = ESPUI.label("<style>body { background-color: black; } .card { border-radius: 20px !important; }</style>Controls", Dark, "");
-  ESPUI.setElementStyle(ledId, String("background-color: #2c3e50") + espuiIndicatorElementStyle);
+  ledId = ESPUI.label(espuiMainpageStyle, Dark, "");
+  ESPUI.setElementStyle(ledId, String("background-color: #2c3e50") + espuiIndElemStyle);
   auto in_button = ESPUI.addControl(Button, "", "< Left ", None, ledId, buttonInCallback);
   ESPUI.setElementStyle(in_button, btnStyle);
   auto out_button = ESPUI.addControl(Button, "", "Right >", None, ledId, buttonOutCallback);
@@ -16,7 +16,7 @@ void espui_init() {
   auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, ledId, buttonRepeatCallback);
   ESPUI.setElementStyle(rpt_button, btnStyle);
   repeatId = ESPUI.addControl(Label, "", "", Dark, ledId, textCallback);
-  ESPUI.setElementStyle(repeatId, String("background-color: #2c3e50") + espuiIndicatorElementStyle);
+  ESPUI.setElementStyle(repeatId, String("background-color: #2c3e50") + espuiIndElemStyle);
   auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
   ESPUI.setElementStyle(spd_switch, swStyleOFF);
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
@@ -43,10 +43,10 @@ void espui_init() {
   ESPUI.setElementStyle(serialLabelId, commandConsoleStyle);
   logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, textCallback);
   ESPUI.setElementStyle(logLabelId, commandConsoleStyle);
-  auto cmd_input = ESPUI.addControl(Text, "Commande:", "", Dark, serialLabelId, commandCallback);
+  auto cmd_input = ESPUI.addControl(Text, "Command:", "", Dark, serialLabelId, commandCallback);
   ESPUI.setElementStyle(cmd_input, commandInputStyle);
   auto highVerboLabel = ESPUI.addControl(Label, "", "High Verbosity", None, serialLabelId, textCallback);
-  ESPUI.setElementStyle(highVerboLabel, espuiLongLabelStyle);  
+  ESPUI.setElementStyle(highVerboLabel, espuiSwtLabelStyle);  
   highVerbosity_switch = ESPUI.addControl(Switcher, "", String(highVerbosity), Dark, serialLabelId, verbosityCallback);
   ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
   
@@ -54,54 +54,89 @@ void espui_init() {
   auto configtab = ESPUI.addControl(Tab, "", "Configuration");
   auto durationLabel = ESPUI.addControl(Label, "Duration", "detection: ", None, configtab, textCallback);
   ESPUI.setElementStyle(durationLabel, espuiLongLabelStyle);  
-  detectionDurationLabelId = ESPUI.addControl(Number, "", String(getDetectionDuration()), Dark, durationLabel, textCallback);
-  ESPUI.setElementStyle(detectionDurationLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
-  auto muteLabel = ESPUI.addControl(Label, "", "mute: ", None, durationLabel, textCallback);
+  detectionDurationLabelId = ESPUI.addControl(Text, "", String(getDetectionDuration()), Dark, durationLabel, textCallback);
+  ESPUI.setElementStyle(detectionDurationLabelId, espuiTelStyle);
+  ESPUI.setInputType(detectionDurationLabelId, "tel");
+  auto muteLabel = ESPUI.addControl(Label, "", "     mute: ", None, durationLabel, textCallback);
   ESPUI.setElementStyle(muteLabel, espuiLongLabelStyle);  
-  muteDurationLabelId = ESPUI.addControl(Number, "", String(getMuteDuration()), Dark, durationLabel, textCallback);
-  ESPUI.setElementStyle(muteDurationLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  muteDurationLabelId = ESPUI.addControl(Text, "", String(getMuteDuration()), Dark, durationLabel, textCallback);
+  ESPUI.setElementStyle(muteDurationLabelId, espuiTelStyle);
+  ESPUI.setInputType(muteDurationLabelId, "tel");
 
   auto infraredLabel = ESPUI.addControl(Label, "Infrared", "duration: ", None, configtab, textCallback);
   ESPUI.setElementStyle(infraredLabel, espuiLongLabelStyle);  
-  irCycleDurationLabelId = ESPUI.addControl(Number, "", String(getIrCycleDuration()), Dark, infraredLabel, textCallback);
-  ESPUI.setElementStyle(irCycleDurationLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  irCycleDurationLabelId = ESPUI.addControl(Text, "", String(getIrCycleDuration()), Dark, infraredLabel, textCallback);
+  ESPUI.setElementStyle(irCycleDurationLabelId, espuiTelStyle);
+  ESPUI.setInputType(irCycleDurationLabelId, "tel");
   auto tresholdLabel = ESPUI.addControl(Label, "", "treshold: ", None, infraredLabel, textCallback);
   ESPUI.setElementStyle(tresholdLabel, espuiLongLabelStyle);  
-  irTresholdLabelId = ESPUI.addControl(Number, "", String(getIrTreshold()), Dark, infraredLabel, textCallback);
-  ESPUI.setElementStyle(irTresholdLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
-  
-  auto presetLabel = ESPUI.addControl(Label, "Arm Preset", "12\": ", None, configtab, textCallback);
+  irTresholdLabelId = ESPUI.addControl(Text, "", String(getIrTreshold()), Dark, infraredLabel, textCallback);
+  ESPUI.setElementStyle(irTresholdLabelId, espuiTelStyle);
+  ESPUI.setInputType(irTresholdLabelId, "tel");
+
+  auto presetLabel = ESPUI.addControl(Label, "Arm Presets", "12\": ", None, configtab, textCallback);
   ESPUI.setElementStyle(presetLabel, espuiLabelStyle);  
-  armPresetValue30LabelId = ESPUI.addControl(Number, "Arm Presets", String(getArmPresetValue(1)), Dark, presetLabel, textCallback);
-  ESPUI.setElementStyle(armPresetValue30LabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  armPresetValue30LabelId = ESPUI.addControl(Text, "Arm Presets", String(getArmPresetValue(1)), Dark, presetLabel, textCallback);
+  ESPUI.setElementStyle(armPresetValue30LabelId, espuiTelStyle);
+  ESPUI.setInputType(armPresetValue30LabelId, "tel");
   auto preset17Label = ESPUI.addControl(Label, "", "6\": ", None, presetLabel, textCallback);
   ESPUI.setElementStyle(preset17Label, espuiLabelStyle);  
-  armPresetValue17LabelId = ESPUI.addControl(Number, "", String(getArmPresetValue(2)), Dark, presetLabel, textCallback);
-  ESPUI.setElementStyle(armPresetValue17LabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  armPresetValue17LabelId = ESPUI.addControl(Text, "", String(getArmPresetValue(2)), Dark, presetLabel, textCallback);
+  ESPUI.setElementStyle(armPresetValue17LabelId, espuiTelStyle);
+  ESPUI.setInputType(armPresetValue17LabelId, "tel");
   auto presetEndLabel = ESPUI.addControl(Label, "", "End: ", None, presetLabel, textCallback);
   ESPUI.setElementStyle(presetEndLabel, espuiLabelStyle);  
-  armPresetValueEndLabelId = ESPUI.addControl(Number, "", String(getArmPresetValue(3)), Dark, presetLabel, textCallback);
-  ESPUI.setElementStyle(armPresetValueEndLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  armPresetValueEndLabelId = ESPUI.addControl(Text, "", String(getArmPresetValue(3)), Dark, presetLabel, textCallback);
+  ESPUI.setElementStyle(armPresetValueEndLabelId, espuiTelStyle);
+  ESPUI.setInputType(armPresetValueEndLabelId, "tel");
   
-
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, SaveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, textCallback);
   
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
+
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, textCallback);
-  wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Dark, wifitab, textCallback);
-  wifi_pass_text = ESPUI.addControl(Text, "Password", stored_pass, Dark, wifitab, textCallback);
+  ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);
+
+  auto wifiLabel = ESPUI.addControl(Label, "Wi-Fi setup", "SSID: ", None, wifitab, textCallback);
+  ESPUI.setElementStyle(wifiLabel, espuiLongLabelStyle);  
+  wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Dark, wifiLabel, textCallback);
+  ESPUI.setElementStyle(wifi_ssid_text, espuiTextSetupStyle);
+  auto passLabel = ESPUI.addControl(Label, "", "password: ", None, wifiLabel, textCallback);
+  ESPUI.setElementStyle(passLabel, espuiLongLabelStyle);  
+  wifi_pass_text = ESPUI.addControl(Text, "Password", stored_pass, Dark, wifiLabel, textCallback);
+  ESPUI.setElementStyle(wifi_pass_text, espuiTextSetupStyle);
   ESPUI.setInputType(wifi_pass_text, "password");
   ESPUI.addControl(Max, "", "32", None, wifi_ssid_text);
   ESPUI.addControl(Max, "", "64", None, wifi_pass_text);
-  mqtt_server_text = ESPUI.addControl(Text, "MQTT server", stored_mqtt_server, Dark, wifitab, textCallback);
-  mqtt_user_text = ESPUI.addControl(Text, "MQTT user", stored_mqtt_user, Dark, wifitab, textCallback);
-  mqtt_pass_text = ESPUI.addControl(Text, "MQTT password", stored_mqtt_pass, Dark, wifitab, textCallback);
+
+  auto mqttLabel = ESPUI.addControl(Label, "MQTT setup", "server IP: ", None, wifitab, textCallback);
+  ESPUI.setElementStyle(mqttLabel, espuiLongLabelStyle);  
+  mqtt_server_text = ESPUI.addControl(Text, "MQTT server", stored_mqtt_server, Dark, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqtt_server_text, espuiTextSetupStyle);
+  auto mqttuserLabel = ESPUI.addControl(Label, "", "User: ", None, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqttuserLabel, espuiLongLabelStyle);  
+  mqtt_user_text = ESPUI.addControl(Text, "MQTT user", stored_mqtt_user, Dark, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqtt_user_text, espuiTextSetupStyle);
+  auto mqttpasswordLabel = ESPUI.addControl(Label, "", "Password: ", None, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqttpasswordLabel, espuiLongLabelStyle);  
+  mqtt_pass_text = ESPUI.addControl(Text, "MQTT password", stored_mqtt_pass, Dark, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqtt_pass_text, espuiTextSetupStyle);
   ESPUI.setInputType(mqtt_pass_text, "password");
-  mqtt_enabled_switch = ESPUI.addControl(Switcher, "Enable MQTT", String(mqtt_enabled), Dark, wifitab, textCallback);
-  mqtt_topic_in_text = ESPUI.addControl(Text, "MQTT topic IN", stored_mqtt_topic_in, Dark, wifitab, textCallback);
-  mqtt_topic_out_text = ESPUI.addControl(Text, "MQTT topic OUT", stored_mqtt_topic_out, Dark, wifitab, textCallback);
+  auto mqttenableLabel = ESPUI.addControl(Label, "", "Enable: ", None, mqttLabel, textCallback);
+  ESPUI.setElementStyle(mqttenableLabel, espuiSwtLabelStyle);  
+  mqtt_enabled_switch = ESPUI.addControl(Switcher, "Enable MQTT", String(mqtt_enabled), Dark, mqttLabel, switchCallback);
+  ESPUI.setElementStyle(mqtt_enabled_switch, mqtt_enabled ? swStyleON : swStyleOFF);
+
+  auto mqttTopicInLabel = ESPUI.addControl(Label, "MQTT Topics", "IN: ", None, wifitab, textCallback);
+  ESPUI.setElementStyle(mqttTopicInLabel, espuiLongLabelStyle);  
+  mqtt_topic_in_text = ESPUI.addControl(Text, "MQTT topic IN", stored_mqtt_topic_in, Dark, mqttTopicInLabel, textCallback);
+  ESPUI.setElementStyle(mqtt_topic_in_text, espuiTextSetupStyle);
+  auto mqttTopicOutLabel = ESPUI.addControl(Label, "", "OUT: ", None, mqttTopicInLabel, textCallback);
+  ESPUI.setElementStyle(mqttTopicOutLabel, espuiLongLabelStyle);  
+  mqtt_topic_out_text = ESPUI.addControl(Text, "MQTT topic OUT", stored_mqtt_topic_out, Dark, mqttTopicInLabel, textCallback);
+  ESPUI.setElementStyle(mqtt_topic_out_text, espuiTextSetupStyle);
 
   auto wifisave = ESPUI.addControl(Button, "Save", "Save", Peterriver, wifitab, SaveWifiDetailsCallback);
   auto espreset = ESPUI.addControl(Button, "", "Reboot ESP", None, wifisave, ESPReset);
