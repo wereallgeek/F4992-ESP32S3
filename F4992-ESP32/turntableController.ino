@@ -54,8 +54,8 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 
-#define DEFIRCYCLEDURATION   2500
-#define DEFDETECTIONDURATION 2500
+#define DEFIRCYCLEDURATION   3000
+#define DEFDETECTIONDURATION 3000
 #define DEFMUTEDURATION      1000
 int irCycleDuration =        2500;
 int detectionDuration =      2500;
@@ -95,7 +95,7 @@ const bool OUT =         false;
 
 const int irNotvitible = HIGH;
 const int irVisible =    LOW;
-#define DEFIRTRESHOLD    1800
+#define DEFIRTRESHOLD    1500
 int irTreshold =         DEFIRTRESHOLD;
 const int irMinimum =    1;
 
@@ -110,8 +110,8 @@ DetectedSize DiscSize =           NODISC;
 DetectedSize previousDiscSize =   NODISC;
 DetectedSize printedDiscSize =    DISC30;
 enum ArmPositions                 {HOME, START30, START17, END};
-const uint16_t PresetDefaults[] = {0,    1600,    13000,   19000}; //default values
-uint16_t ArmPresets[] =           {0,    1600,    13000,   19000}; //used value as overwritten by preferences
+const uint16_t PresetDefaults[] = {0,    187,     1035,    1450}; //default values
+uint16_t ArmPresets[] =           {0,    187,     1035,    1450}; //used value as overwritten by preferences
 uint16_t  desiredPosition =       ArmPresets[HOME];
 
 enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
@@ -237,8 +237,7 @@ void turntablePeripheralUpdate() {
   if (sense30()) DetectionTime[DISC30] = millis();
   if (sense17()) DetectionTime[DISC17] = millis();
   if (isArmDown()) armdowntime = millis(); //unmute timer.
-  if (isTurning() && isState(DETECT)) computeAutoSpeed();
-  else if (isHome()) resetDiskSize();
+  if (isHome()) resetDiskSize();
   //process Mute
   setMute(armdowntime > millis() - muteDuration);
   compuselect();
@@ -446,15 +445,13 @@ void resetDiskSize() {
   verboseDiskChange();
 }
 
-void computeAutoSpeed() {
+void computeDiscSize() {
   bool recent30cmSensed = (DetectionTime[DISC30] > millis() - irCycleDuration);
   bool recent17cmSensed = (DetectionTime[DISC17] > millis() - irCycleDuration);
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
-
   verboseDiskChange();
-  setAutoDDspeed();
 }
 
 bool discPresent() {
@@ -1006,9 +1003,19 @@ void turntableLoop() {
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // two detection cycles should suffice
       if (millis() - sensortimer >= (detectionDuration)) {
-        nextState = PLAY;
+        computeDiscSize();
+        desiredPosition = ArmPresets[DiscSize];
         moveArmTo(desiredPosition);
-        changeState(MOVE); 
+        if (DiscSize == NODISC)
+        {
+          nextState = IDLE;
+          changeState(GOHOME); 
+        }
+        else
+        {
+          nextState = PLAY;
+          changeState(MOVE); 
+        }
       }
       //set record speed and change state
       break;
