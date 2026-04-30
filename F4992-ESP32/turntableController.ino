@@ -57,9 +57,11 @@ unsigned long lastUpdateCycle4 = 0;
 #define DEFIRCYCLEDURATION   2290
 #define DEFDETECTIONDURATION 2290
 #define DEFMUTEDURATION      1000
+#define DEFUPDURATION        350
 int irCycleDuration =        2500;
 int detectionDuration =      2500;
 int muteDuration =           1000;
+int upDuration =             350;
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
@@ -110,14 +112,13 @@ DetectedSize DiscSize =           NODISC;
 DetectedSize previousDiscSize =   NODISC;
 DetectedSize printedDiscSize =    DISC30;
 enum ArmPositions                 {HOME, START30, START17, END};
-const uint16_t PresetDefaults[] = {0,    188,     1050,    1460}; //default values
-uint16_t ArmPresets[] =           {0,    188,     1050,    1460}; //used value as overwritten by preferences
+const uint16_t PresetDefaults[] = {0,    188,     1050,    1444}; //default values
+uint16_t ArmPresets[] =           {0,    188,     1050,    1444}; //used value as overwritten by preferences
 uint16_t  desiredPosition =       ArmPresets[HOME];
 
-enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
-const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Moving",  "Detecting", "Playing"};
-const ControlColor statusColor[] = {Dark,      Sunflower,      Carrot,      Carrot,    Sunflower,   Peterriver};
-const char* statusHexColor[] =     {"#2c3e50", "#f1c40f",      "#e67e22",   "#e67e22", "#f1c40f",   "#3498db"};
+enum TurntableState                {IDLE,      INITIAL,        GOHOME,      UPTOHOME,    UPTOMOVE,    MOVE,      DETECT,      PLAY};
+const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Playing"};
+const char* statusHexColor[] =     {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22", "#497a98",   "#3489c9"};
 
 TurntableState previousArmState =  MOVE;
 TurntableState previousLedState =  MOVE;
@@ -236,7 +237,9 @@ void turntablePeripheralUpdate() {
   //17 & 30cm sensors
   if (sense30()) DetectionTime[DISC30] = millis();
   if (sense17()) DetectionTime[DISC17] = millis();
-  if (isArmDown()) armdowntime = millis(); //unmute timer.
+  //armdown timer
+  if (isArmDown()) armdowntime = millis();
+  //reset switch
   if (isHome()) resetDiskSize();
   //process Mute
   setMute(armdowntime > millis() - muteDuration);
@@ -331,6 +334,18 @@ int getMuteDuration() {
   return muteDuration;
 }
 
+void readUpDurationFromStorage(){
+  setUpDuration(ttConfig.getUShort("upDuration", DEFUPDURATION));
+}
+
+void setUpDuration(int duration) {
+  upDuration = duration;
+}
+
+int getUpDuration() {
+  return upDuration;
+}
+
 void readIrCycleDurationFromStorage() {
   setIrCycleDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
 }
@@ -380,6 +395,7 @@ void readTurntablePresetValuesFromStorage() {
   readArmPresetValuesFromStorage();
   readDetectionDurationFromStorage();
   readMuteDurationFromStorage();
+  readUpDurationFromStorage();
   readIrCycleDurationFromStorage();
   readIrTresholdFromStorage();
 }
@@ -588,7 +604,7 @@ void turntableSetup() {
 
 void returnAndClear() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
-  changeState(GOHOME);
+  changeState(UPTOHOME);
   repeat = false;
 }
 
@@ -764,14 +780,14 @@ void requestStartStop() {
   else if (armLifter() == armUp   && armResetNotActive() && isTurning()) returnAndClear();
   else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear();
   else if (isState(DETECT)) returnAndClear();
-  else if (isState(GOHOME)) clearRepeat();
-  else changeState(GOHOME); //undetermined state, going home.
+  else if (isState(GOHOME) || isState(UPTOHOME)) clearRepeat();
+  else changeState(UPTOHOME); //undetermined state, going home.
 }
 
 void requestHome() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request HOME");
   nextState = IDLE;
-  changeState(GOHOME);
+  changeState(UPTOHOME);
 }
 
 void requestGoEnd() {
@@ -834,7 +850,7 @@ void requestMove(uint16_t  newPosition) {
   if (!initializationCompleted) return;
   desiredPosition = newPosition;
   nextState = IDLE;
-  changeState(MOVE);
+  changeState(UPTOMOVE);
 }
 
 void requestRepeat() {
@@ -989,6 +1005,14 @@ void turntableLoop() {
       moveArmOut();
       if (reachedHome()) changeState(nextState);
       break;
+    case UPTOHOME:
+      raiseArm();
+      if (armdowntime < millis() - upDuration) changeState(GOHOME);
+      break;
+    case UPTOMOVE:
+      raiseArm();
+      if (armdowntime < millis() - upDuration) changeState(MOVE);
+      break;
     case MOVE:
       setAutoDDspeed();
       moveArmTo(desiredPosition);
@@ -1001,7 +1025,7 @@ void turntableLoop() {
       desiredPosition = ArmPresets[DiscSize];
       moveArmTo(ArmPresets[DISC30]); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
-      // two detection cycles should suffice
+      // It is about the time it takes for the arm to get to large disc drop location.
       if (millis() - sensortimer >= (detectionDuration)) {
         computeDiscSize();
         desiredPosition = ArmPresets[DiscSize];
@@ -1028,10 +1052,10 @@ void turntableLoop() {
           nextState = PLAY;
           desiredPosition = ArmPresets[DiscSize];
           repeat = false; //no infinite repeat
-          changeState(MOVE); 
+          changeState(UPTOMOVE); 
         }
         else {
-          changeState(GOHOME);
+          changeState(UPTOHOME);
         }
       }
       break;
