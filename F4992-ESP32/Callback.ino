@@ -291,6 +291,11 @@ void SerialCommand(String input) {
     requestInitBypass();
   }
 
+  else if (input.indexOf("temp") > -1) {
+    float temperature = getCpuTemperature();
+    webSerialPrintln("CPU Temperature: " + String(temperature, 2) + "\xC2\xB0" + "C");
+  }
+
   else if (input.indexOf("info") > -1) {
     webSerialPrintln("Device name " + stored_devicename);
     webSerialPrintln("Firmware " + firmwareVersion());
@@ -309,12 +314,12 @@ void SerialCommand(String input) {
     webSerialPrintln("-ssid, password + argument = WIFI");
     webSerialPrintln("-mqtten, mqttserver, mqttuser, mqttpass + argument = MQTT");
     webSerialPrintln("-topicin, topicout + argument = MQTT TOPIC");
-    webSerialPrintln("-info, report, sensor = various reports");
+    webSerialPrintln("-info, report, sensor, temp = reports");
     webSerialPrintln("-verbose, quiet = debug verbosity");
-    webSerialPrintln("-go+ home/end/17/30/still move the arm");
+    webSerialPrintln("-go+[home/end/17/30/still] move arm");
+    webSerialPrintln("-up/down/pause = up/down button");
     webSerialPrintln("-bypass/overrite/init = skip initialization and go IDLE");
     webSerialPrintln("-start/stop/play = start/stop button");
-    webSerialPrintln("-up/down/pause = up/down button");
     webSerialPrintln("-repeat = repeat button  --  restart = reboot the device");
   }
 }
