@@ -54,8 +54,8 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 
-#define DEFIRCYCLEDURATION   3000
-#define DEFDETECTIONDURATION 3000
+#define DEFIRCYCLEDURATION   2500
+#define DEFDETECTIONDURATION 2500
 #define DEFMUTEDURATION      1000
 int irCycleDuration =        2500;
 int detectionDuration =      2500;
@@ -110,8 +110,8 @@ DetectedSize DiscSize =           NODISC;
 DetectedSize previousDiscSize =   NODISC;
 DetectedSize printedDiscSize =    DISC30;
 enum ArmPositions                 {HOME, START30, START17, END};
-const uint16_t PresetDefaults[] = {0,    187,     1035,    1450}; //default values
-uint16_t ArmPresets[] =           {0,    187,     1035,    1450}; //used value as overwritten by preferences
+const uint16_t PresetDefaults[] = {0,    187,     1050,    1500}; //default values
+uint16_t ArmPresets[] =           {0,    187,     1050,    1500}; //used value as overwritten by preferences
 uint16_t  desiredPosition =       ArmPresets[HOME];
 
 enum TurntableState                {IDLE,      INITIAL,        GOHOME,      MOVE,      DETECT,      PLAY};
@@ -1023,7 +1023,7 @@ void turntableLoop() {
       setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
       
-      else if (reachedEndPosition()) {
+      if (reachedEndPosition()) {
         if (repeat) {
           nextState = PLAY;
           desiredPosition = ArmPresets[DiscSize];
