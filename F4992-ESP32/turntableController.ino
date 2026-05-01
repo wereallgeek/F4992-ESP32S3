@@ -727,7 +727,10 @@ void updateKeys() {
 }
 
 void computeKeys() {
-  if (debouncedButtons[ARM].fell()) webSerialPrintln(String(millis()) + " - Resetting armPosition");
+  if (debouncedButtons[ARM].fell()) {
+    if (highVerbosity) webSerialPrint(String(millis()) + " - ");
+    webSerialPrintln("Resetting armPosition");
+  }
   if (debouncedButtons[ARM].read() == pressed) resetArmposition();
   if (debouncedButtons[ARM].rose()) resetArmposition();
 

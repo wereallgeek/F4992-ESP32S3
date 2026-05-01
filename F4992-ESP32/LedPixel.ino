@@ -4,7 +4,7 @@
 #define NUM_PIXELS           1  
 
 Adafruit_NeoPixel strip(NUM_PIXELS, PIN_LEDPIXEL, NEO_GRB + NEO_KHZ800);
-bool ledPixelEnable = true;
+bool ledPixelEnable = false;
 
 //these needs to be a 1:1 match for the turntable state machine
 enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, ANIMRIGHT, PULSEDETECT, STEADYPLAY};

@@ -107,7 +107,7 @@ void espui_init() {
   ESPUI.setElementStyle(wifiLabel, espuiTextLabelStyle);  
   wifi_ssid_text = ESPUI.addControl(Text, "SSID", stored_ssid, Dark, wifiLabel, textCallback);
   ESPUI.setElementStyle(wifi_ssid_text, espuiTextSetupStyle);
-  auto passLabel = ESPUI.addControl(Label, "", "password: ", None, wifiLabel, textCallback);
+  auto passLabel = ESPUI.addControl(Label, "", "pass: ", None, wifiLabel, textCallback);
   ESPUI.setElementStyle(passLabel, espuiTextLabelStyle);  
   wifi_pass_text = ESPUI.addControl(Text, "Password", stored_pass, Dark, wifiLabel, textCallback);
   ESPUI.setElementStyle(wifi_pass_text, espuiTextSetupStyle);
@@ -115,7 +115,7 @@ void espui_init() {
   ESPUI.addControl(Max, "", "32", None, wifi_ssid_text);
   ESPUI.addControl(Max, "", "64", None, wifi_pass_text);
 
-  auto mqttLabel = ESPUI.addControl(Label, "MQTT setup", "server IP: ", None, wifitab, textCallback);
+  auto mqttLabel = ESPUI.addControl(Label, "MQTT setup", "IP: ", None, wifitab, textCallback);
   ESPUI.setElementStyle(mqttLabel, espuiTextLabelStyle);  
   mqtt_server_text = ESPUI.addControl(Text, "MQTT server", stored_mqtt_server, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_server_text, espuiTextSetupStyle);
@@ -123,7 +123,7 @@ void espui_init() {
   ESPUI.setElementStyle(mqttuserLabel, espuiTextLabelStyle);  
   mqtt_user_text = ESPUI.addControl(Text, "MQTT user", stored_mqtt_user, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_user_text, espuiTextSetupStyle);
-  auto mqttpasswordLabel = ESPUI.addControl(Label, "", "Password: ", None, mqttLabel, textCallback);
+  auto mqttpasswordLabel = ESPUI.addControl(Label, "", "Pass: ", None, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqttpasswordLabel, espuiTextLabelStyle);  
   mqtt_pass_text = ESPUI.addControl(Text, "MQTT password", stored_mqtt_pass, Dark, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqtt_pass_text, espuiTextSetupStyle);
