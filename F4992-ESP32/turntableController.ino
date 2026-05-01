@@ -140,6 +140,7 @@ const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\
 unsigned long sensortimer = 0;
 unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
+unsigned long armuptime = 0;
 
 bool repeat = false;
 bool previousRepeat = false;
@@ -239,10 +240,11 @@ void turntablePeripheralUpdate() {
   if (sense17()) DetectionTime[DISC17] = millis();
   //armdown timer
   if (isArmDown()) armdowntime = millis();
+  else armuptime = millis();
   //reset switch
   if (isHome()) resetDiskSize();
   //process Mute
-  setMute(armdowntime > millis() - muteDuration);
+  setMute(millis() - armuptime < muteDuration);
   compuselect();
   //LEDS -- P-L55
   updateLeds();
@@ -260,6 +262,11 @@ void setLifter(int lifterPosition) {
 void setMute(bool activateMute) {
   digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
 }
+
+bool getMute() {
+  return digitalRead(PIN_MUTING) == mutesound;
+}
+
 
 int32_t armPosition() {
     int counterValue = 0;
@@ -683,7 +690,7 @@ void turntableReport() {
   webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
   webSerialPrintln(String("armPosition:     ") + armPosition() + " (" + desiredPosition + ")");
   webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
-  webSerialPrintln(String("arm lifter:      ") + (armLifter() == armUp ? "armUp" : "armDown"));
+  webSerialPrintln(String("arm & mute:      ") + (armLifter() == armUp ? " armUp " : "armDown") + " (" + (getMute() ? "M)" : "P)"));
   webSerialPrintln(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
 
   webSerialPrint("DCM    :");
