@@ -418,6 +418,7 @@ void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) webSerialPrint(String(millis()) + " - "); //state change remains in low verbosity
   if(firstPassCompleted) webSerialPrintln(String("State: ") + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
   currentState = newState;
+  setAnimationMode(currentState, statusHexColor[currentState]); //inform ledpixel driver.
 }
 
 bool isState(TurntableState state) {
