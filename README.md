@@ -39,6 +39,7 @@ When the ESP is powered ON, it will :
  - [Preferences](https://github.com/vshymanskyy/Preferences) (for ESP8266)
  - [PubSubClient](https://github.com/knolleary/pubsubclient)
  - [Bounce2](https://github.com/thomasfredericks/Bounce2) hardware switch debouncer
+ - [Adafruit Neopixel](https://github.com/adafruit/adafruit_neopixel) Adafruit neopixel driver
 
 ## Default GUI
 

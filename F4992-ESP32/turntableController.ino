@@ -1068,4 +1068,8 @@ void turntableLoop() {
 
   //update GUI
   turntableUiUpdate();
+
+  //update LedPixels
+  setLedPixelHexColor(statusHexColor[currentState]); //current no anim only status
+  animateLeds();
 }
