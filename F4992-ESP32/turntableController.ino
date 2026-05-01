@@ -163,10 +163,8 @@ volatile bool armlifterDirty = false;
 volatile bool ttstateDirty = false;
 volatile bool armpositionDirty = false;
 volatile bool ledstateDirty = false;
-volatile int uiDcm = 0;
 volatile bool uiDd3Active = false;
 volatile const char* uiRecordStyle;
-volatile bool uiArmLifter = false;
 volatile const char* uiLifterIcon;
 volatile const char* uidcmIcon;
 volatile const char* uiTurntableStatus;
@@ -907,10 +905,12 @@ void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
 
 //change indicators
 bool computeRepeatDirty() {
-  bool haschanged = false;
-  if (previousRepeat != repeat) haschanged = true;
-  previousRepeat = repeat;
-  return haschanged;
+  if (previousRepeat != repeat) {
+    uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
+    previousRepeat = repeat;
+    return true;
+  }
+  return false;
 }
 
 bool computeDcmDirty() {
@@ -918,6 +918,7 @@ bool computeDcmDirty() {
   int currentDcm = getDCM();
   if (previousDcm != currentDcm) haschanged = true;
   previousDcm = currentDcm;
+  uidcmIcon = dcmIcons[currentDcm];
   return haschanged;
 }
 
@@ -925,6 +926,7 @@ bool computeArmstateDirty() {
   bool haschanged = false;
   if (previousArmState != currentState) haschanged = true;
   previousArmState = currentState;
+  uiStatusHexColor = statusHexColor[currentState];
   return haschanged;
 }
 
@@ -932,6 +934,7 @@ bool computeTtstateDirty() {
   bool haschanged = false;
   if (previousTtState != currentState) haschanged = true;
   previousTtState = currentState;
+  uiTurntableStatus = TurntableStateDesc[currentState];
   return haschanged;
 }
 
@@ -939,6 +942,7 @@ bool computeLedstateDirty() {
   bool haschanged = false;
   if (previousLedState != currentState) haschanged = true;
   previousLedState = currentState;
+  uiStatusHexColor = statusHexColor[currentState];
   return haschanged;
 }
 
@@ -946,6 +950,7 @@ bool computeDd33Dirty() {
   bool haschanged = false;
   if (previousDD33 != dd33active()) haschanged=true;
   previousDD33 = dd33active();
+  uiDd3Active = dd33active();
   return haschanged;
 }
 
@@ -953,6 +958,7 @@ bool computeDisksizeDirty() {
   bool haschanged = false;
   if (printedDiscSize != DiscSize) haschanged = true;
   printedDiscSize = DiscSize;
+  uiRecordStyle = recordStyles[DiscSize];
   return haschanged;
 }
 
@@ -960,6 +966,7 @@ bool computeArmlifterDirty() {
   bool haschanged = false;
   if (previousArmLifter != armLifter()) haschanged = true;
   previousArmLifter = armLifter();
+  uiLifterIcon = (armLifter() == armUp) ? armIcons[1] : armIcons[0];
   return haschanged;
 }
 
@@ -967,37 +974,25 @@ bool computeArmpositionDirty() {
   bool haschanged = false;
   if (previousPosition != armPosition()) haschanged = true;
   previousPosition = armPosition();
+  uiArmPosition = armPosition();
   return haschanged;
 }
 
-void aiVolatileComputation() {
-  uiDcm = getDCM();
-  uiDd3Active = dd33active();
-  uiRecordStyle = recordStyles[DiscSize];
-  uiArmLifter = armLifter();
-  uiLifterIcon = (armLifter() == armUp) ? armIcons[1] : armIcons[0];
-  uidcmIcon = dcmIcons[uiDcm];
-  uiTurntableStatus = TurntableStateDesc[currentState];
-  uiArmPosition = armPosition();
-  uiStatusHexColor = statusHexColor[currentState];
-  uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
-  requestInvert(uiInvert);
-}
-
 void dirtyComputation() {
-  armstateDirty = computeArmstateDirty();
-  repeatDirty = computeRepeatDirty();
-  dcmDirty = computeDcmDirty();
-  webserialDirty = computeWebserialDirty();
-  dd33Dirty = computeDd33Dirty();
-  disksizeDirty = computeDisksizeDirty();
-  armlifterDirty = computeArmlifterDirty();
-  ttstateDirty = computeTtstateDirty();
-  armpositionDirty = computeArmpositionDirty();
-  ledstateDirty = computeLedstateDirty();
+  if (computeArmstateDirty()) armstateDirty = true;
+  if (computeRepeatDirty()) repeatDirty = true;
+  if (computeDcmDirty()) dcmDirty = true;
+  if (computeWebserialDirty()) webserialDirty = true;
+  if (computeDd33Dirty()) dd33Dirty = true;
+  if (computeDisksizeDirty()) disksizeDirty = true;
+  if (computeArmlifterDirty()) armlifterDirty = true;
+  if (computeTtstateDirty()) ttstateDirty = true;
+  if (computeArmpositionDirty()) armpositionDirty = true;
+  if (computeLedstateDirty()) ledstateDirty = true;
 }
 
 void requestComputation() {
+  requestInvert(uiInvert);
   if (uiPressRepeat) requestRepeat();
   uiPressRepeat = false;
   if (uiPressMoveIn) {
@@ -1155,7 +1150,6 @@ void turntableLoop() {
   turntablePeripheralUpdate();
 
   //update GUI values - let GUI handle the rest
-  aiVolatileComputation();
   dirtyComputation();
   requestComputation();
 
