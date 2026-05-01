@@ -17,51 +17,51 @@ unsigned long lastUpdateCycle4 = 0;
 //here declaration for the hardware pins.
 
 // ARM POSITION COUNTER
-#define PIN_COUNTER          6   
+#define PIN_COUNTER              6   
 
 //Infrared Sensors
-#define PIN_IR30             1
-#define PIN_IR17             3
+#define PIN_IR30                 1
+#define PIN_IR17                 3
 
 // Switches (Inputs)
-#define PIN_SW1              5
-#define PIN_SW2              7
-#define PIN_SW3              8
-#define PIN_SW4              9
-#define PIN_SW5              10
-#define PIN_ARMRESET         16
+#define PIN_SW1                  5
+#define PIN_SW2                  7
+#define PIN_SW3                  8
+#define PIN_SW4                  9
+#define PIN_SW5                  10
+#define PIN_ARMRESET             16
 
 // DCM Arm tray (Outputs)
-#define PIN_DCM1             17  
-#define PIN_DCM2             14
-#define PIN_DCM3             4   
-#define PIN_LIFTER           13
-#define PIN_MUTING           18  
+#define PIN_DCM1                 17  
+#define PIN_DCM2                 14
+#define PIN_DCM3                 4   
+#define PIN_LIFTER               13
+#define PIN_MUTING               18  
 
 // Direct Drive module
-#define PIN_DDSS             11
-#define PIN_DD33             15
-#define PIN_DD45             2
+#define PIN_DDSS                 11
+#define PIN_DD33                 15
+#define PIN_DD45                 2
 
 // LEDs (Outputs)
-#define PIN_LED1             39
-#define PIN_LED2             40
-#define PIN_LED3             42
-#define PIN_LED4             41
+#define PIN_LED1                 39
+#define PIN_LED2                 40
+#define PIN_LED3                 42
+#define PIN_LED4                 41
 
 //compuselector. 
-#define PIN_COMPUSELECTOR    12
+#define PIN_COMPUSELECTOR        12
 
 
 
-#define DEFIRCYCLEDURATION   2290
-#define DEFDETECTIONDURATION 2290
-#define DEFMUTEDURATION      1000
-#define DEFUPDURATION        350
-int irCycleDuration =        2500;
-int detectionDuration =      2500;
-int muteDuration =           1000;
-int upDuration =             350;
+#define DEFIRCYCLEDURATION       2290
+#define DEFDETECTIONDURATION     2290
+#define DEFMUTEDURATION          1000
+#define DEFUPDURATION            350
+volatile int irCycleDuration =   2500;
+volatile int detectionDuration = 2500;
+volatile int muteDuration =      1000;
+volatile int upDuration =        350;
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
 const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
@@ -75,33 +75,33 @@ const byte ledpins[] =       {0,            PIN_LED1,     PIN_LED2,  PIN_LED3,  
 enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      MAXDCM};
 const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
 
-int previousDcm = 0;
+volatile int previousDcm = 0;
 
-const int armUp =        LOW;
-const int armDown =      HIGH;
+const int armUp =         LOW;
+const int armDown =       HIGH;
 
-const int mutesound =    LOW;
-const int playsound =    HIGH;
+const int mutesound =     LOW;
+const int playsound =     HIGH;
 
-const int released =     HIGH;
-const int pressed =      LOW;
+const int released =      HIGH;
+const int pressed =       LOW;
 
-const int DdActive =     LOW;
-const int DdInactive =   HIGH;
+const int DdActive =      LOW;
+const int DdInactive =    HIGH;
 
-const bool DcmActive =   HIGH;
-const bool DcmInactive = LOW;
+const bool DcmActive =    HIGH;
+const bool DcmInactive =  LOW;
 
-const bool IN =          true;
-const bool OUT =         false;
+const bool IN =           true;
+const bool OUT =          false;
 
-const int irNotvitible = HIGH;
-const int irVisible =    LOW;
-#define DEFIRTRESHOLD    1500
-int irTreshold =         DEFIRTRESHOLD;
-const int irMinimum =    1;
+const int irNotvitible =  HIGH;
+const int irVisible =     LOW;
+#define DEFIRTRESHOLD     1500
+volatile int irTreshold = DEFIRTRESHOLD;
+const int irMinimum =     1;
 
-const int bStop =        HIGH;
+const int bStop =         HIGH;
 const int bStart =        LOW;
 
 //purposely match arm position and speed
@@ -142,14 +142,38 @@ unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
 unsigned long armuptime = 0;
 
-bool repeat = false;
-bool previousRepeat = false;
-bool previousDD33 = false;
-bool previousArmLifter = true;
-int32_t previousPosition = -1;
+volatile bool repeat = false;
+volatile bool previousRepeat = false;
+volatile bool previousDD33 = false;
+volatile bool previousArmLifter = true;
+volatile int32_t previousPosition = -1;
 
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
+
+//core separation
+
+volatile bool armstateDirty = false;
+volatile bool repeatDirty = false;
+volatile bool dcmDirty = false;
+volatile bool webserialDirty = false;
+volatile bool dd33Dirty = false;
+volatile bool disksizeDirty = false;
+volatile bool armlifterDirty = false;
+volatile bool ttstateDirty = false;
+volatile bool armpositionDirty = false;
+volatile bool ledstateDirty = false;
+volatile int uiDcm = 0;
+volatile bool uiDd3Active = false;
+volatile const char* uiRecordStyle;
+volatile bool uiArmLifter = false;
+volatile const char* uiLifterIcon;
+volatile const char* uidcmIcon;
+volatile const char* uiTurntableStatus;
+volatile int uiArmPosition = 0;
+volatile const char* uiStatusHexColor;
+volatile const char* uiOnOffIndicatorColor;
+
 
 //============================ hardware interface =============================
 void turntableCounterSetup() {
@@ -836,18 +860,6 @@ void requestUpDown() {
   else if (armLifter() == armDown && !isHome())  changeState(IDLE);
 }
 
-void requestMoveIn(uint16_t  delta) {
-  if (armPosition() > ArmPresets[END] - delta) return; //no rollover
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move IN");
-  if( !isAtEndPosition() && armLifter() == armUp) requestMove(armPosition() + delta);
-}
-
-void requestMoveOut(uint16_t  delta) {
-  if (armPosition() < delta) return; //no rollover
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move OUT");
-  if( !isHome() && armLifter() == armUp) requestMove(armPosition() - delta);
-}
-
 void stepTonearmOut() {
   if( !isHome() && armLifter() == armUp) moveArmOut();
 }
@@ -870,21 +882,13 @@ void requestRepeat() {
 }
 
 void requestInvert(bool invertRequested) {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
+  if(highVerbosity && softSpeedInverter != invertRequested) webSerialPrintln(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
   softSpeedInverter = invertRequested;
 }
 
 void requestInitBypass() {
   initializationCompleted = true;
   changeState(IDLE);
-}
-
-void changeEspuiPanelColor(uint16_t id, ControlColor newColor) {
-    Control* panel = ESPUI.getControl(id);
-    if (panel != nullptr) {
-      panel->color = newColor;
-      ESPUI.updateControl(id);
-    }
 }
 
 void changeEspuiLabelColor(uint16_t id, const char* colorHex) {
@@ -902,14 +906,14 @@ void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
 }
 
 //change indicators
-bool repeatDirty() {
+bool computeRepeatDirty() {
   bool haschanged = false;
   if (previousRepeat != repeat) haschanged = true;
   previousRepeat = repeat;
   return haschanged;
 }
 
-bool dcmDirty() {
+bool computeDcmDirty() {
   bool haschanged = false;
   int currentDcm = getDCM();
   if (previousDcm != currentDcm) haschanged = true;
@@ -917,78 +921,151 @@ bool dcmDirty() {
   return haschanged;
 }
 
-bool armstateDirty() {
+bool computeArmstateDirty() {
   bool haschanged = false;
   if (previousArmState != currentState) haschanged = true;
   previousArmState = currentState;
   return haschanged;
 }
 
-bool ttstateDirty() {
+bool computeTtstateDirty() {
   bool haschanged = false;
   if (previousTtState != currentState) haschanged = true;
   previousTtState = currentState;
   return haschanged;
 }
 
-bool ledstateDirty() {
+bool computeLedstateDirty() {
   bool haschanged = false;
   if (previousLedState != currentState) haschanged = true;
   previousLedState = currentState;
   return haschanged;
 }
 
-bool dd33Dirty() {
+bool computeDd33Dirty() {
   bool haschanged = false;
   if (previousDD33 != dd33active()) haschanged=true;
   previousDD33 = dd33active();
   return haschanged;
 }
 
-bool disksizeDirty() {
+bool computeDisksizeDirty() {
   bool haschanged = false;
   if (printedDiscSize != DiscSize) haschanged = true;
   printedDiscSize = DiscSize;
   return haschanged;
 }
 
-bool armlifterDirty() {
+bool computeArmlifterDirty() {
   bool haschanged = false;
   if (previousArmLifter != armLifter()) haschanged = true;
   previousArmLifter = armLifter();
   return haschanged;
 }
 
-bool armpositionDirty() {
+bool computeArmpositionDirty() {
   bool haschanged = false;
   if (previousPosition != armPosition()) haschanged = true;
   previousPosition = armPosition();
   return haschanged;
 }
 
+void aiVolatileComputation() {
+  uiDcm = getDCM();
+  uiDd3Active = dd33active();
+  uiRecordStyle = recordStyles[DiscSize];
+  uiArmLifter = armLifter();
+  uiLifterIcon = (armLifter() == armUp) ? armIcons[1] : armIcons[0];
+  uidcmIcon = dcmIcons[uiDcm];
+  uiTurntableStatus = TurntableStateDesc[currentState];
+  uiArmPosition = armPosition();
+  uiStatusHexColor = statusHexColor[currentState];
+  uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
+  requestInvert(uiInvert);
+}
+
+void dirtyComputation() {
+  armstateDirty = computeArmstateDirty();
+  repeatDirty = computeRepeatDirty();
+  dcmDirty = computeDcmDirty();
+  webserialDirty = computeWebserialDirty();
+  dd33Dirty = computeDd33Dirty();
+  disksizeDirty = computeDisksizeDirty();
+  armlifterDirty = computeArmlifterDirty();
+  ttstateDirty = computeTtstateDirty();
+  armpositionDirty = computeArmpositionDirty();
+  ledstateDirty = computeLedstateDirty();
+}
+
+void requestComputation() {
+  if (uiPressRepeat) requestRepeat();
+  uiPressRepeat = false;
+  if (uiPressMoveIn) {
+    if (armPosition() >= ArmPresets[END]) uiPressMoveIn = false;
+    else stepTonearmIn();
+  }
+  if (uiPressMoveOut) {
+    if (armPosition() <= ArmPresets[HOME]) uiPressMoveOut = false;
+    else stepTonearmOut();
+  }
+  if (uiPressUpDown) requestUpDown();
+  uiPressUpDown = false;
+  if (uiPressStartStop) requestStartStop();
+  uiPressStartStop = false;
+
+  if (uiAskMoveHome) requestHome();
+  uiAskMoveHome = false;
+  if (uiAskMoveEnd) requestGoEnd();
+  uiAskMoveEnd = false;
+  if (uiAskMove30) requestGo30();
+  uiAskMove30 = false;
+  if (uiAskMove17) requestGo17();
+  uiAskMove17 = false;
+  if (uiAskMoveNot) requestGoStill();
+  uiAskMoveNot = false;
+
+  if (uiRequestInit) requestInitBypass();
+  uiRequestInit = false;
+
+  if (uiAskReport) turntableReport();
+  uiAskReport = false;
+  if (uiAskInfra) turntableIrReport();
+  uiAskInfra = false;
+}
+
 void turntableUiUpdate() {
 // conditionnal ui update separated to minimize ESPUI starvation on multiple instances
   if (millis() - lastUpdateCycle1 >= 802) {
     lastUpdateCycle1 = millis();
-    if(armstateDirty()) changeEspuiLabelColor(armStatusLabelId, statusHexColor[currentState]);
-    if(repeatDirty()) changeEspuiIndicatorColor(repeatId, onOffIndicatorColor[repeat ? 1 : 0]); //include CSS
-    if(dcmDirty()) ESPUI.print(dcmStatusId, dcmIcons[getDCM()]);
+    if(armstateDirty) changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
+    armstateDirty = false; 
+    if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor); //include CSS
+    repeatDirty = false; 
+    if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
+    dcmDirty = false;
   }
   else if (millis() - lastUpdateCycle2 >= 872) {
     lastUpdateCycle2 = millis();
-    if(webserialDirty()) updateWebSerial(); //serial has 15 lines of text
+    if(webserialDirty) updateWebSerial();
+    webserialDirty = false;
   }
   else if (millis() - lastUpdateCycle3 >= 955) {
     lastUpdateCycle3 = millis();
-    if (dd33Dirty()) ESPUI.updateControlValue(recordsizeLabelId, dd33active() ? "33" : "45");    
-    if (disksizeDirty()) ESPUI.setElementStyle(recordsizeLabelId, recordStyles[DiscSize]);  //include CSS
-    if (armlifterDirty()) ESPUI.print(lifterStatusId, (armLifter() == armUp) ? armIcons[1] : armIcons[0]);
+    if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
+    dd33Dirty = false;
+    if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);  //include CSS
+    disksizeDirty = false;
+    if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
+    armlifterDirty = false;
   }
   else if (millis() - lastUpdateCycle4 >= 1024) {
     lastUpdateCycle4 = millis();
-    if (ttstateDirty()) ESPUI.print(armStatusLabelId, turntableStatus());
-    if (armpositionDirty()) ESPUI.print(armPositionLabelId, String(armPosition()));
-    if (ledstateDirty()) changeEspuiIndicatorColor(ledId, statusHexColor[currentState]); //include CSS
+    if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
+    ttstateDirty = false;
+    if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
+    armpositionDirty = false;
+    if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor); //include CSS
+    ledstateDirty = false;
   }
 }
 // Turntable user interface ==============================================
@@ -1077,8 +1154,10 @@ void turntableLoop() {
   //handle sensors
   turntablePeripheralUpdate();
 
-  //update GUI
-  turntableUiUpdate();
+  //update GUI values - let GUI handle the rest
+  aiVolatileComputation();
+  dirtyComputation();
+  requestComputation();
 
   //update LedPixels
   setLedPixelHexColor(statusHexColor[currentState]); //current no anim only status

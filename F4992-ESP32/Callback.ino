@@ -43,31 +43,37 @@ void textCallback(Control *sender, int type) {
 //Turntable ESPUI callback========================
 void buttonInCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    requestMoveIn(5);
+    uiPressMoveIn = true;
+  }
+  else   if (type == B_UP) {
+    uiPressMoveIn = false;
   }
 }
 
 void buttonOutCallback(Control *sender, int type) {
   if (type == B_DOWN) {
-    requestMoveOut(5);
+    uiPressMoveOut = true;
+  }
+  else   if (type == B_UP) {
+    uiPressMoveOut = false;
   }
 }
 
 void buttonUpdownCallback(Control *sender, int type) {
   if (type == B_UP) {
-    requestUpDown();
+    uiPressUpDown = true;
   }
 }
 
 void buttonStartStopCallback(Control *sender, int type) {
   if (type == B_UP) {
-    requestStartStop();
+    uiPressStartStop = true;
   }
 }
 
 void buttonRepeatCallback(Control *sender, int type) {
   if (type == B_UP) {
-    requestRepeat();
+    uiPressRepeat = true;
   }
 }
 
@@ -76,7 +82,7 @@ void switchCallback(Control *sender, int type) {
 }
 
 void buttonInvertCallback(Control *sender, int type) {
-  requestInvert(type == S_ACTIVE);
+  uiInvert = (type == S_ACTIVE);
   switchCallback(sender, type);
 }
 
@@ -130,14 +136,14 @@ void saveWifiDetailsCallback(Control *sender, int type) {
     stored_mqtt_pass = String(ESPUI.getControl(mqtt_pass_text)->value);
     mqtt_enabled = ESPUI.getControl(mqtt_enabled_switch)->value.toInt() ? true : false;
 
-    settings.putString("devicename", stored_devicename);
-    settings.putString("ssid", stored_ssid);
-    settings.putString("pass", stored_pass);
-    settings.putString("mqtt_server", stored_mqtt_server);
-    settings.putString("mqtt_user", stored_mqtt_user);
-    settings.putString("mqtt_pass", stored_mqtt_pass);
-    settings.putString("mqtt_topic_in", stored_mqtt_topic_in);
-    settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
+    settings.putString("devicename", String(stored_devicename));
+    settings.putString("ssid", String(stored_ssid));
+    settings.putString("pass", String(stored_pass));
+    settings.putString("mqtt_server", String(stored_mqtt_server));
+    settings.putString("mqtt_user", String(stored_mqtt_user));
+    settings.putString("mqtt_pass", String(stored_mqtt_pass));
+    settings.putString("mqtt_topic_in", String(stored_mqtt_topic_in));
+    settings.putString("mqtt_topic_out", String(stored_mqtt_topic_out));
     settings.putBool("mqtt_enabled", mqtt_enabled);
 
     if(highVerbosity) {
@@ -185,13 +191,13 @@ void SerialCommand(String input) {
 
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
-    settings.putString("ssid", stored_ssid);
+    settings.putString("ssid", String(stored_ssid));
     webSerialPrintln("New SSID : " + stored_ssid);
   }
 
   else if (input.indexOf("password") > -1) {
     stored_pass = splitString(input, ' ', 1);
-    settings.putString("pass", stored_pass);
+    settings.putString("pass", String(stored_pass));
     webSerialPrintln("New password : " + stored_pass);
   }
 
@@ -203,31 +209,31 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("mqttserver") > -1) {
     stored_mqtt_server = splitString(input, ' ', 1);
-    settings.putString("mqtt_server", stored_mqtt_server);
+    settings.putString("mqtt_server", String(stored_mqtt_server));
     webSerialPrintln("New MQTT server : " + stored_mqtt_server);
   }
 
   else if (input.indexOf("mqttuser") > -1) {
     stored_mqtt_user = splitString(input, ' ', 1);
-    settings.putString("mqtt_user", stored_mqtt_user);
+    settings.putString("mqtt_user", String(stored_mqtt_user));
     webSerialPrintln("New MQTT user : " + stored_mqtt_user);
   }
 
   else if (input.indexOf("mqttpass") > -1) {
     stored_mqtt_pass = splitString(input, ' ', 1);
-    settings.putString("mqtt_pass", stored_mqtt_pass);
+    settings.putString("mqtt_pass", String(stored_mqtt_pass));
     webSerialPrintln("New MQTT pass : " + stored_mqtt_pass);
   }
 
   else if (input.indexOf("topicin") > -1) {
     stored_mqtt_topic_in = splitString(input, ' ', 1);
-    settings.putString("mqtt_topic_in", stored_mqtt_topic_in);
+    settings.putString("mqtt_topic_in", String(stored_mqtt_topic_in));
     webSerialPrintln("New Topic IN : " + stored_mqtt_topic_in);
   }
 
   else if (input.indexOf("topicout") > -1) {
     stored_mqtt_topic_out = splitString(input, ' ', 1);
-    settings.putString("mqtt_topic_out", stored_mqtt_topic_out);
+    settings.putString("mqtt_topic_out", String(stored_mqtt_topic_out));
     webSerialPrintln("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
@@ -238,11 +244,11 @@ void SerialCommand(String input) {
   }
 
   else if (input.indexOf("report") > -1) {
-    turntableReport();
+    uiAskReport = true;
   }
 
   else if (input.indexOf("sensor") > -1) {
-    turntableIrReport();
+    uiAskInfra = true;
   }
 
   else if (input.indexOf("quiet") > -1) {
@@ -256,39 +262,39 @@ void SerialCommand(String input) {
   }
 
   else if (input.indexOf("gohome") > -1) {
-    requestHome();
+    uiAskMoveHome = true;
   }
 
   else if (input.indexOf("goend") > -1) {
-    requestGoEnd();
+    uiAskMoveEnd = true;
   }
 
   else if (input.indexOf("go30") > -1) {
-    requestGo30();
+    uiAskMove30 = true;
   }
 
   else if (input.indexOf("go17") > -1) {
-    requestGo17();
+    uiAskMove17 = true;
   }
 
   else if (input.indexOf("gostill") > -1) {
-    requestGoStill();
+    uiAskMoveNot = true;
   }
 
   else if (input.indexOf("stop") > -1 || input.indexOf("start") > -1 || input.indexOf("play") > -1) {
-    requestStartStop();
+    uiPressStartStop = true;
   }
 
   else if (input.indexOf("up") > -1 || input.indexOf("down") > -1 || input.indexOf("pause") > -1) {
-    requestUpDown();
+    uiPressUpDown = true;
   }
 
   else if (input.indexOf("repeat") > -1) {
-    requestRepeat();
+    uiPressRepeat = true;
   }
 
   else if (input.indexOf("bypass") > -1 || input.indexOf("overrite") > -1 || input.indexOf("init") > -1) {
-    requestInitBypass();
+    uiRequestInit = true;
   }
 
   else if (input.indexOf("temp") > -1) {

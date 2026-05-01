@@ -6,7 +6,7 @@ const int WS_MAX_LINES = 10;
 std::deque<String> webLog;
 
 SemaphoreHandle_t logMutex = xSemaphoreCreateMutex();
-bool haschanged = true;
+volatile bool haschanged = true;
 
 void wsprint(String s) {
   Serial.print(s);
@@ -16,10 +16,10 @@ void wsprint(String s) {
     } else {
       webLog.back() += s;
     }
-    xSemaphoreGive(logMutex); //unlock
     wsMaintainWebLog();
+    xSemaphoreGive(logMutex); //unlock
+    haschanged = true;
   }
-  haschanged = true;
 }
 
 void wsprintln(String s) {
@@ -31,10 +31,10 @@ void wsprintln(String s) {
       webLog.back() += s;
     }
     webLog.push_back("");
-    xSemaphoreGive(logMutex); //unlock
     wsMaintainWebLog();
+    xSemaphoreGive(logMutex); //unlock
+    haschanged = true;
   }
-  haschanged = true;
 }
 
 
@@ -56,7 +56,7 @@ void webSerialPrintln(long unsigned int l) { wsprintln(String(l)); }
 void webSerialPrint(IPAddress ip)   { wsprint(ip.toString()); }
 void webSerialPrintln(IPAddress ip) { wsprintln(ip.toString()); }
 
-bool webserialDirty() { return haschanged; }
+bool computeWebserialDirty() { return haschanged; }
 
 void wsMaintainWebLog() {
   while (webLog.size() > (WS_MAX_LINES + 1)) { //+1 for last linefeed
@@ -70,7 +70,7 @@ void updateWebSerial() {
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
 
     String buffer = "";
-    buffer.reserve(2600); 
+    buffer.reserve(1000); 
 
     for (const String& s : webLog) {
       buffer += s + "\n";
@@ -78,6 +78,6 @@ void updateWebSerial() {
     xSemaphoreGive(logMutex); //unlock
 
     ESPUI.updateLabel(logLabelId, buffer);
+    haschanged = false;
   }
-  haschanged = false;
 }

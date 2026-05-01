@@ -15,8 +15,8 @@ uint16_t logLabelId;
 //Turntable config========
 uint16_t device_name_text, highVerbosity_switch;
 String stored_devicename;
-bool highVerbosity = false;
-bool firstPassCompleted = false;
+volatile bool highVerbosity = false;
+volatile bool firstPassCompleted = false;
 //Turntable config========
 
 //Web server==================================
@@ -97,6 +97,25 @@ uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, 
 #include "driver/temperature_sensor.h"
 temperature_sensor_handle_t temp_sensor = NULL;
 
+
+volatile bool uiPressRepeat    = false;
+volatile bool uiPressMoveIn    = false;
+volatile bool uiPressMoveOut   = false;
+volatile bool uiPressUpDown    = false;
+volatile bool uiPressStartStop = false;
+volatile bool uiInvert         = false;
+volatile bool uiAskMoveHome    = false;
+volatile bool uiAskMoveEnd     = false;
+volatile bool uiAskMove30      = false;
+volatile bool uiAskMove17      = false;
+volatile bool uiAskMoveNot     = false;
+volatile bool uiRequestInit    = false;
+volatile bool uiAskReport      = false;
+volatile bool uiAskInfra       = false;
+  
+TaskHandle_t Handle_Turntable;
+
+
 void cpuTempSensorSetup() {
   temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
   temperature_sensor_install(&temp_sensor_config, &temp_sensor);
@@ -132,7 +151,8 @@ void setup() {
   simpleOTAbegin();
 
   firstPassCompleted = true;
-  if(highVerbosity) webSerialPrint(String(millis()) + " - ");
+  xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 1, &Handle_Turntable, 1);
+
   webSerialPrintln(String("FW ver ") + firmwareVersion());
   webSerialPrintln(String("[") + stored_devicename + "] awoken");
 }
@@ -147,6 +167,16 @@ void loop() {
   }
   mqtt_loop();
 
-  turntableLoop();
+  //update GUI
+  turntableUiUpdate();
+
+  vTaskDelay(1); 
+}
+//core 1 - handles everything but ESPUI
+void TaskTurntable(void * pvParameters) {
+  for(;;) {
+    turntableLoop();
+    vTaskDelay(1);
+  }
 }
 //LOOP==========================================
