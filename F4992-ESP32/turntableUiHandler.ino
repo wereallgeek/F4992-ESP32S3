@@ -167,11 +167,11 @@ void requestComputation() {
   if (uiPressRepeat) requestRepeat();
   uiPressRepeat = false;
   if (uiPressMoveIn) {
-    if (armPosition() >= getArmPresetValue(3)) uiPressMoveIn = false; //needs to match enum ArmPositions
+    if (armPosition() >= getArmPresetValue(END)) uiPressMoveIn = false;
     else stepTonearmIn();
   }
   if (uiPressMoveOut) {
-    if (armPosition() <= getArmPresetValue(0)) uiPressMoveOut = false; //needs to match enum ArmPositions
+    if (armPosition() <= getArmPresetValue(HOME)) uiPressMoveOut = false;
     else stepTonearmOut();
   }
   if (uiPressUpDown) requestUpDown();
@@ -205,7 +205,7 @@ void turntableUiUpdate() {
     lastUpdateCycle1 = millis();
     if(armstateDirty) changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
     armstateDirty = false; 
-    if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor); //include CSS
+    if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor);
     repeatDirty = false; 
     if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
     dcmDirty = false;
@@ -219,7 +219,7 @@ void turntableUiUpdate() {
     lastUpdateCycle3 = millis();
     if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
     dd33Dirty = false;
-    if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);  //include CSS
+    if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);
     disksizeDirty = false;
     if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
     armlifterDirty = false;
@@ -230,7 +230,7 @@ void turntableUiUpdate() {
     ttstateDirty = false;
     if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
     armpositionDirty = false;
-    if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor); //include CSS
+    if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
     ledstateDirty = false;
   }
 }
@@ -269,8 +269,8 @@ void turntableReport() {
 
 void turntableSensorReport() {
   webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[1] + ")");
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[2] + ")");  // must follow enum DetectedSize
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
 }
 
 void turntableIrReport() {
@@ -351,28 +351,28 @@ int getIrTreshold() {
 }
 
 void readArmPresetValuesFromStorage() {
-  setArmPresetValues (PresetDefaults[0], 
-                      ttConfig.getUShort("Steps30", PresetDefaults[1]),
-                      ttConfig.getUShort("Steps17", PresetDefaults[2]),
-                      ttConfig.getUShort("StepsEnd", PresetDefaults[3]));   //needs to match enum ArmPositions
+  setArmPresetValues (PresetDefaults[HOME], 
+                      ttConfig.getUShort("Steps30", PresetDefaults[START30]),
+                      ttConfig.getUShort("Steps17", PresetDefaults[START17]),
+                      ttConfig.getUShort("StepsEnd", PresetDefaults[END]));
 }
 
 void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
-  ArmPresets[0] = valueForHome;
-  ArmPresets[1] = valueFor30;
-  ArmPresets[2] = valueFor17;
-  ArmPresets[3] = valueForEnd; //needs to match enum ArmPositions
+  ArmPresets[HOME] = valueForHome;
+  ArmPresets[START30] = valueFor30;
+  ArmPresets[START17] = valueFor17;
+  ArmPresets[END] = valueForEnd;
 }
 
 uint16_t getArmPresetValue(int presetIndex) {
-  if (presetIndex < 0 || 
-      presetIndex > 3) return 0; //needs to match enum ArmPositions
+  if (presetIndex < HOME || 
+      presetIndex > END) return 0;
   return ArmPresets[presetIndex];
 }
 
 const char* turntableStatus(int stateIndex) {
-  if (stateIndex < 0 || 
-      stateIndex > 7) return "Error"; //needs to match enum TurntableState
+  if (stateIndex < IDLE || 
+      stateIndex > PLAY) return "Error";
   return TurntableStateDesc[stateIndex];
 }
 
@@ -394,8 +394,7 @@ void outputTurntableDetailsValues() {
     webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
     webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
     webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
-    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(1) + String(", ")   //needs to match enum ArmPositions
-          + getArmPresetValue(2) + String(", ") + getArmPresetValue(3)+ String("]"));
+    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
   }
 }
 
@@ -404,9 +403,9 @@ void resyncTurntableDetailsToScreen() {
   ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
   ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
   ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
-  ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(1)));
-  ESPUI.updateControlValue(armPresetValue17LabelId, String(getArmPresetValue(2)));
-  ESPUI.updateControlValue(armPresetValueEndLabelId, String(getArmPresetValue(3)));  //needs to match enum ArmPositions
+  ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(START30)));
+  ESPUI.updateControlValue(armPresetValue17LabelId, String(getArmPresetValue(START17)));
+  ESPUI.updateControlValue(armPresetValueEndLabelId, String(getArmPresetValue(END)));
 }
 
 void applyTurntableDetailsToMemory() {
@@ -424,8 +423,8 @@ void saveTurntableDetailsToConfig() {
     ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
     ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
     ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
-    ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(1));
-    ttConfig.putUShort("Steps17", (uint16_t)getArmPresetValue(2));
-    ttConfig.putUShort("StepsEnd", (uint16_t)getArmPresetValue(3));  //needs to match enum ArmPositions
+    ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(START30));
+    ttConfig.putUShort("Steps17", (uint16_t)getArmPresetValue(START17));
+    ttConfig.putUShort("StepsEnd", (uint16_t)getArmPresetValue(END));
 }
 //======================== TT CONFIGURATION =================================
