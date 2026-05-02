@@ -7,7 +7,7 @@
 //================================================
 #include <Bounce2.h>
 #include "driver/pulse_cnt.h"
-
+ 
 unsigned long lastUpdateCycle1 = 0; 
 unsigned long lastUpdateCycle2 = 0; 
 unsigned long lastUpdateCycle3 = 0; 
