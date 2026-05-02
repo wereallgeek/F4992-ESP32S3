@@ -115,20 +115,6 @@ volatile bool uiAskInfra       = false;
   
 TaskHandle_t Handle_Turntable;
 
-
-void cpuTempSensorSetup() {
-  temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
-  temperature_sensor_install(&temp_sensor_config, &temp_sensor);
-  temperature_sensor_enable(temp_sensor);
-}
-
-float getCpuTemperature() {
-  float tsens_out;
-  temperature_sensor_get_celsius(temp_sensor, &tsens_out);
-  return tsens_out;
-}
-//Internal temperature sensor============================================================================================
-
 //SETUP=========================
 void setup() {
   firstPassCompleted = false;
