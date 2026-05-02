@@ -7,7 +7,7 @@
 //================================================
 #include <Bounce2.h>
 #include "driver/pulse_cnt.h"
- 
+
 unsigned long lastUpdateCycle1 = 0; 
 unsigned long lastUpdateCycle2 = 0; 
 unsigned long lastUpdateCycle3 = 0; 
@@ -527,63 +527,6 @@ void startAutoOperation() {
 void clearRepeat() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
   repeat = false;
-}
-
-//Handling config changes
-void outputTurntableDetailsValues() {
-  if(highVerbosity) {
-    webSerialPrintln(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
-    webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
-    webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
-    webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
-    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
-  }
-}
-
-void resyncTurntableDetailsToScreen() {
-  ESPUI.updateControlValue(detectionDurationLabelId, String(getDetectionDuration()));
-  ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
-  ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
-  ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
-  ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(START30)));
-  ESPUI.updateControlValue(armPresetValue17LabelId, String(getArmPresetValue(START17)));
-  ESPUI.updateControlValue(armPresetValueEndLabelId, String(getArmPresetValue(END)));
-}
-
-void applyTurntableDetailsToMemory() {
-  setDetectionDuration(ESPUI.getControl(detectionDurationLabelId)->value.toInt());
-  setMuteDuration(ESPUI.getControl(muteDurationLabelId)->value.toInt());
-  setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
-  setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
-  setArmPresetValues(0, ESPUI.getControl(armPresetValue30LabelId)->value.toInt(), 
-                        ESPUI.getControl(armPresetValue17LabelId)->value.toInt(),
-                        ESPUI.getControl(armPresetValueEndLabelId)->value.toInt());
-}
-
-void saveTurntableDetailsToConfig() {
-    ttConfig.putUShort("detectDuration", (uint16_t)getDetectionDuration());
-    ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
-    ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
-    ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
-    ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(START30));
-    ttConfig.putUShort("Steps17", (uint16_t)getArmPresetValue(START17));
-    ttConfig.putUShort("StepsEnd", (uint16_t)getArmPresetValue(END));
-}
-
-//Tonearm control=============================
-void turntableSensorReport() {
-  webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
-}
-
-void turntableIrReport() {
-  webSerialPrintln("========Infrared=sensor=report=========");
-  turntableSensorReport();
-  webSerialPrint("IR value:");
-  webSerialPrint  ((String("  30-")) + value30cm());
-  webSerialPrintln((String("  17-")) + value17cm());
-  webSerialPrintln("=======================================");
 }
 
 void updateLeds() {

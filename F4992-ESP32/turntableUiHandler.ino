@@ -266,6 +266,21 @@ void turntableReport() {
 
   webSerialPrintln((String(sizename[getDiscSize()])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (getRepeatState() ? " | -REPEAT-" : " | norepeat"));
 }
+
+void turntableSensorReport() {
+  webSerialPrint("Sensors:");
+  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[1] + ")");
+  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[2] + ")");  // must follow enum DetectedSize
+}
+
+void turntableIrReport() {
+  webSerialPrintln("========Infrared=sensor=report=========");
+  turntableSensorReport();
+  webSerialPrint("IR value:");
+  webSerialPrint  ((String("  30-")) + value30cm());
+  webSerialPrintln((String("  17-")) + value17cm());
+  webSerialPrintln("=======================================");
+}
 // ============ Debug console helper =================
 
 // ======== LED INTERFACE =========
@@ -339,7 +354,7 @@ void readArmPresetValuesFromStorage() {
   setArmPresetValues (PresetDefaults[0], 
                       ttConfig.getUShort("Steps30", PresetDefaults[1]),
                       ttConfig.getUShort("Steps17", PresetDefaults[2]),
-                      ttConfig.getUShort("StepsEnd", PresetDefaults[3]));
+                      ttConfig.getUShort("StepsEnd", PresetDefaults[3]));   //needs to match enum ArmPositions
 }
 
 void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
@@ -370,3 +385,47 @@ void readTurntablePresetValuesFromStorage() {
   readIrTresholdFromStorage();
 }
 //======================== UI exposition of constants =======================
+
+//======================== TT CONFIGURATION =================================
+//Handling config changes
+void outputTurntableDetailsValues() {
+  if(highVerbosity) {
+    webSerialPrintln(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
+    webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
+    webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
+    webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
+    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(1) + String(", ")   //needs to match enum ArmPositions
+          + getArmPresetValue(2) + String(", ") + getArmPresetValue(3)+ String("]"));
+  }
+}
+
+void resyncTurntableDetailsToScreen() {
+  ESPUI.updateControlValue(detectionDurationLabelId, String(getDetectionDuration()));
+  ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
+  ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
+  ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
+  ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(1)));
+  ESPUI.updateControlValue(armPresetValue17LabelId, String(getArmPresetValue(2)));
+  ESPUI.updateControlValue(armPresetValueEndLabelId, String(getArmPresetValue(3)));  //needs to match enum ArmPositions
+}
+
+void applyTurntableDetailsToMemory() {
+  setDetectionDuration(ESPUI.getControl(detectionDurationLabelId)->value.toInt());
+  setMuteDuration(ESPUI.getControl(muteDurationLabelId)->value.toInt());
+  setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
+  setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
+  setArmPresetValues(0, ESPUI.getControl(armPresetValue30LabelId)->value.toInt(), 
+                        ESPUI.getControl(armPresetValue17LabelId)->value.toInt(),
+                        ESPUI.getControl(armPresetValueEndLabelId)->value.toInt());
+}
+
+void saveTurntableDetailsToConfig() {
+    ttConfig.putUShort("detectDuration", (uint16_t)getDetectionDuration());
+    ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
+    ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
+    ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
+    ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(1));
+    ttConfig.putUShort("Steps17", (uint16_t)getArmPresetValue(2));
+    ttConfig.putUShort("StepsEnd", (uint16_t)getArmPresetValue(3));  //needs to match enum ArmPositions
+}
+//======================== TT CONFIGURATION =================================
