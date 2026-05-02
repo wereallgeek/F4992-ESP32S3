@@ -54,17 +54,8 @@ unsigned long lastUpdateCycle4 = 0;
 
 
 
-#define DEFIRCYCLEDURATION       2290
-#define DEFDETECTIONDURATION     2290
-#define DEFMUTEDURATION          1000
-#define DEFUPDURATION            350
-volatile int irCycleDuration =   2500;
-volatile int detectionDuration = 2500;
-volatile int muteDuration =      1000;
-volatile int upDuration =        350;
 
 enum Hardwareswitch          {ARM,          SWITCH1,  SWITCH2,    SWITCH3,    SWITCH4,   SWITCH5, MAXSWITCH};
-const char* Switchname[] =   {"ArmReset",   "Repeat", "Move In",  "Move Out", "Up/Down", "Start/Stop"};
 const byte switchpins[] =    {PIN_ARMRESET, PIN_SW1,  PIN_SW2,    PIN_SW3,    PIN_SW4,    PIN_SW5};
 Bounce debouncedButtons[MAXSWITCH]; 
 
@@ -75,7 +66,6 @@ const byte ledpins[] =       {0,            PIN_LED1,     PIN_LED2,  PIN_LED3,  
 enum Hardwaredcm             {NODCM,        DCM1,         DCM2,      DCM3,      MAXDCM};
 const byte dcmpins[] =       {0,            PIN_DCM1,     PIN_DCM2,  PIN_DCM3};
 
-volatile int previousDcm = 0;
 
 const int armUp =         LOW;
 const int armDown =       HIGH;
@@ -97,8 +87,6 @@ const bool OUT =          false;
 
 const int irNotvitible =  HIGH;
 const int irVisible =     LOW;
-#define DEFIRTRESHOLD     1500
-volatile int irTreshold = DEFIRTRESHOLD;
 const int irMinimum =     1;
 
 const int bStop =         HIGH;
@@ -106,27 +94,16 @@ const int bStart =        LOW;
 
 //purposely match arm position and speed
 enum DetectedSize                 {NODISC, DISC30, DISC17};
-const char* sizename[] =          {"NODISC", "30cm", "17cm"};
 const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
 DetectedSize DiscSize =           NODISC;
-DetectedSize previousDiscSize =   NODISC;
-DetectedSize printedDiscSize =    DISC30;
 enum ArmPositions                 {HOME, START30, START17, END};
-const uint16_t PresetDefaults[] = {0,    188,     1050,    1444}; //default values
-uint16_t ArmPresets[] =           {0,    188,     1050,    1444}; //used value as overwritten by preferences
-uint16_t  desiredPosition =       ArmPresets[HOME];
+uint16_t  desiredPosition =       0;
 
 enum TurntableState                {IDLE,      INITIAL,        GOHOME,      UPTOHOME,    UPTOMOVE,    MOVE,      DETECT,      PLAY};
-const char* TurntableStateDesc[] = {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Playing"};
-const char* statusHexColor[] =     {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22", "#497a98",   "#3489c9"};
 
-TurntableState previousArmState =  MOVE;
-TurntableState previousLedState =  MOVE;
-TurntableState previousTtState =   MOVE;
 TurntableState currentState =      IDLE;
 TurntableState nextState =         IDLE;
 
-const char* onOffIndicatorColor[] =     {"#2c3e50", "#e67e22"};
 
 //prototypes to make arduino IDE happy 
 void changeState(TurntableState newState); 
@@ -134,44 +111,15 @@ bool isState(TurntableState state);
 
 bool initializationCompleted = false;
 
-const char* armIcons[] = {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
-const char* dcmIcons[] = {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
-
 unsigned long sensortimer = 0;
 unsigned long DetectionTime[3] = {0, 0, 0};
 unsigned long armdowntime = 0;
 unsigned long armuptime = 0;
 
 volatile bool repeat = false;
-volatile bool previousRepeat = false;
-volatile bool previousDD33 = false;
-volatile bool previousArmLifter = true;
-volatile int32_t previousPosition = -1;
 
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
-
-//core separation
-
-volatile bool armstateDirty = false;
-volatile bool repeatDirty = false;
-volatile bool dcmDirty = false;
-volatile bool webserialDirty = false;
-volatile bool dd33Dirty = false;
-volatile bool disksizeDirty = false;
-volatile bool armlifterDirty = false;
-volatile bool ttstateDirty = false;
-volatile bool armpositionDirty = false;
-volatile bool ledstateDirty = false;
-volatile bool uiDd3Active = false;
-volatile const char* uiRecordStyle;
-volatile const char* uiLifterIcon;
-volatile const char* uidcmIcon;
-volatile const char* uiTurntableStatus;
-volatile int uiArmPosition = 0;
-volatile const char* uiStatusHexColor;
-volatile const char* uiOnOffIndicatorColor;
-
 
 //============================ hardware interface =============================
 void turntableCounterSetup() {
@@ -255,7 +203,7 @@ void turntableCompuselectorSetup() {
   digitalWrite(PIN_COMPUSELECTOR, bStop);
 }
 
-//update
+//---------update-----------------
 void turntablePeripheralUpdate() {
   //17 & 30cm sensors
   if (sense30()) DetectionTime[DISC30] = millis();
@@ -266,13 +214,13 @@ void turntablePeripheralUpdate() {
   //reset switch
   if (isHome()) resetDiskSize();
   //process Mute
-  setMute(millis() - armuptime < muteDuration);
+  setMute(millis() - armuptime < getMuteDuration());
   compuselect();
   //LEDS -- P-L55
   updateLeds();
 }
 
-//lifter
+//--getters----------------------
 int armLifter() {
   return digitalRead(PIN_LIFTER);
 }
@@ -317,12 +265,12 @@ int value17cm() {
 
 bool sense30() {
   int sensed30value = value30cm();
-  return irMinimum < sensed30value && sensed30value < irTreshold;
+  return irMinimum < sensed30value && sensed30value < getIrTreshold();
 }
 
 bool sense17() {
   int sensed17value = value17cm();
-  return irMinimum < sensed17value && sensed17value < irTreshold;
+  return irMinimum < sensed17value && sensed17value < getIrTreshold();
 }
 
 void compuselect() {
@@ -338,116 +286,53 @@ void LD(int ledNumber, bool illuminate) {
   digitalWrite(ledpins[ledNumber], illuminate? HIGH : LOW);
 }
 
-//======================== UI exposition of constants =======================
-void readDetectionDurationFromStorage() {
-  setDetectionDuration(ttConfig.getUShort("detectDuration", DEFDETECTIONDURATION));
+bool getRepeatState() {
+  return repeat;
 }
 
-void setDetectionDuration(int duration) {
-  detectionDuration = duration;
+bool getInitializationCompleted() {
+  return initializationCompleted;
 }
 
-int getDetectionDuration(){
-  return detectionDuration;
+uint16_t getDesiredPosition() {
+  return desiredPosition;
 }
 
-void readMuteDurationFromStorage(){
-  setMuteDuration(ttConfig.getUShort("muteDuration", DEFMUTEDURATION));
+int getDiscSize() {
+  return (int)DiscSize;
 }
 
-void setMuteDuration(int duration) {
-  muteDuration = duration;
+int getCurrentState() {
+  return (int)currentState;
 }
 
-int getMuteDuration() {
-  return muteDuration;
+int getNextState() {
+  return (int)nextState;
 }
 
-void readUpDurationFromStorage(){
-  setUpDuration(ttConfig.getUShort("upDuration", DEFUPDURATION));
-}
-
-void setUpDuration(int duration) {
-  upDuration = duration;
-}
-
-int getUpDuration() {
-  return upDuration;
-}
-
-void readIrCycleDurationFromStorage() {
-  setIrCycleDuration(ttConfig.getUShort("irCycleDuration", DEFIRCYCLEDURATION));
-}
-
-void setIrCycleDuration(int duration) {
-  irCycleDuration = duration;
-}
-
-int getIrCycleDuration() {
-  return irCycleDuration;
-}
-
-void readIrTresholdFromStorage() {
-  setIrTreshold(ttConfig.getUShort("irTreshold", DEFIRTRESHOLD));
-}
-
-void setIrTreshold(int treshold) {
-  irTreshold = treshold;
-}
-
-int getIrTreshold() {
-  return irTreshold;
-}
-
-void readArmPresetValuesFromStorage() {
-  setArmPresetValues (PresetDefaults[HOME], 
-                      ttConfig.getUShort("Steps30", PresetDefaults[START30]),
-                      ttConfig.getUShort("Steps17", PresetDefaults[START17]),
-                      ttConfig.getUShort("StepsEnd", PresetDefaults[END]));
-}
-
-void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
-  ArmPresets[HOME] = valueForHome;
-  ArmPresets[START30] = valueFor30;
-  ArmPresets[START17] = valueFor17;
-  ArmPresets[END] = valueForEnd;
-}
-
-uint16_t getArmPresetValue(int presetIndex) {
-  if (presetIndex < HOME) return 0;
-  if (presetIndex > END) return 0;
-  return ArmPresets[presetIndex];
-}
-
-
-void readTurntablePresetValuesFromStorage() {
-  readArmPresetValuesFromStorage();
-  readDetectionDurationFromStorage();
-  readMuteDurationFromStorage();
-  readUpDurationFromStorage();
-  readIrCycleDurationFromStorage();
-  readIrTresholdFromStorage();
+int getArmUpLevel() {
+  return armUp;
 }
 
 //============================ state machine logic ============================
 
 bool isHome() {
-  return armPosition() == ArmPresets[HOME];
+  return armPosition() == getArmPresetValue(HOME);
 }
 
 bool isOverPlatter() {
-  return armPosition() >= ArmPresets[START30];
+  return armPosition() >= getArmPresetValue(START30);
 }
 
 bool isAtEndPosition() {
-  return armPosition() >= ArmPresets[END];
+  return armPosition() >= getArmPresetValue(END);
 }
 
 void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) webSerialPrint(String(millis()) + " - "); //state change remains in low verbosity
-  if(firstPassCompleted) webSerialPrintln(String("State: ") + TurntableStateDesc[currentState] + " -> " + TurntableStateDesc[newState]);
+  if(firstPassCompleted) webSerialPrintln(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
   currentState = newState;
-  setAnimationMode(currentState, statusHexColor[currentState]); //inform ledpixel driver.
+  ledAnimationSetState(currentState);
 }
 
 bool isState(TurntableState state) {
@@ -481,19 +366,14 @@ void resetArmposition() {
   if (isMovingOut()) changeState(IDLE);
 }
 
-void verboseDiskChange() {
-  if (highVerbosity && previousDiscSize != DiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[DiscSize]);
-  previousDiscSize = DiscSize;
-}
-
 void resetDiskSize() {
   DiscSize = NODISC;
   verboseDiskChange();
 }
 
 void computeDiscSize() {
-  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - irCycleDuration);
-  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - irCycleDuration);
+  bool recent30cmSensed = (DetectionTime[DISC30] > millis() - getIrCycleDuration());
+  bool recent17cmSensed = (DetectionTime[DISC17] > millis() - getIrCycleDuration());
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
@@ -581,7 +461,7 @@ bool reachedPosition() {
 }
 
 bool reachedEndPosition() {
-  return armPosition() >= ArmPresets[END];
+  return armPosition() >= getArmPresetValue(END);
 }
 
 void startDD() {
@@ -706,35 +586,6 @@ void turntableIrReport() {
   webSerialPrintln("=======================================");
 }
 
-// Turntable user interface ==============================================
-void turntableReport() {
-  webSerialPrintln(String("status:          ") + TurntableStateDesc[currentState]);
-  webSerialPrintln(String("Next state:      ") + TurntableStateDesc[nextState]);
-  webSerialPrintln(String("armPosition:     ") + armPosition() + " (" + desiredPosition + ")");
-  webSerialPrintln(String("Initialization:  ") + (initializationCompleted ? "Completed" : "Pending"));
-  webSerialPrintln(String("arm & mute:      ") + (armLifter() == armUp ? " armUp " : "armDown") + " (" + (getMute() ? "M)" : "P)"));
-  webSerialPrintln(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
-
-  webSerialPrint("DCM    :");
-  webSerialPrint  ((String("   1-")) + (DCM(1) ? "ON" : "--"));
-  webSerialPrint  ((String("   2-")) + (DCM(2) ? "ON" : "--"));
-  webSerialPrintln((String("   3-")) + (DCM(3) ? "ON" : "--"));
-
-  webSerialPrint("DD     :");
-  webSerialPrint  ((String("  SS-")) + (isTurning() ? "EN" : "--"));
-  webSerialPrint  ((String("  33-")) + (dd33active() ? "EN" : "--"));
-  webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
-
-  turntableSensorReport();
-
-  webSerialPrintln((String(sizename[DiscSize])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (repeat ? " | -REPEAT-" : " | norepeat"));
-}
-
-//for UI
-String turntableStatus() {
- return TurntableStateDesc[currentState];
-}
-
 void updateLeds() {
   LD(1, !(isState(IDLE) || isState(PLAY))); //Compute - all but play&idle is "I am doing something"
   LD(2, repeat); //Repeat
@@ -827,21 +678,21 @@ void requestGoEnd() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request GoEND");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(ArmPresets[END]);
+  requestMove(getArmPresetValue(END));
 }
 
 void requestGo30() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go30");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(ArmPresets[START30]);
+  requestMove(getArmPresetValue(START30));
 }
 
 void requestGo17() {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go17");
   if (!initializationCompleted) return;
   nextState = IDLE;
-  requestMove(ArmPresets[START17]);
+  requestMove(getArmPresetValue(START17));
 }
 
 void requestGoStill() {
@@ -903,168 +754,6 @@ void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
     ESPUI.updateControl(id);
 }
 
-//change indicators
-bool computeRepeatDirty() {
-  if (previousRepeat != repeat) {
-    uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
-    previousRepeat = repeat;
-    return true;
-  }
-  return false;
-}
-
-bool computeDcmDirty() {
-  bool haschanged = false;
-  int currentDcm = getDCM();
-  if (previousDcm != currentDcm) haschanged = true;
-  previousDcm = currentDcm;
-  uidcmIcon = dcmIcons[currentDcm];
-  return haschanged;
-}
-
-bool computeArmstateDirty() {
-  bool haschanged = false;
-  if (previousArmState != currentState) haschanged = true;
-  previousArmState = currentState;
-  uiStatusHexColor = statusHexColor[currentState];
-  return haschanged;
-}
-
-bool computeTtstateDirty() {
-  bool haschanged = false;
-  if (previousTtState != currentState) haschanged = true;
-  previousTtState = currentState;
-  uiTurntableStatus = TurntableStateDesc[currentState];
-  return haschanged;
-}
-
-bool computeLedstateDirty() {
-  bool haschanged = false;
-  if (previousLedState != currentState) haschanged = true;
-  previousLedState = currentState;
-  uiStatusHexColor = statusHexColor[currentState];
-  return haschanged;
-}
-
-bool computeDd33Dirty() {
-  bool haschanged = false;
-  if (previousDD33 != dd33active()) haschanged=true;
-  previousDD33 = dd33active();
-  uiDd3Active = dd33active();
-  return haschanged;
-}
-
-bool computeDisksizeDirty() {
-  bool haschanged = false;
-  if (printedDiscSize != DiscSize) haschanged = true;
-  printedDiscSize = DiscSize;
-  uiRecordStyle = recordStyles[DiscSize];
-  return haschanged;
-}
-
-bool computeArmlifterDirty() {
-  bool haschanged = false;
-  if (previousArmLifter != armLifter()) haschanged = true;
-  previousArmLifter = armLifter();
-  uiLifterIcon = (armLifter() == armUp) ? armIcons[1] : armIcons[0];
-  return haschanged;
-}
-
-bool computeArmpositionDirty() {
-  bool haschanged = false;
-  if (previousPosition != armPosition()) haschanged = true;
-  previousPosition = armPosition();
-  uiArmPosition = armPosition();
-  return haschanged;
-}
-
-void dirtyComputation() {
-  if (computeArmstateDirty()) armstateDirty = true;
-  if (computeRepeatDirty()) repeatDirty = true;
-  if (computeDcmDirty()) dcmDirty = true;
-  if (computeWebserialDirty()) webserialDirty = true;
-  if (computeDd33Dirty()) dd33Dirty = true;
-  if (computeDisksizeDirty()) disksizeDirty = true;
-  if (computeArmlifterDirty()) armlifterDirty = true;
-  if (computeTtstateDirty()) ttstateDirty = true;
-  if (computeArmpositionDirty()) armpositionDirty = true;
-  if (computeLedstateDirty()) ledstateDirty = true;
-}
-
-void requestComputation() {
-  requestInvert(uiInvert);
-  if (uiPressRepeat) requestRepeat();
-  uiPressRepeat = false;
-  if (uiPressMoveIn) {
-    if (armPosition() >= ArmPresets[END]) uiPressMoveIn = false;
-    else stepTonearmIn();
-  }
-  if (uiPressMoveOut) {
-    if (armPosition() <= ArmPresets[HOME]) uiPressMoveOut = false;
-    else stepTonearmOut();
-  }
-  if (uiPressUpDown) requestUpDown();
-  uiPressUpDown = false;
-  if (uiPressStartStop) requestStartStop();
-  uiPressStartStop = false;
-
-  if (uiAskMoveHome) requestHome();
-  uiAskMoveHome = false;
-  if (uiAskMoveEnd) requestGoEnd();
-  uiAskMoveEnd = false;
-  if (uiAskMove30) requestGo30();
-  uiAskMove30 = false;
-  if (uiAskMove17) requestGo17();
-  uiAskMove17 = false;
-  if (uiAskMoveNot) requestGoStill();
-  uiAskMoveNot = false;
-
-  if (uiRequestInit) requestInitBypass();
-  uiRequestInit = false;
-
-  if (uiAskReport) turntableReport();
-  uiAskReport = false;
-  if (uiAskInfra) turntableIrReport();
-  uiAskInfra = false;
-}
-
-void turntableUiUpdate() {
-// conditionnal ui update separated to minimize ESPUI starvation on multiple instances
-  if (millis() - lastUpdateCycle1 >= 802) {
-    lastUpdateCycle1 = millis();
-    if(armstateDirty) changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
-    armstateDirty = false; 
-    if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor); //include CSS
-    repeatDirty = false; 
-    if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
-    dcmDirty = false;
-  }
-  else if (millis() - lastUpdateCycle2 >= 872) {
-    lastUpdateCycle2 = millis();
-    if(webserialDirty) updateWebSerial();
-    webserialDirty = false;
-  }
-  else if (millis() - lastUpdateCycle3 >= 955) {
-    lastUpdateCycle3 = millis();
-    if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
-    dd33Dirty = false;
-    if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);  //include CSS
-    disksizeDirty = false;
-    if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
-    armlifterDirty = false;
-  }
-  else if (millis() - lastUpdateCycle4 >= 1024) {
-    lastUpdateCycle4 = millis();
-    if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
-    ttstateDirty = false;
-    if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
-    armpositionDirty = false;
-    if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor); //include CSS
-    ledstateDirty = false;
-  }
-}
-// Turntable user interface ==============================================
-
 
 void turntableLoop() {
   switch (currentState) {
@@ -1084,17 +773,17 @@ void turntableLoop() {
       break;
     case GOHOME:
       nextState = IDLE;
-      desiredPosition = ArmPresets[HOME];
+      desiredPosition = getArmPresetValue(HOME);
       moveArmOut();
       if (reachedHome()) changeState(nextState);
       break;
     case UPTOHOME:
       raiseArm();
-      if (armdowntime < millis() - upDuration) changeState(GOHOME);
+      if (armdowntime < millis() - getUpDuration()) changeState(GOHOME);
       break;
     case UPTOMOVE:
       raiseArm();
-      if (armdowntime < millis() - upDuration) changeState(MOVE);
+      if (armdowntime < millis() - getUpDuration()) changeState(MOVE);
       break;
     case MOVE:
       setAutoDDspeed();
@@ -1105,13 +794,13 @@ void turntableLoop() {
       startDD();
       setAutoDDspeed();
       nextState = DETECT;
-      desiredPosition = ArmPresets[DiscSize];
-      moveArmTo(ArmPresets[DISC30]); // begin arm movement to larger disc
+      desiredPosition = getArmPresetValue(DiscSize);
+      moveArmTo(getArmPresetValue(DISC30)); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // It is about the time it takes for the arm to get to large disc drop location.
-      if (millis() - sensortimer >= (detectionDuration)) {
+      if (millis() - sensortimer >= (getDetectionDuration())) {
         computeDiscSize();
-        desiredPosition = ArmPresets[DiscSize];
+        desiredPosition = getArmPresetValue(DiscSize);
         moveArmTo(desiredPosition);
         if (DiscSize == NODISC)
         {
@@ -1133,7 +822,7 @@ void turntableLoop() {
       if (reachedEndPosition()) {
         if (repeat) {
           nextState = PLAY;
-          desiredPosition = ArmPresets[DiscSize];
+          desiredPosition = getArmPresetValue(DiscSize);
           repeat = false; //no infinite repeat
           changeState(UPTOMOVE); 
         }
@@ -1154,6 +843,5 @@ void turntableLoop() {
   requestComputation();
 
   //update LedPixels
-  setLedPixelHexColor(statusHexColor[currentState]); //current no anim only status
   animateLeds();
 }
