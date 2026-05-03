@@ -117,6 +117,7 @@ TaskHandle_t Handle_Turntable;
 //SETUP=========================
 void setup() {
   firstPassCompleted = false;
+  cpuInfo_setup();
   Serial.begin(115200);
   Serial.println();
 
@@ -127,7 +128,6 @@ void setup() {
   turntableSetup();
   simpleOTAsetup();
 
-  cpuInfo_setup();
 
   wifi_init();
   espui_init();

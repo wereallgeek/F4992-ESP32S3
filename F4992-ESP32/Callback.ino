@@ -291,6 +291,17 @@ void SerialCommand(String input) {
     uiRequestInit = true;
   }
 
+  else if (input.indexOf("cpu") > -1) {
+    webSerialPrintln("--- CPU SYSTEM REPORT ---");
+    webSerialPrintln("Model: " + getChipModel() + " (" + String(getCpuCores()) + " cores) @ " + String(ESP.getCpuFreqMHz()) + "MHz");
+    webSerialPrintln("Temperature: " + String(getCpuTemperature(), 0) + " C");
+    webSerialPrintln("Last Boot: " + getReadableResetReason());
+    webSerialPrintln("Last Crash: " + getReadableLastCrashReason());
+    webSerialPrintln("RAM: " + String(getFreeHeap()) + " / " + String(getTotalHeap()) + " bytes free");
+    webSerialPrintln("Flash: " + String(getSketchSize()) + " / " + String(getFlashSize()) + " bytes used");
+    webSerialPrintln("Free Sketch: " + String(getFreeSketchSpace()) + " bytes");
+  }
+
   else if (input.indexOf("temp") > -1) {
     float temperature = getCpuTemperature();
     webSerialPrintln("CPU Temperature: " + String(temperature, 0) + "\xC2\xB0" + "C");
