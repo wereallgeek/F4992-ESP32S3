@@ -92,9 +92,7 @@ const char* recordNodiscStyle =   "width:80px;height:80px;border-radius:50%;back
 uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId;
 uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
 //ESPUI==================================================================================================================
-//Internal temperature sensor============================================================================================
-#include "driver/temperature_sensor.h"
-temperature_sensor_handle_t temp_sensor = NULL;
+
 
 enum actionTypeForStats {MANUAL, CONSOLE, WEB, MQTT, AUTO};
 
@@ -129,7 +127,7 @@ void setup() {
   turntableSetup();
   simpleOTAsetup();
 
-  cpuTempSensorSetup();
+  cpuInfo_setup();
 
   wifi_init();
   espui_init();

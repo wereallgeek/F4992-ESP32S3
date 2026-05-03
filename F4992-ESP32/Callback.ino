@@ -17,20 +17,6 @@ String firmwareVersion() {
   return version;
 }
 
-//Internal temperature sensor============================================================================================
-void cpuTempSensorSetup() {
-  temperature_sensor_config_t temp_sensor_config = TEMPERATURE_SENSOR_CONFIG_DEFAULT(-10, 80);
-  temperature_sensor_install(&temp_sensor_config, &temp_sensor);
-  temperature_sensor_enable(temp_sensor);
-}
-
-float getCpuTemperature() {
-  float tsens_out;
-  temperature_sensor_get_celsius(temp_sensor, &tsens_out);
-  return tsens_out;
-}
-//Internal temperature sensor============================================================================================
-
 //MQTT CALLBACK===================================================
 void mqtt_callback(String topic, byte *message, unsigned int length) {
   String messageTemp;
