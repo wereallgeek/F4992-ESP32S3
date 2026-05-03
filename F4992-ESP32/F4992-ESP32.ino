@@ -135,7 +135,7 @@ void setup() {
   simpleOTAbegin();
 
   firstPassCompleted = true;
-  xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 1, &Handle_Turntable, 1);
+  xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 3, &Handle_Turntable, 1);
 
   webSerialPrintln(String("FW ver ") + firmwareVersion());
   webSerialPrintln(String("[") + stored_devicename + "] awoken");
