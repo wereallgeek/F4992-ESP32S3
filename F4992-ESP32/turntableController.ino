@@ -494,6 +494,10 @@ void turntableSetup() {
   webSerialPrintln("Starting initialization sequence");
 
   turntableLedSetup();
+
+  stats_setup();
+  ttConfigSetup();
+
   turntableCompuselectorSetup();
 
   turntableDcmSetup();
@@ -512,16 +516,18 @@ void turntableSetup() {
   webSerialPrintln("Peripheral configuration completed");
 }
 
-void returnAndClear() {
+void returnAndClear(int actionType) {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
   changeState(UPTOHOME);
   repeat = false;
+  incrementStop(actionType);
 }
 
-void startAutoOperation() {
+void startAutoOperation(int actionType) {
   if(highVerbosity) webSerialPrintln(String(millis()) + " - Start Operation");
   sensortimer = millis();
   changeState(DETECT);
+  incrementStart(actionType);
 }
 
 void clearRepeat() {
@@ -563,10 +569,10 @@ void computeKeys() {
   }
 
   if (debouncedButtons[SWITCH4].fell()) requestUpDown();
-  if (debouncedButtons[SWITCH5].fell()) requestStartStop();
+  if (debouncedButtons[SWITCH5].fell()) requestStartStop(MANUAL);
 }
 
-void requestStartStop() {
+void requestStartStop(int actionType) {
   if (highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
 
@@ -601,12 +607,12 @@ void requestStartStop() {
   //|During autoreturn operation|        ---      |  Clear |
   //|---------------------------|--------------------------|
   // * return after 2.5s via the key operation during the UP using the UP/DOWN key
-       if (armLifter() == armUp   && reachedArmReset()  && !isTurning()) startAutoOperation();
+       if (armLifter() == armUp   && reachedArmReset()  && !isTurning()) startAutoOperation(actionType);
   else if (armLifter() == armUp   && armResetNotActive() && !isTurning()) startDD();
   else if (armLifter() == armDown && armResetNotActive() && !isTurning()) startDD();
-  else if (armLifter() == armUp   && armResetNotActive() && isTurning()) returnAndClear();
-  else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear();
-  else if (isState(DETECT)) returnAndClear();
+  else if (armLifter() == armUp   && armResetNotActive() && isTurning()) returnAndClear(actionType);
+  else if (armLifter() == armDown && armResetNotActive() && isTurning()) returnAndClear(actionType);
+  else if (isState(DETECT)) returnAndClear(actionType);
   else if (isState(GOHOME) || isState(UPTOHOME)) clearRepeat();
   else changeState(UPTOHOME); //undetermined state, going home.
 }
@@ -748,11 +754,14 @@ void turntableLoop() {
         if (DiscSize == NODISC)
         {
           nextState = IDLE;
+          incrementReject();
           changeState(GOHOME); 
         }
         else
         {
           nextState = PLAY;
+          incrementPlaycount();
+          incrementRecordCount((int)DiscSize);
           changeState(MOVE); 
         }
       }
@@ -767,9 +776,11 @@ void turntableLoop() {
           nextState = PLAY;
           desiredPosition = getArmPresetValue(DiscSize);
           repeat = false; //no infinite repeat
+          incrementRepeat();
           changeState(UPTOMOVE); 
         }
         else {
+          incrementStop(AUTO);
           changeState(UPTOHOME);
         }
       }

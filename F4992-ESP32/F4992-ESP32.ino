@@ -31,7 +31,6 @@ volatile bool firstPassCompleted = false;
 
 #include <Preferences.h>
 Preferences settings;
-Preferences ttConfig;
 #include <DNSServer.h>
 #include <ESPmDNS.h>
 #define DNS_PORT 53
@@ -97,12 +96,14 @@ uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, 
 #include "driver/temperature_sensor.h"
 temperature_sensor_handle_t temp_sensor = NULL;
 
+enum actionTypeForStats {MANUAL, CONSOLE, WEB, MQTT, AUTO};
 
 volatile bool uiPressRepeat    = false;
 volatile bool uiPressMoveIn    = false;
 volatile bool uiPressMoveOut   = false;
 volatile bool uiPressUpDown    = false;
 volatile bool uiPressStartStop = false;
+volatile int  uiTypeStartStop  = AUTO;
 volatile bool uiInvert         = false;
 volatile bool uiAskMoveHome    = false;
 volatile bool uiAskMoveEnd     = false;
@@ -124,7 +125,6 @@ void setup() {
   analogSetAttenuation(ADC_11db);
   
   settings.begin("Settings");
-  ttConfig.begin("F4992");
   //Custom setup...............
   turntableSetup();
   simpleOTAsetup();

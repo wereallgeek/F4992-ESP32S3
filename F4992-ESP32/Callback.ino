@@ -82,6 +82,7 @@ void buttonUpdownCallback(Control *sender, int type) {
 void buttonStartStopCallback(Control *sender, int type) {
   if (type == B_UP) {
     uiPressStartStop = true;
+    uiTypeStartStop = WEB;
   }
 }
 
@@ -129,7 +130,7 @@ void applyTurntableDetailsCallback(Control *sender, int type) {
 void resetTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
     webSerialPrintln("Reset turntable to default");
-    ttConfig.clear();
+    ttConfigClear();
     readTurntablePresetValuesFromStorage();
     saveTurntableDetailsToConfig();
     outputTurntableDetailsValues();
@@ -257,14 +258,6 @@ void SerialCommand(String input) {
     ESP.restart();
   }
 
-  else if (input.indexOf("report") > -1) {
-    uiAskReport = true;
-  }
-
-  else if (input.indexOf("sensor") > -1) {
-    uiAskInfra = true;
-  }
-
   else if (input.indexOf("quiet") > -1) {
     highVerbosity = false;
     refreshVerbosity();
@@ -297,6 +290,7 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("stop") > -1 || input.indexOf("start") > -1 || input.indexOf("play") > -1) {
     uiPressStartStop = true;
+    uiTypeStartStop = SERIAL;
   }
 
   else if (input.indexOf("up") > -1 || input.indexOf("down") > -1 || input.indexOf("pause") > -1) {
@@ -314,6 +308,18 @@ void SerialCommand(String input) {
   else if (input.indexOf("temp") > -1) {
     float temperature = getCpuTemperature();
     webSerialPrintln("CPU Temperature: " + String(temperature, 0) + "\xC2\xB0" + "C");
+  }
+
+  else if (input.indexOf("report") > -1) {
+    uiAskReport = true;
+  }
+
+  else if (input.indexOf("sensor") > -1) {
+    uiAskInfra = true;
+  }
+
+  else if (input.indexOf("stats") > -1) {
+    printStatsReport();
   }
 
   else if (input.indexOf("info") > -1) {

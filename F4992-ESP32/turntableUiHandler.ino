@@ -6,7 +6,7 @@
 //          and various communications
 //
 //================================================
-
+Preferences ttConfig;
 //repeats
 //this needs to match ArmPositions
 const uint16_t PresetDefaults[] =   {0,      188,       1050,      1444};
@@ -176,7 +176,7 @@ void requestComputation() {
   }
   if (uiPressUpDown) requestUpDown();
   uiPressUpDown = false;
-  if (uiPressStartStop) requestStartStop();
+  if (uiPressStartStop) requestStartStop(uiTypeStartStop);
   uiPressStartStop = false;
 
   if (uiAskMoveHome) requestHome();
@@ -350,6 +350,10 @@ int getIrTreshold() {
   return irTreshold;
 }
 
+void ttConfigClear() {
+  ttConfig.clear();
+}
+
 void readArmPresetValuesFromStorage() {
   setArmPresetValues (PresetDefaults[HOME], 
                       ttConfig.getUShort("Steps30", PresetDefaults[START30]),
@@ -374,6 +378,10 @@ const char* turntableStatus(int stateIndex) {
   if (stateIndex < IDLE || 
       stateIndex > PLAY) return "Error";
   return TurntableStateDesc[stateIndex];
+}
+
+void ttConfigSetup() {
+  ttConfig.begin("F4992");
 }
 
 void readTurntablePresetValuesFromStorage() {
