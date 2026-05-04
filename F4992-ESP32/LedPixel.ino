@@ -129,7 +129,7 @@ void lightCurrentPosition(int ledR, int ledG, int ledB) {
 
 void showCurrentPosition() {
   strip.clear();
-  lightCurrentPosition(0, 64, 192);
+  lightCurrentPosition(baseRgb[RgbR], baseRgb[RgbG], baseRgb[RgbB]);
   strip.show();
 }
 
