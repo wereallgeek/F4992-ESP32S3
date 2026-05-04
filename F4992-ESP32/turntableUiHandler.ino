@@ -410,9 +410,9 @@ void readArmPresetValuesFromStorage() {
 
 void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t valueFor17, uint16_t valueForEnd) {
   ArmPresets[HOME] = valueForHome;
-  ArmPresets[START30] = valueFor30;
-  ArmPresets[START17] = valueFor17;
-  ArmPresets[END] = valueForEnd;
+  ArmPresets[START30] = (valueFor30 > 0) ?  valueFor30  : 1;
+  ArmPresets[START17] = (valueFor17 > 0) ?  valueFor17  : 1;
+  ArmPresets[END]     = (valueForEnd > 0) ? valueForEnd : 1;
 }
 
 uint16_t getArmMaxValue() {

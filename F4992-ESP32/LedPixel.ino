@@ -125,6 +125,11 @@ void setDesiredBrightness(int brightness) {
   desiredBrightness = brightness;
 }
 
+bool computeLedOverlapTransitionFromArmPosition(uint16_t stepToCompute) {
+  float progress = (float)(stepToCompute * (numberOfPixels() - 1)) / getArmMaxValue();
+  return (progress - (int)progress) > 0.5;
+}
+
 int computeLedFromArmPosition(uint16_t stepToCompute) {
   return (stepToCompute * (numberOfPixels() - 1)) / getArmMaxValue();
 }
@@ -181,7 +186,10 @@ void setLedPixelBrightnessToPreset() {
 }
 
 void lightCurrentPosition(int ledR, int ledG, int ledB) {
-  setLedPixelRgbColor(computeLedFromArmPosition(armPosition()), ledR, ledG, ledB);
+  int currentArmLedToLight = computeLedFromArmPosition(armPosition());
+  setLedPixelRgbColor(currentArmLedToLight, ledR, ledG, ledB);
+  if (computeLedOverlapTransitionFromArmPosition(armPosition())) 
+      setLedPixelRgbColor(currentArmLedToLight + 1, ledR, ledG, ledB);
 }
 
 void showCurrentPosition() {
