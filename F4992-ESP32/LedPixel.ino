@@ -1,3 +1,9 @@
+//================================================
+// LedPixel handler
+//
+// assist the turntable in led animation (addon)
+//
+//================================================
 #include <Adafruit_NeoPixel.h>
 // NeoPixel Extension 
 #define PIN_LEDPIXEL         48  

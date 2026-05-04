@@ -94,7 +94,6 @@ const int bStart =        LOW;
 
 //purposely match arm position and speed
 enum DetectedSize                 {NODISC, DISC30, DISC17};
-const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
 DetectedSize DiscSize =           NODISC;
 enum ArmPositions                 {HOME, START30, START17, END};
 uint16_t  desiredPosition =       0;
@@ -688,21 +687,6 @@ void requestInitBypass() {
   initializationCompleted = true;
   changeState(IDLE);
 }
-
-void changeEspuiLabelColor(uint16_t id, const char* colorHex) {
-    String circleStyle = "background-color: " + String(colorHex) + espuiStatusStyle;
-
-    ESPUI.setElementStyle(id, circleStyle.c_str());
-    ESPUI.updateControl(id);
-}
-
-void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
-    String circleStyle = "background-color: " + String(colorHex) + espuiIndElemStyle;
-
-    ESPUI.setElementStyle(id, circleStyle.c_str());
-    ESPUI.updateControl(id);
-}
-
 
 void turntableLoop() {
   switch (currentState) {

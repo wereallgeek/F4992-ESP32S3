@@ -20,8 +20,19 @@ const char* statusHexColor[] =      {"#2c3e50", "#515453",      "#c9845e",   "#b
 const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Playing"};
 const char* sizename[] =            {"NODISC", "30cm", "17cm"};
 
-int printedDiscSize =               1;
+const char* record33style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,#0000 8%),radial-gradient(#555 18%,#111 19%);border:4px double #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";
+const char* record45style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 25%,#0000 26%),radial-gradient(#555 45%,#111 46%);border:4px solid #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";
+const char* recordNodiscStyle = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 4%,#0000 5%),radial-gradient(#777 5%,#333 6%);border:2px solid #444;color:#0000;line-height:80px;text-align:center;display:inline-block;vertical-align:middle;margin-left:20px!important;";
 
+const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
+
+//CSS as an add-on to color
+const char* espuiStatusStyle = " !important;width:150px;height:32px;border-radius:4px;display:inline-block;border:1px solid #444;font:700 .85rem/32px sans-serif;text-align:center;vertical-align:middle;margin-top:20px!important;";
+const char* espuiIndElemStyle = " !important;width:15px;height:15px;border-radius:50%;display:inline-block;vertical-align:middle;margin:5px;border:1px solid #222!important;";
+
+//switch style
+const char* swStyleOFF = "width:40px;height:22px;background:#000;border:1px solid #444;border-radius:11px;display:inline-block;vertical-align:top;transform:scale(.8);margin:-3px -5px 0!important;";
+const char* swStyleON  = "width:40px;height:22px;background:#2ECC71;border:1px solid #27AE60;border-radius:11px;display:inline-block;vertical-align:top;transform:scale(.8);margin:-3px -5px 0!important;";
 
 // Variable to share between cores 0 (comms) and 1 (controller)
 volatile bool armstateDirty    = false;
@@ -42,6 +53,8 @@ volatile const char* uidcmIcon;
 volatile const char* uiTurntableStatus;
 volatile const char* uiStatusHexColor;
 volatile const char* uiOnOffIndicatorColor;
+
+volatile int     printedDiscSize   = 1;
 
 volatile bool    previousRepeat    = false;
 volatile bool    previousDD33      = false;
@@ -288,6 +301,39 @@ void ledAnimationSetState(int state, uint16_t currentPosition, uint16_t targetPo
   setLedAnimationMode(state, statusHexColor[state], currentPosition, targetPosition);
 }
 // ======== LED INTERFACE =========
+
+// ======== tt-UI link ============
+String getEspuiSwitchStyle(bool onstatus) {
+  return onstatus ? swStyleON : swStyleOFF;
+}
+
+String getEspuiDefaultRecord() {
+  return recordStyles[1];
+}
+
+String getEspuiLabelColor(String colorHex) {
+  return "background-color:" + String(colorHex) + espuiStatusStyle;
+}
+
+String getEspuiIndicatorColor(String colorHex) {
+  return "background-color:" + String(colorHex) + espuiIndElemStyle;
+}
+
+void changeEspuiLabelColor(uint16_t id, const char* colorHex) {
+    String circleStyle = getEspuiLabelColor(String(colorHex));
+
+    ESPUI.setElementStyle(id, circleStyle.c_str());
+    ESPUI.updateControl(id);
+}
+
+void changeEspuiIndicatorColor(uint16_t id, const char* colorHex) {
+    String circleStyle = getEspuiIndicatorColor(String(colorHex));
+
+    ESPUI.setElementStyle(id, circleStyle.c_str());
+    ESPUI.updateControl(id);
+}
+// ======== tt-UI link ============
+
 
 //======================== UI exposition of constants =======================
 void readDetectionDurationFromStorage() {

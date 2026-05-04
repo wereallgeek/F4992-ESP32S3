@@ -1,3 +1,25 @@
+//================================================
+// ESPUI 
+//
+// configuration of the ESPUI interface
+//
+//================================================
+
+const char* espuiMainpageStyle =  "<style>body{background-color:black;color:white!important;}input{background-color:#333!important;color:white!important;border:1px solid #444!important;border-radius:4px!important;outline:none!important;box-sizing:border-box!important;padding:0 5px!important;}input:focus{background-color:#444!important;}</style>Controls";
+
+const char* espuiIconStyle =      "color: white !important; width: 41px !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 2rem !important; line-height: 32px !important; text-align: right !important; vertical-align: middle !important; padding-right: 10px !important; margin-top: 20px !important;";
+const char* espuiLabelStyle =     "color:white!important;width:60px!important;height:32px!important;display:inline-block!important;text-align:right!important;vertical-align:middle!important;padding-right:10px!important;margin-top:20px!important;line-height:32px!important;box-sizing:border-box!important;background-color:transparent!important;border:none!important;box-shadow:none!important;";
+const char* espuiLongLabelStyle = "color:white!important;width:45%!important;height:32px!important;display:inline-block!important;text-align:right!important;vertical-align:middle!important;padding-right:10px!important;margin-top:20px!important;line-height:32px!important;box-sizing:border-box!important;background-color:transparent!important;border:none!important;box-shadow:none!important;";
+const char* espuiTextLabelStyle = "color:white!important;width:25%!important;height:32px!important;display:inline-block!important;text-align:right!important;vertical-align:middle!important;padding-right:10px!important;margin-top:20px!important;line-height:32px!important;box-sizing:border-box!important;background-color:transparent!important;border:none!important;box-shadow:none!important;";
+const char* espuiSwtLabelStyle =  "color: white !important; width: 45% !important; height: 32px !important; background-color: transparent !important; border: none !important; box-shadow: none !important; display: inline-block !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.25rem !important; line-height: 34px !important; text-align: right !important; vertical-align: top !important; padding-right: 10px !important; margin-top: 22px !important;";
+const char* btnStyle =            "background-color: #000 !important; color: #fff !important; font-size: 10px !important; min-width: 55px !important; height: 25px !important; padding: 0 5px !important; line-height: 25px !important; border: 1px solid #444 !important; display: inline-block !important; vertical-align: middle !important; text-align: center !important;";
+const char* commandConsoleStyle = "text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 10px;";
+const char* commandInputStyle =   "color: #000000 !important; background-color: #ffffff !important; text-align: left; font-family: 'Courier New', monospace; white-space: pre; font-size: 14px; border: 1px solid #444 !important;";
+const char* espuiTelStyle =       "width:75px!important;height:32px!important;display:inline-block!important;vertical-align:top!important;margin-top:20px!important;text-align:center!important;box-sizing:border-box!important;";
+const char* espuiTextSetupStyle = "width:70%!important;height:32px!important;display:inline-block!important;vertical-align:middle!important;margin-top:20px!important;box-sizing:border-box!important;padding-left:10px!important;";
+const char* espuiNumberStyle =    "background-color: #2c3e50 !important; width: 75px !important; height: 32px !important; border-radius: 4px !important; display: inline-block !important; border: 1px solid #444 !important; font-family: 'Segoe UI',Roboto,sans-serif !important; font-size: 0.85rem !important; line-height: 32px !important; text-align: center !important; vertical-align: middle !important; margin-top: 20px !important;";
+
+
 //ESPUI=====================================================================================================================
 void espui_init() {
   ESPUI.setVerbosity(Verbosity::Quiet);//todo: link to settings
@@ -10,7 +32,7 @@ void espui_init() {
 
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
   ledId = ESPUI.label(espuiMainpageStyle, Dark, "");
-  ESPUI.setElementStyle(ledId, String("background-color: #2c3e50") + espuiIndElemStyle);
+  ESPUI.setElementStyle(ledId, getEspuiIndicatorColor("#2c3e50"));
   auto in_button = ESPUI.addControl(Button, "", "< Left ", None, ledId, buttonInCallback);
   ESPUI.setElementStyle(in_button, btnStyle);
   auto out_button = ESPUI.addControl(Button, "", "Right >", None, ledId, buttonOutCallback);
@@ -22,24 +44,24 @@ void espui_init() {
   auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, ledId, buttonRepeatCallback);
   ESPUI.setElementStyle(rpt_button, btnStyle);
   repeatId = ESPUI.addControl(Label, "", "", Dark, ledId, textCallback);
-  ESPUI.setElementStyle(repeatId, String("background-color: #2c3e50") + espuiIndElemStyle);
+  ESPUI.setElementStyle(repeatId, getEspuiIndicatorColor("#2c3e50"));
   auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
-  ESPUI.setElementStyle(spd_switch, swStyleOFF);
+  ESPUI.setElementStyle(spd_switch, getEspuiSwitchStyle(false));
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
 
 
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
   //status
   recordsizeLabelId = ESPUI.addControl(Label, "", "status", Dark, tonearmtab, textCallback);
-  ESPUI.setElementStyle(recordsizeLabelId, record33style);
+  ESPUI.setElementStyle(recordsizeLabelId, getEspuiDefaultRecord());
   lifterStatusId = ESPUI.addControl(Label, "", "arm", None, recordsizeLabelId, textCallback);
   ESPUI.setElementStyle(lifterStatusId, espuiIconStyle);
   armPositionLabelId = ESPUI.addControl(Label, "", "position", None, recordsizeLabelId, textCallback);
-  ESPUI.setElementStyle(armPositionLabelId, String("background-color: #2c3e50") + espuiNumberStyle);
+  ESPUI.setElementStyle(armPositionLabelId, espuiNumberStyle);
   dcmStatusId = ESPUI.addControl(Label, "", "dcm", None, recordsizeLabelId, textCallback);
   ESPUI.setElementStyle(dcmStatusId, espuiIconStyle);
   armStatusLabelId = ESPUI.addControl(Label, "", "status", Dark, recordsizeLabelId, textCallback);
-  ESPUI.setElementStyle(armStatusLabelId, String("background-color: #2c3e50") + espuiStatusStyle);
+  ESPUI.setElementStyle(armStatusLabelId, getEspuiLabelColor("#2c3e50"));
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
 
   //Console debug tab--------------------------------------------------------------------------------------------------------------
@@ -52,7 +74,7 @@ void espui_init() {
   auto highVerboLabel = ESPUI.addControl(Label, "", "High Verbosity", None, serialLabelId, textCallback);
   ESPUI.setElementStyle(highVerboLabel, espuiSwtLabelStyle);  
   highVerbosity_switch = ESPUI.addControl(Switcher, "", String(highVerbosity), Dark, serialLabelId, verbosityCallback);
-  ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
+  ESPUI.setElementStyle(highVerbosity_switch, getEspuiSwitchStyle(highVerbosity));
   auto firmwareversionLabel = ESPUI.addControl(Label, "", String("       FW ver ") + firmwareVersion(), None, serialLabelId, textCallback);
   ESPUI.setElementStyle(firmwareversionLabel, espuiSwtLabelStyle);  
 
@@ -131,7 +153,7 @@ void espui_init() {
   auto mqttenableLabel = ESPUI.addControl(Label, "", "Enable: ", None, mqttLabel, textCallback);
   ESPUI.setElementStyle(mqttenableLabel, espuiSwtLabelStyle);  
   mqtt_enabled_switch = ESPUI.addControl(Switcher, "Enable MQTT", String(mqtt_enabled), Dark, mqttLabel, switchCallback);
-  ESPUI.setElementStyle(mqtt_enabled_switch, mqtt_enabled ? swStyleON : swStyleOFF);
+  ESPUI.setElementStyle(mqtt_enabled_switch, getEspuiSwitchStyle(mqtt_enabled)); 
 
   auto mqttTopicInLabel = ESPUI.addControl(Label, "MQTT Topics", "IN: ", None, wifitab, textCallback);
   ESPUI.setElementStyle(mqttTopicInLabel, espuiTextLabelStyle);  

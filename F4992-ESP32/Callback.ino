@@ -79,7 +79,7 @@ void buttonRepeatCallback(Control *sender, int type) {
 }
 
 void switchCallback(Control *sender, int type) {
-  ESPUI.setElementStyle(sender->id, (type == S_ACTIVE) ? swStyleON : swStyleOFF);
+  ESPUI.setElementStyle(sender->id, getEspuiSwitchStyle(type == S_ACTIVE));
 }
 
 void buttonInvertCallback(Control *sender, int type) {
@@ -183,7 +183,7 @@ void commandCallback(Control* sender, int type) {
 
 void refreshVerbosity() {
   ESPUI.updateControlValue(highVerbosity_switch, highVerbosity ? "1" : "0");
-  ESPUI.setElementStyle(highVerbosity_switch, highVerbosity ? swStyleON : swStyleOFF);
+  ESPUI.setElementStyle(highVerbosity_switch, getEspuiSwitchStyle(highVerbosity));
 }
 
 //Serial setup===============================================================
