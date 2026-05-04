@@ -36,7 +36,7 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
 
 
 //Default ESPUI callback======================
-void textCallback(Control *sender, int type) {
+void noCallback(Control *sender, int type) {
 }
 //Default ESPUI callback======================
 
@@ -78,8 +78,34 @@ void buttonRepeatCallback(Control *sender, int type) {
   }
 }
 
+void switchDebugCallback(Control *sender, int type) {
+  writeDebugVisibility(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+
+void switchRepeatCallback(Control *sender, int type) {
+  writeRepeatVisibility(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+
+void switchInvertCallback(Control *sender, int type) {
+  writeInvertVisibility(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+
+void switchLedCallback(Control *sender, int type) {
+  changeLedPixelEnable(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+
 void switchCallback(Control *sender, int type) {
   ESPUI.setElementStyle(sender->id, getEspuiSwitchStyle(type == S_ACTIVE));
+}
+
+void numLedCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    changeLedPixelNumber(sender->value.toInt());
+  }
 }
 
 void buttonInvertCallback(Control *sender, int type) {
@@ -182,13 +208,14 @@ void commandCallback(Control* sender, int type) {
 //ESPUI command===============================
 
 void refreshVerbosity() {
+  if (!debugTabVisible()) return;
   ESPUI.updateControlValue(highVerbosity_switch, highVerbosity ? "1" : "0");
   ESPUI.setElementStyle(highVerbosity_switch, getEspuiSwitchStyle(highVerbosity));
 }
 
 //Serial setup===============================================================
 void SerialCommand(String input) {
-  ESPUI.print(serialLabelId, input);
+  if (debugTabVisible()) ESPUI.print(serialLabelId, input);
 
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);

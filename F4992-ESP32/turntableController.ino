@@ -495,6 +495,7 @@ void turntableSetup() {
   turntableLedSetup();
 
   stats_setup();
+  ledPixelSetup();
   ttConfigSetup();
 
   turntableCompuselectorSetup();

@@ -10,21 +10,23 @@ volatile bool haschanged = true;
 
 void wsprint(String s) {
   Serial.print(s);
-  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) { //no doubledipping
+  if (!debugTabVisible()) return;
+  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(5)) == pdTRUE) { //no doubledipping
     if (webLog.empty()) {
       webLog.push_back(s);
     } else {
       webLog.back() += s;
     }
     wsMaintainWebLog();
-    xSemaphoreGive(logMutex); //unlock
     haschanged = true;
+    xSemaphoreGive(logMutex); //unlock
   }
 }
 
 void wsprintln(String s) {
   Serial.println(s);
-  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) { //no doubledipping
+  if (!debugTabVisible()) return;
+  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(5)) == pdTRUE) { //no doubledipping
    if (webLog.empty()) {
       webLog.push_back(s);
     } else {
@@ -32,8 +34,8 @@ void wsprintln(String s) {
     }
     webLog.push_back("");
     wsMaintainWebLog();
-    xSemaphoreGive(logMutex); //unlock
     haschanged = true;
+    xSemaphoreGive(logMutex); //unlock
   }
 }
 
@@ -65,19 +67,22 @@ void wsMaintainWebLog() {
 }
 
 void updateWebSerial() {
-  if (!firstPassCompleted) return;
+  if (!firstPassCompleted || !debugTabVisible() || !haschanged) return;
 
-  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
+
+  if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
 
     String buffer = "";
-    buffer.reserve(1000); 
 
     for (const String& s : webLog) {
-      buffer += s + "\n";
+      if (s.length() > 0) buffer += s + "\n";
     }
+    haschanged = false;
     xSemaphoreGive(logMutex); //unlock
 
     ESPUI.updateLabel(logLabelId, buffer);
-    haschanged = false;
+    if (buffer.length() > 0) {
+        ESPUI.updateLabel(logLabelId, buffer);
+    }
   }
 }

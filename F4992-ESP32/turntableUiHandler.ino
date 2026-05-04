@@ -213,9 +213,10 @@ void requestComputation() {
 }
 
 void turntableUiUpdate() {
-// conditionnal ui update separated to minimize ESPUI starvation on multiple instances
-  if (millis() - lastUpdateCycle1 >= 802) {
-    lastUpdateCycle1 = millis();
+  unsigned long currentmillis = millis();
+
+  if (currentmillis - lastUpdateCycle1 >= 802) {
+    lastUpdateCycle1 = currentmillis;
     if(armstateDirty) changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
     armstateDirty = false; 
     if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor);
@@ -223,13 +224,13 @@ void turntableUiUpdate() {
     if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
     dcmDirty = false;
   }
-  else if (millis() - lastUpdateCycle2 >= 872) {
-    lastUpdateCycle2 = millis();
+  else if (currentmillis - lastUpdateCycle2 >= 872) {
+    lastUpdateCycle2 = currentmillis;
     if(webserialDirty) updateWebSerial();
     webserialDirty = false;
   }
-  else if (millis() - lastUpdateCycle3 >= 955) {
-    lastUpdateCycle3 = millis();
+  else if (currentmillis - lastUpdateCycle3 >= 955) {
+    lastUpdateCycle3 = currentmillis;
     if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
     dd33Dirty = false;
     if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);
@@ -237,8 +238,8 @@ void turntableUiUpdate() {
     if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
     armlifterDirty = false;
   }
-  else if (millis() - lastUpdateCycle4 >= 1024) {
-    lastUpdateCycle4 = millis();
+  else if (currentmillis - lastUpdateCycle4 >= 1024) {
+    lastUpdateCycle4 = currentmillis;
     if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
     ttstateDirty = false;
     if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
