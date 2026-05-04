@@ -1,18 +1,27 @@
 #include <Adafruit_NeoPixel.h>
 // NeoPixel Extension 
 #define PIN_LEDPIXEL         48  
-#define NUM_PIXELS           1  
+#define NUM_PIXELS           9  //todo: expose to GUI
 
 Adafruit_NeoPixel strip(NUM_PIXELS, PIN_LEDPIXEL, NEO_GRB + NEO_KHZ800);
-bool ledPixelEnable = false;
+bool ledPixelEnable = true; //todo: expose to GUI
 
 //these needs to be a 1:1 match for the turntable state machine
-enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, ANIMRIGHT, PULSEDETECT, STEADYPLAY};
+enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, MOVECHASER, PULSEDETECT, FOLLOWPLAY};
 LedAnimation animationStyle = NONE;
 enum RGB {RgbR, RgbG, RgbB};
 int baseRgb[3] = {0, 0, 0};
 int desiredBrightness = 50;
 
+//chaser
+uint32_t chaserColor = strip.Color(255, 0, 0);
+int chaserRangeFrom = 0;
+int chaserRangeTo = 5;
+int chaserSpeed = 111; //for a 1sec animation 1000/NUM_PIXELS
+bool chaserDirection = true;
+static int currentChaserStep = -1;
+
+//=================================================================================================
 void ledPixelSetup() {
   strip.begin();
   setLedPixelBrightness(ledPixelEnable ? desiredBrightness : 0);
@@ -28,7 +37,7 @@ bool useLedPixel() {
 }
 
 void setAnimationStyle(int style) {
-  if (style < NONE || style > STEADYPLAY) animationStyle = NONE;
+  if (style < NONE || style > FOLLOWPLAY) animationStyle = NONE;
   else animationStyle = (LedAnimation)style;
 }
 
@@ -53,9 +62,14 @@ void setDesiredBrightness(int brightness) {
   desiredBrightness = brightness;
 }
 
-void setAnimationMode(int style, const char* hexColor) {
+int computeLedFromArmPosition(uint16_t stepToCompute) {
+  return (stepToCompute * (NUM_PIXELS - 1)) / getArmMaxValue();
+}
+
+void setLedAnimationMode(int style, const char* hexColor, uint16_t currentPosition, uint16_t targetPosition) {
   setAnimationStyle(style);
   setbaseRgb(hexColor);
+  setupChaser(computeLedFromArmPosition(currentPosition), computeLedFromArmPosition(targetPosition));
 }
 
 void setLedPixelHexColor(int ledIndex, const char* hexColor) {
@@ -90,6 +104,10 @@ void setLedPixelRgbColorToPreset() {
   setLedPixelRgbColor(baseRgb[RgbR], baseRgb[RgbG], baseRgb[RgbB]);
 }
 
+void setLedPixelRgbColorToPreset(int ledIndex) {
+  setLedPixelRgbColor(ledIndex, baseRgb[RgbR], baseRgb[RgbG], baseRgb[RgbB]);
+}
+
 void setLedPixelBrightness(int brightness) {
   if (brightness < 0 || brightness > 255) return;
   strip.setBrightness(brightness);
@@ -99,34 +117,75 @@ void setLedPixelBrightnessToPreset() {
   setLedPixelBrightness(desiredBrightness);
 }
 
+void lightCurrentPosition(int ledR, int ledG, int ledB) {
+  setLedPixelRgbColor(computeLedFromArmPosition(armPosition()), ledR, ledG, ledB);
+}
+
+void showCurrentPosition() {
+  strip.clear();
+  lightCurrentPosition(0, 64, 192);
+  strip.show();
+}
+
+void setupChaser(int from, int to) {
+  chaserDirection = (from < to)? true : false;
+  chaserRangeFrom = from;
+  chaserRangeTo = to;
+  currentChaserStep = from;
+}
+
+void runChaser() {
+  static unsigned long lastUpdate = 0;
+
+  if (millis() - lastUpdate < chaserSpeed) return;
+  lastUpdate = millis();
+
+  if (currentChaserStep == -1) currentChaserStep = chaserRangeFrom;
+
+  strip.clear();
+
+  setLedPixelRgbColor(chaserRangeFrom, 255, 69, 0);
+  setLedPixelRgbColor(chaserRangeTo, 0, 255, 200);
+  lightCurrentPosition(0, 32, 128);
+  setLedPixelRgbColorToPreset(currentChaserStep);
+
+  strip.show();
+
+  if (chaserDirection) {
+    if (currentChaserStep < (NUM_PIXELS - 1)) currentChaserStep++;
+    else currentChaserStep = chaserRangeFrom;
+  } 
+  else {
+    if (currentChaserStep > 0) currentChaserStep--;
+    else currentChaserStep = NUM_PIXELS - 1;
+  }
+}
+
+
 void animateLeds() {
   if (!ledPixelEnable) return;
 
   switch (animationStyle) {
     case NONE:
-      setLedPixelBrightness(0);
+      if (isHome()) setLedPixelBrightness(0);
+      else showCurrentPosition();
       break;
     case WAKEPULSE:
       setLedPixelBrightnessToPreset();
       setLedPixelRgbColorToPreset();
       break;
     case ANIMHOME:  
-    case ANIMRIGHT:  
-      setLedPixelBrightnessToPreset();
-      setLedPixelRgbColorToPreset();
-      break;
-    case UPHOME:  
-    case UPMOVE:  
-      setLedPixelBrightnessToPreset();
-      setLedPixelRgbColorToPreset();
+    case MOVECHASER:  
+      runChaser();
       break;
     case PULSEDETECT:  
       setLedPixelBrightnessToPreset();
       setLedPixelRgbColorToPreset();
       break;
-    case STEADYPLAY:  
-      setLedPixelBrightnessToPreset();
-      setLedPixelRgbColorToPreset();
+    case UPHOME:  
+    case UPMOVE:  
+    case FOLLOWPLAY:  
+      showCurrentPosition();
       break;
   }
   strip.show(); 

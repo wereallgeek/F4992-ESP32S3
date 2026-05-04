@@ -284,8 +284,8 @@ void turntableIrReport() {
 // ============ Debug console helper =================
 
 // ======== LED INTERFACE =========
-void ledAnimationSetState(int state) {
-  setAnimationMode(state, statusHexColor[state]);
+void ledAnimationSetState(int state, uint16_t currentPosition, uint16_t targetPosition) {
+  setLedAnimationMode(state, statusHexColor[state], currentPosition, targetPosition);
 }
 // ======== LED INTERFACE =========
 
@@ -366,6 +366,10 @@ void setArmPresetValues(uint16_t valueForHome, uint16_t valueFor30, uint16_t val
   ArmPresets[START30] = valueFor30;
   ArmPresets[START17] = valueFor17;
   ArmPresets[END] = valueForEnd;
+}
+
+uint16_t getArmMaxValue() {
+  return ArmPresets[END];
 }
 
 uint16_t getArmPresetValue(int presetIndex) {

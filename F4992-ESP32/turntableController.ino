@@ -332,7 +332,7 @@ void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) webSerialPrint(String(millis()) + " - "); //state change remains in low verbosity
   if(firstPassCompleted) webSerialPrintln(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
   currentState = newState;
-  ledAnimationSetState(currentState);
+  ledAnimationSetState(currentState, armPosition(), desiredPosition);
 }
 
 bool isState(TurntableState state) {
@@ -780,6 +780,8 @@ void turntableLoop() {
           changeState(UPTOMOVE); 
         }
         else {
+          nextState = IDLE;
+          desiredPosition = getArmPresetValue(HOME);
           incrementStop(AUTO);
           changeState(UPTOHOME);
         }
