@@ -38,7 +38,6 @@ const char* swStyleON  = "width:40px;height:22px;background:#2ECC71;border:1px s
 volatile bool armstateDirty    = false;
 volatile bool repeatDirty      = false;
 volatile bool dcmDirty         = false;
-volatile bool webserialDirty   = false;
 volatile bool dd33Dirty        = false;
 volatile bool disksizeDirty    = false;
 volatile bool armlifterDirty   = false;
@@ -65,6 +64,10 @@ volatile int     previousDiscSize  = 0;
 volatile int     previousArmState  = 0;
 volatile int     previousLedState  = 0;
 volatile int     previousTtState   = 0;
+
+unsigned long lastUpdateCycle1 = 0; 
+unsigned long lastUpdateCycle2 = 0; 
+unsigned long lastUpdateCycle3 = 0; 
 
 //Storage variables
 #define DEFIRCYCLEDURATION         2290
@@ -166,7 +169,6 @@ void dirtyComputation() {
   if (computeArmstateDirty()) armstateDirty = true;
   if (computeRepeatDirty()) repeatDirty = true;
   if (computeDcmDirty()) dcmDirty = true;
-  if (computeWebserialDirty()) webserialDirty = true;
   if (computeDd33Dirty()) dd33Dirty = true;
   if (computeDisksizeDirty()) disksizeDirty = true;
   if (computeArmlifterDirty()) armlifterDirty = true;
@@ -224,13 +226,8 @@ void turntableUiUpdate() {
     if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
     dcmDirty = false;
   }
-  else if (currentmillis - lastUpdateCycle2 >= 872) {
+  else if (currentmillis - lastUpdateCycle2 >= 955) {
     lastUpdateCycle2 = currentmillis;
-    if(webserialDirty) updateWebSerial();
-    webserialDirty = false;
-  }
-  else if (currentmillis - lastUpdateCycle3 >= 955) {
-    lastUpdateCycle3 = currentmillis;
     if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
     dd33Dirty = false;
     if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);
@@ -238,8 +235,8 @@ void turntableUiUpdate() {
     if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
     armlifterDirty = false;
   }
-  else if (currentmillis - lastUpdateCycle4 >= 1024) {
-    lastUpdateCycle4 = currentmillis;
+  else if (currentmillis - lastUpdateCycle3 >= 1024) {
+    lastUpdateCycle3 = currentmillis;
     if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
     ttstateDirty = false;
     if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
@@ -254,46 +251,46 @@ void turntableUiUpdate() {
 // ============ Debug console helper =================
 void verboseDiskChange() {
   int currentDiscSize = getDiscSize();
-  if (highVerbosity && previousDiscSize != currentDiscSize)  webSerialPrintln(String(millis()) + " - Detected " + sizename[currentDiscSize]);
+  if (highVerbosity && previousDiscSize != currentDiscSize)  Serial.println(String(millis()) + " - Detected " + sizename[currentDiscSize]);
   previousDiscSize = currentDiscSize;
 }
 
 void turntableReport() {
-  webSerialPrintln(String("status:          ") + turntableStatus(getCurrentState()));
-  webSerialPrintln(String("Next state:      ") + turntableStatus(getNextState()));
-  webSerialPrintln(String("armPosition:     ") + armPosition() + " (" + getDesiredPosition() + ")");
-  webSerialPrintln(String("Initialization:  ") + (getInitializationCompleted() ? "Completed" : "Pending"));
-  webSerialPrintln(String("arm & mute:      ") + (armLifter() == getArmUpLevel() ? " armUp " : "armDown") + " (" + (getMute() ? "M)" : "P)"));
-  webSerialPrintln(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
+  Serial.println(String("status:          ") + turntableStatus(getCurrentState()));
+  Serial.println(String("Next state:      ") + turntableStatus(getNextState()));
+  Serial.println(String("armPosition:     ") + armPosition() + " (" + getDesiredPosition() + ")");
+  Serial.println(String("Initialization:  ") + (getInitializationCompleted() ? "Completed" : "Pending"));
+  Serial.println(String("arm & mute:      ") + (armLifter() == getArmUpLevel() ? " armUp " : "armDown") + " (" + (getMute() ? "M)" : "P)"));
+  Serial.println(String("armReset switch: ") + (reachedArmReset() ? "Pressed" : "Released"));
 
-  webSerialPrint("DCM    :");
-  webSerialPrint  ((String("   1-")) + (DCM(1) ? "ON" : "--"));
-  webSerialPrint  ((String("   2-")) + (DCM(2) ? "ON" : "--"));
-  webSerialPrintln((String("   3-")) + (DCM(3) ? "ON" : "--"));
+  Serial.print("DCM    :");
+  Serial.print  ((String("   1-")) + (DCM(1) ? "ON" : "--"));
+  Serial.print  ((String("   2-")) + (DCM(2) ? "ON" : "--"));
+  Serial.println((String("   3-")) + (DCM(3) ? "ON" : "--"));
 
-  webSerialPrint("DD     :");
-  webSerialPrint  ((String("  SS-")) + (isTurning() ? "EN" : "--"));
-  webSerialPrint  ((String("  33-")) + (dd33active() ? "EN" : "--"));
-  webSerialPrintln((String("  45-")) + (dd45active() ? "EN" : "--"));
+  Serial.print("DD     :");
+  Serial.print  ((String("  SS-")) + (isTurning() ? "EN" : "--"));
+  Serial.print  ((String("  33-")) + (dd33active() ? "EN" : "--"));
+  Serial.println((String("  45-")) + (dd45active() ? "EN" : "--"));
 
   turntableSensorReport();
 
-  webSerialPrintln((String(sizename[getDiscSize()])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (getRepeatState() ? " | -REPEAT-" : " | norepeat"));
+  Serial.println((String(sizename[getDiscSize()])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (getRepeatState() ? " | -REPEAT-" : " | norepeat"));
 }
 
 void turntableSensorReport() {
-  webSerialPrint("Sensors:");
-  webSerialPrint  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
-  webSerialPrintln((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
+  Serial.print("Sensors:");
+  Serial.print  ((String("  30-")) + (sense30() ? "IR(" : "no(") + DetectionTime[DISC30] + ")");
+  Serial.println((String("  17-")) + (sense17() ? "IR(" : "no(") + DetectionTime[DISC17] + ")");
 }
 
 void turntableIrReport() {
-  webSerialPrintln("========Infrared=sensor=report=========");
+  Serial.println("========Infrared=sensor=report=========");
   turntableSensorReport();
-  webSerialPrint("IR value:");
-  webSerialPrint  ((String("  30-")) + value30cm());
-  webSerialPrintln((String("  17-")) + value17cm());
-  webSerialPrintln("=======================================");
+  Serial.print("IR value:");
+  Serial.print  ((String("  30-")) + value30cm());
+  Serial.println((String("  17-")) + value17cm());
+  Serial.println("=======================================");
 }
 // ============ Debug console helper =================
 
@@ -449,11 +446,11 @@ void readTurntablePresetValuesFromStorage() {
 //Handling config changes
 void outputTurntableDetailsValues() {
   if(highVerbosity) {
-    webSerialPrintln(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
-    webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
-    webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
-    webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
-    webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
+    Serial.println(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
+    Serial.println(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
+    Serial.println(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
+    Serial.println(String("Infrared Treshold ") + getIrTreshold());
+    Serial.println(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
   }
 }
 

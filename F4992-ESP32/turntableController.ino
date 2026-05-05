@@ -8,11 +8,6 @@
 #include <Bounce2.h>
 #include "driver/pulse_cnt.h"
 
-unsigned long lastUpdateCycle1 = 0; 
-unsigned long lastUpdateCycle2 = 0; 
-unsigned long lastUpdateCycle3 = 0; 
-unsigned long lastUpdateCycle4 = 0; 
-
 //============================ hardware interface =============================
 //here declaration for the hardware pins.
 
@@ -328,8 +323,8 @@ bool isAtEndPosition() {
 }
 
 void changeState(TurntableState newState) {
-  if(firstPassCompleted && highVerbosity) webSerialPrint(String(millis()) + " - "); //state change remains in low verbosity
-  if(firstPassCompleted) webSerialPrintln(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
+  if(firstPassCompleted && highVerbosity) Serial.print(String(millis()) + " - "); //state change remains in low verbosity
+  if(firstPassCompleted) Serial.println(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
   currentState = newState;
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
 }
@@ -490,7 +485,7 @@ void playRecord() {
 
 //Tonearm control=============================
 void turntableSetup() {
-  webSerialPrintln("Starting initialization sequence");
+  Serial.println("Starting initialization sequence");
 
   turntableLedSetup();
 
@@ -513,25 +508,25 @@ void turntableSetup() {
 
   turntableCounterSetup();
   
-  webSerialPrintln("Peripheral configuration completed");
+  Serial.println("Peripheral configuration completed");
 }
 
 void returnAndClear(int actionType) {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Return (and clear)");
+  if(highVerbosity) Serial.println(String(millis()) + " - Return (and clear)");
   changeState(UPTOHOME);
   repeat = false;
   incrementStop(actionType);
 }
 
 void startAutoOperation(int actionType) {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Start Operation");
+  if(highVerbosity) Serial.println(String(millis()) + " - Start Operation");
   sensortimer = millis();
   changeState(DETECT);
   incrementStart(actionType);
 }
 
 void clearRepeat() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - Clear repeat");  
+  if(highVerbosity) Serial.println(String(millis()) + " - Clear repeat");  
   repeat = false;
 }
 
@@ -550,20 +545,20 @@ void updateKeys() {
 
 void computeKeys() {
   if (debouncedButtons[ARM].fell()) {
-    if (highVerbosity) webSerialPrint(String(millis()) + " - ");
-    webSerialPrintln("Resetting armPosition");
+    if (highVerbosity) Serial.print(String(millis()) + " - ");
+    Serial.println("Resetting armPosition");
   }
   if (debouncedButtons[ARM].read() == pressed) resetArmposition();
   if (debouncedButtons[ARM].rose()) resetArmposition();
 
   if (debouncedButtons[SWITCH1].fell()) requestRepeat();
 
-  if (highVerbosity && debouncedButtons[SWITCH2].fell()) webSerialPrintln(String(millis()) + " - request Move IN");
+  if (highVerbosity && debouncedButtons[SWITCH2].fell()) Serial.println(String(millis()) + " - request Move IN");
   if (debouncedButtons[SWITCH2].read() == pressed) {
     stepTonearmIn();
   }
 
-  if (highVerbosity && debouncedButtons[SWITCH3].fell()) webSerialPrintln(String(millis()) + " - request Move OUT");
+  if (highVerbosity && debouncedButtons[SWITCH3].fell()) Serial.println(String(millis()) + " - request Move OUT");
   if (debouncedButtons[SWITCH3].read() == pressed) {
     stepTonearmOut();
   }
@@ -573,16 +568,16 @@ void computeKeys() {
 }
 
 void requestStartStop(int actionType) {
-  if (highVerbosity) webSerialPrintln(String(millis()) + " - request Play/Stop");
+  if (highVerbosity) Serial.println(String(millis()) + " - request Play/Stop");
   if (!initializationCompleted) return;
 
   if (highVerbosity)
   {
-    webSerialPrintln("| Lifter |ArmReset |  DDSS  |"); 
-    webSerialPrintln("| (p31)  | (p25)   | (p38)  |"); 
-    webSerialPrint  (armLifter() == armDown ? "| DN (H) " : "| UP (L) ");
-    webSerialPrint  (reachedArmReset() ? "| HOME(L) " : "| away(H) ");
-    webSerialPrintln(isTurning() ? "| ON (L) |" : "| OFF(H) |");
+    Serial.println("| Lifter |ArmReset |  DDSS  |"); 
+    Serial.println("| (p31)  | (p25)   | (p38)  |"); 
+    Serial.print  (armLifter() == armDown ? "| DN (H) " : "| UP (L) ");
+    Serial.print  (reachedArmReset() ? "| HOME(L) " : "| away(H) ");
+    Serial.println(isTurning() ? "| ON (L) |" : "| OFF(H) |");
   }
   // section 2-4 key operation
   // Start/Stop (pin24) key
@@ -618,41 +613,41 @@ void requestStartStop(int actionType) {
 }
 
 void requestHome() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request HOME");
+  if(highVerbosity) Serial.println(String(millis()) + " - request HOME");
   nextState = IDLE;
   changeState(UPTOHOME);
 }
 
 void requestGoEnd() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request GoEND");
+  if(highVerbosity) Serial.println(String(millis()) + " - request GoEND");
   if (!initializationCompleted) return;
   nextState = IDLE;
   requestMove(getArmPresetValue(END));
 }
 
 void requestGo30() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go30");
+  if(highVerbosity) Serial.println(String(millis()) + " - request Go30");
   if (!initializationCompleted) return;
   nextState = IDLE;
   requestMove(getArmPresetValue(START30));
 }
 
 void requestGo17() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Go17");
+  if(highVerbosity) Serial.println(String(millis()) + " - request Go17");
   if (!initializationCompleted) return;
   nextState = IDLE;
   requestMove(getArmPresetValue(START17));
 }
 
 void requestGoStill() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Still");
+  if(highVerbosity) Serial.println(String(millis()) + " - request Still");
   if (!initializationCompleted) return;
   nextState = IDLE;
   requestMove(armPosition());
 }
 
 void requestUpDown() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request UP/DOWN");
+  if(highVerbosity) Serial.println(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;
        if (armLifter() == armUp && !isHome()) changeState(PLAY);
   else if (armLifter() == armDown && !isHome())  changeState(IDLE);
@@ -667,7 +662,7 @@ void stepTonearmIn() {
 }
 
 void requestMove(uint16_t  newPosition) {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Move to " + newPosition);
+  if(highVerbosity) Serial.println(String(millis()) + " - request Move to " + newPosition);
   if (!initializationCompleted) return;
   desiredPosition = newPosition;
   nextState = IDLE;
@@ -675,12 +670,12 @@ void requestMove(uint16_t  newPosition) {
 }
 
 void requestRepeat() {
-  if(highVerbosity) webSerialPrintln(String(millis()) + " - request Repeat");
+  if(highVerbosity) Serial.println(String(millis()) + " - request Repeat");
   repeat = !repeat;
 }
 
 void requestInvert(bool invertRequested) {
-  if(highVerbosity && softSpeedInverter != invertRequested) webSerialPrintln(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
+  if(highVerbosity && softSpeedInverter != invertRequested) Serial.println(String(millis()) + " - request " + (invertRequested ? "[INV] speed" : "[NOR] speed"));
   softSpeedInverter = invertRequested;
 }
 

@@ -109,8 +109,8 @@ void setup() {
   firstPassCompleted = true;
   xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 3, &Handle_Turntable, 1);
 
-  webSerialPrintln(String("FW ver ") + firmwareVersion());
-  webSerialPrintln(String("[") + stored_devicename + "] awoken");
+  Serial.println(String("FW ver ") + firmwareVersion());
+  Serial.println(String("[") + stored_devicename + "] awoken");
 }
 //SETUP=========================
 

@@ -87,17 +87,31 @@ void incrementPlaycount() {
 }
 
 uint32_t getStat(int type) {
+  if (type < 0 || type >= MAXCOUNTER) return 0;
   return numberStats[type];
 }
 
+String getStatLabel(int type) {
+  if (type < 0 || type >= MAXCOUNTER) return "";
+  return String(statsLabels[type]);
+}
+
+uint32_t getBootcount() {
+  return getStat(BOOTCOUNT);
+}
+
+int maxStatIndex() {
+  return MAXCOUNTER;
+}
+
 void printStatsReport() {
-  webSerialPrintln("--- Turntable Stats ---");
+  Serial.println("--- Turntable Stats ---");
   for (int i = 0; i < MAXCOUNTER; i += 2) {
     String line = formattedStatsColumn(i);
     if (i + 1 < MAXCOUNTER && strlen(statsLabels[i + 1]) > 0) {
       line += "  " + formattedStatsColumn(i + 1);
     }
-    webSerialPrintln(line);
+    Serial.println(line);
   }
 }
 
@@ -111,5 +125,5 @@ String formattedStatsColumn(int index) {
 void statsReset() {
   ttStats.clear(); 
   for (int i = 0; i < MAXCOUNTER; i++) numberStats[i] = 0;
-  webSerialPrintln("Turntable statistics reset");
+  Serial.println("Turntable statistics reset");
 }

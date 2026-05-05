@@ -24,6 +24,27 @@ void cpuInfo_setup() {
   cpuTempSensorSetup();
 }
 
+
+//firmware ==============================================================================================================
+String firmwareVersion() {
+  static String version = ""; 
+  if (version != "") return version; //compute once print many
+
+  static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+  version = String(__DATE__ + 7); 
+  int m = (String(months).indexOf(String(__DATE__).substring(0, 3)) / 3) + 1;
+  if (m < 10) version += "0";
+  version += m;
+  version += (__DATE__[4] == ' ') ? "0" : String(__DATE__[4]);
+  version += __DATE__[5];
+  version += "-";
+  version += String(__TIME__).substring(0, 2);
+  version += String(__TIME__).substring(3, 5);
+
+  return version;
+}
+//firmware ==============================================================================================================
+
 //CPU related ===========================================================================================================
 String getChipModel() {
   return String(ESP.getChipModel());

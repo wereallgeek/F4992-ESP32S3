@@ -1,22 +1,3 @@
-//kitchenware
-String firmwareVersion() {
-  static String version = ""; 
-  if (version != "") return version; //compute once print many
-
-  static const char months[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
-  version = String(__DATE__ + 7); 
-  int m = (String(months).indexOf(String(__DATE__).substring(0, 3)) / 3) + 1;
-  if (m < 10) version += "0";
-  version += m;
-  version += (__DATE__[4] == ' ') ? "0" : String(__DATE__[4]);
-  version += __DATE__[5];
-  version += "-";
-  version += String(__TIME__).substring(0, 2);
-  version += String(__TIME__).substring(3, 5);
-
-  return version;
-}
-
 //MQTT CALLBACK===================================================
 void mqtt_callback(String topic, byte *message, unsigned int length) {
   String messageTemp;
@@ -24,16 +5,15 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   for (int i = 0; i < length; i++) {
     messageTemp += (char)message[i];
   }
-  webSerialPrintln(messageTemp);
+  Serial.println(messageTemp);
 
   if (topic == "demo_topic") {
     client.publish("response_topic", "PONG");
-    webSerialPrintln("Hello World");
+    Serial.println("Hello World");
   }
 
 }
 //MQTT CALLBACK===================================================
-
 
 //Default ESPUI callback======================
 void noCallback(Control *sender, int type) {
@@ -76,11 +56,6 @@ void buttonRepeatCallback(Control *sender, int type) {
   if (type == B_UP) {
     uiPressRepeat = true;
   }
-}
-
-void switchDebugCallback(Control *sender, int type) {
-  writeDebugVisibility(type == S_ACTIVE);
-  switchCallback(sender, type);
 }
 
 void switchRepeatCallback(Control *sender, int type) {
@@ -139,7 +114,7 @@ void verbosityCallback(Control *sender, int type) {
 //config settings callback
 void saveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {    
-    webSerialPrintln("Saving turntable configuration");
+    Serial.println("Saving turntable configuration");
     applyTurntableDetailsToMemory();
     saveTurntableDetailsToConfig();
     readTurntablePresetValuesFromStorage();
@@ -150,7 +125,7 @@ void saveTurntableDetailsCallback(Control *sender, int type) {
 
 void applyTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {    
-    webSerialPrintln("Applying turntable configuration");
+    Serial.println("Applying turntable configuration");
     applyTurntableDetailsToMemory();
     outputTurntableDetailsValues();
     resyncTurntableDetailsToScreen();
@@ -159,7 +134,7 @@ void applyTurntableDetailsCallback(Control *sender, int type) {
 
 void resetTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {
-    webSerialPrintln("Reset turntable to default");
+    Serial.println("Reset turntable to default");
     ttConfigClear();
     readTurntablePresetValuesFromStorage();
     saveTurntableDetailsToConfig();
@@ -192,18 +167,18 @@ void saveWifiDetailsCallback(Control *sender, int type) {
     settings.putBool("mqtt_enabled", mqtt_enabled);
 
     if(highVerbosity) {
-      webSerialPrintln(stored_devicename);
-      webSerialPrintln(stored_ssid);
-      webSerialPrintln(stored_pass);
-      webSerialPrintln(stored_mqtt_server);
-      webSerialPrintln(stored_mqtt_user);
-      webSerialPrintln(stored_mqtt_pass);
-      webSerialPrintln(stored_mqtt_topic_in);
-      webSerialPrintln(stored_mqtt_topic_out);
-      webSerialPrintln(mqtt_enabled);
+      Serial.println(stored_devicename);
+      Serial.println(stored_ssid);
+      Serial.println(stored_pass);
+      Serial.println(stored_mqtt_server);
+      Serial.println(stored_mqtt_user);
+      Serial.println(stored_mqtt_pass);
+      Serial.println(stored_mqtt_topic_in);
+      Serial.println(stored_mqtt_topic_out);
+      Serial.println(mqtt_enabled);
     }
 
-    webSerialPrintln("Saving settings");
+    Serial.println("Saving settings");
   }
 }
 //WiFi settings callback=====================================================
@@ -225,62 +200,55 @@ void commandCallback(Control* sender, int type) {
 }
 //ESPUI command===============================
 
-void refreshVerbosity() {
-  if (!debugTabVisible()) return;
-  ESPUI.updateControlValue(highVerbosity_switch, highVerbosity ? "1" : "0");
-  ESPUI.setElementStyle(highVerbosity_switch, getEspuiSwitchStyle(highVerbosity));
-}
 
 //Serial setup===============================================================
 void SerialCommand(String input) {
-  if (debugTabVisible()) ESPUI.print(serialLabelId, input);
-
   if (input.indexOf("ssid") > -1) {
     stored_ssid = splitString(input, ' ', 1);
     settings.putString("ssid", String(stored_ssid));
-    webSerialPrintln("New SSID : " + stored_ssid);
+    Serial.println("New SSID : " + stored_ssid);
   }
 
   else if (input.indexOf("password") > -1) {
     stored_pass = splitString(input, ' ', 1);
     settings.putString("pass", String(stored_pass));
-    webSerialPrintln("New password : " + stored_pass);
+    Serial.println("New password : " + stored_pass);
   }
 
   else if (input.indexOf("mqtten") > -1) {
     mqtt_enabled = splitString(input, ' ', 1).toInt() ? true : false;
     settings.putBool("mqtt_enabled", mqtt_enabled);
-    webSerialPrintln("MQTT enabled : " + String(mqtt_enabled));
+    Serial.println("MQTT enabled : " + String(mqtt_enabled));
   }
 
   else if (input.indexOf("mqttserver") > -1) {
     stored_mqtt_server = splitString(input, ' ', 1);
     settings.putString("mqtt_server", String(stored_mqtt_server));
-    webSerialPrintln("New MQTT server : " + stored_mqtt_server);
+    Serial.println("New MQTT server : " + stored_mqtt_server);
   }
 
   else if (input.indexOf("mqttuser") > -1) {
     stored_mqtt_user = splitString(input, ' ', 1);
     settings.putString("mqtt_user", String(stored_mqtt_user));
-    webSerialPrintln("New MQTT user : " + stored_mqtt_user);
+    Serial.println("New MQTT user : " + stored_mqtt_user);
   }
 
   else if (input.indexOf("mqttpass") > -1) {
     stored_mqtt_pass = splitString(input, ' ', 1);
     settings.putString("mqtt_pass", String(stored_mqtt_pass));
-    webSerialPrintln("New MQTT pass : " + stored_mqtt_pass);
+    Serial.println("New MQTT pass : " + stored_mqtt_pass);
   }
 
   else if (input.indexOf("topicin") > -1) {
     stored_mqtt_topic_in = splitString(input, ' ', 1);
     settings.putString("mqtt_topic_in", String(stored_mqtt_topic_in));
-    webSerialPrintln("New Topic IN : " + stored_mqtt_topic_in);
+    Serial.println("New Topic IN : " + stored_mqtt_topic_in);
   }
 
   else if (input.indexOf("topicout") > -1) {
     stored_mqtt_topic_out = splitString(input, ' ', 1);
     settings.putString("mqtt_topic_out", String(stored_mqtt_topic_out));
-    webSerialPrintln("New Topic OUT : " + stored_mqtt_topic_out);
+    Serial.println("New Topic OUT : " + stored_mqtt_topic_out);
   }
 
   input.toLowerCase();
@@ -291,12 +259,10 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("quiet") > -1) {
     highVerbosity = false;
-    refreshVerbosity();
   }
 
   else if (input.indexOf("verbose") > -1) {
     highVerbosity = true;
-    refreshVerbosity();
   }
 
   else if (input.indexOf("gohome") > -1) {
@@ -336,28 +302,20 @@ void SerialCommand(String input) {
     uiRequestInit = true;
   }
 
-  else if (input.indexOf("debugoff") > -1) {
-    writeDebugVisibility(false);
-  }
-
-  else if (input.indexOf("debugon") > -1) {
-    writeDebugVisibility(true);
-  }
-
   else if (input.indexOf("cpu") > -1) {
-    webSerialPrintln("--- CPU SYSTEM REPORT ---");
-    webSerialPrintln("Model: " + getChipModel() + " (" + String(getCpuCores()) + " cores) @ " + String(ESP.getCpuFreqMHz()) + "MHz");
-    webSerialPrintln("Temperature: " + String(getCpuTemperature(), 0) + "\xC2\xB0" + "C");
-    webSerialPrintln("Last Boot: " + getReadableResetReason());
-    webSerialPrintln("Last Crash: " + getReadableLastCrashReason());
-    webSerialPrintln("RAM: " + String(getFreeHeap()) + " / " + String(getTotalHeap()) + " bytes free");
-    webSerialPrintln("Flash: " + String(getSketchSize()) + " / " + String(getFlashSize()) + " bytes used");
-    webSerialPrintln("Free Sketch: " + String(getFreeSketchSpace()) + " bytes");
+    Serial.println("--- CPU SYSTEM REPORT ---");
+    Serial.println("Model: " + getChipModel() + " (" + String(getCpuCores()) + " cores) @ " + String(ESP.getCpuFreqMHz()) + "MHz");
+    Serial.println("Temperature: " + String(getCpuTemperature(), 0) + "\xC2\xB0" + "C");
+    Serial.println("Last Boot: " + getReadableResetReason());
+    Serial.println("Last Crash: " + getReadableLastCrashReason());
+    Serial.println("RAM: " + String(getFreeHeap()) + " / " + String(getTotalHeap()) + " bytes free");
+    Serial.println("Flash: " + String(getSketchSize()) + " / " + String(getFlashSize()) + " bytes used");
+    Serial.println("Free Sketch: " + String(getFreeSketchSpace()) + " bytes");
   }
 
   else if (input.indexOf("temp") > -1) {
     float temperature = getCpuTemperature();
-    webSerialPrintln("CPU Temperature: " + String(temperature, 0) + "\xC2\xB0" + "C");
+    Serial.println("CPU Temperature: " + String(temperature, 0) + "\xC2\xB0" + "C");
   }
 
   else if (input.indexOf("report") > -1) {
@@ -373,30 +331,30 @@ void SerialCommand(String input) {
   }
 
   else if (input.indexOf("info") > -1) {
-    webSerialPrintln("Device name " + stored_devicename);
-    webSerialPrintln("Firmware " + firmwareVersion());
-    webSerialPrintln("SSID " + stored_ssid);
-    webSerialPrint("IP :");
-    webSerialPrintln(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
-    webSerialPrintln("MQTT server " + stored_mqtt_server);
-    webSerialPrintln("MQTT user " + stored_mqtt_user);
-    webSerialPrintln("MQTT enabled " + String(mqtt_enabled));
-    webSerialPrintln("Topic IN " + stored_mqtt_topic_in);
-    webSerialPrintln("Topic OUT " + stored_mqtt_topic_out);
-    webSerialPrint("Verbosity ");  webSerialPrintln(highVerbosity ? "HI" : "LO");
+    Serial.println("Device name " + stored_devicename);
+    Serial.println("Firmware " + firmwareVersion());
+    Serial.println("SSID " + stored_ssid);
+    Serial.print("IP :");
+    Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
+    Serial.println("MQTT server " + stored_mqtt_server);
+    Serial.println("MQTT user " + stored_mqtt_user);
+    Serial.println("MQTT enabled " + String(mqtt_enabled));
+    Serial.println("Topic IN " + stored_mqtt_topic_in);
+    Serial.println("Topic OUT " + stored_mqtt_topic_out);
+    Serial.print("Verbosity ");  Serial.println(highVerbosity ? "HI" : "LO");
   }
 
   else if (input.indexOf("help") > -1) {
-    webSerialPrintln("-ssid, password + argument = WIFI");
-    webSerialPrintln("-mqtten, mqttserver, mqttuser, mqttpass + argument = MQTT");
-    webSerialPrintln("-topicin, topicout + argument = MQTT TOPIC");
-    webSerialPrintln("-info, report, sensor, temp = reports");
-    webSerialPrintln("-verbose, quiet = debug verbosity");
-    webSerialPrintln("-go+[home/end/17/30/still] move arm");
-    webSerialPrintln("-up/down/pause = up/down button");
-    webSerialPrintln("-bypass/overrite/init = skip initialization and go IDLE");
-    webSerialPrintln("-start/stop/play = start/stop button");
-    webSerialPrintln("-repeat = repeat button  --  restart = reboot the device");
+    Serial.println("-ssid, password + argument = WIFI");
+    Serial.println("-mqtten, mqttserver, mqttuser, mqttpass + argument = MQTT");
+    Serial.println("-topicin, topicout + argument = MQTT TOPIC");
+    Serial.println("-info, report, sensor, temp = reports");
+    Serial.println("-verbose, quiet = debug verbosity");
+    Serial.println("-go+[home/end/17/30/still] move arm");
+    Serial.println("-up/down/pause = up/down button");
+    Serial.println("-bypass/overrite/init = skip initialization and go IDLE");
+    Serial.println("-start/stop/play = start/stop button");
+    Serial.println("-repeat = repeat button  --  restart = reboot the device");
   }
 }
 //Serial setup===================================================================

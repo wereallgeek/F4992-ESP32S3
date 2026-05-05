@@ -15,37 +15,21 @@ const char* espuiLTxtLabelStyle = "color:#fff;width:65%;height:32px;display:inli
 const char* espuiSwtLabelStyle  = "color:#fff!important;width:45%!important;height:32px!important;background:0 0!important;border:none!important;box-shadow:none!important;display:inline-block!important;font-family:'Segoe UI',Roboto,sans-serif!important;font-size:0.85rem!important;line-height:34px!important;text-align:right!important;vertical-align:top!important;padding-right:10px!important;margin-top:22px!important;";
 const char* espuiLSwtLabelStyle = "color:#fff;width:65%;height:32px;display:inline-block;text-align:right;vertical-align:middle;padding-right:10px;margin-top:7px!important;line-height:20px!important;box-sizing:border-box;background:0 0;border:0;box-shadow:none!important;";
 const char* btnStyle            = "background:#000;color:#fff;font:10px/25px sans-serif;min-width:55px;height:25px;padding:0 5px;border:1px solid #444;display:inline-block;vertical-align:middle;text-align:center!important;";
-const char* commandConsoleStyle = "text-align:left;font:10px monospace;white-space:pre;";
-const char* commandInputStyle   = "color:#000;background:#fff;text-align:left;font:14px monospace;white-space:pre;border:1px solid #444!important;";
 const char* espuiTelStyle       = "width:75px;height:32px;display:inline-block;vertical-align:top;margin-top:20px;text-align:center;box-sizing:border-box!important;";
 const char* espuiTextSetupStyle = "width:70%;height:32px;display:inline-block;vertical-align:middle;margin-top:20px;box-sizing:border-box;padding-left:10px!important;";
 const char* espuiNumberStyle    = "background:#2c3e50;width:75px;height:32px;border-radius:4px;display:inline-block;border:1px solid #444;font:700 .85rem/32px sans-serif;text-align:center;vertical-align:middle;margin-top:20px!important;";
+const char* espuiStatLabel      = "background:#1e1e1e!important;color:#0f0!important;font-family:monospace!important;font-size:11px!important;width:46%!important;display:inline-block!important;margin:2px 1%!important;padding:4px!important;height:24px!important;line-height:16px!important;border:1px solid #333!important;box-sizing:border-box!important;vertical-align:top!important;";
 
 //Interface conditionality
 Preferences uisetup;
 volatile bool espuiDebugVisible = false;
 volatile bool espuiRepeatButtonVisible = true;
 volatile bool espuiInvertButtonVisible = true;
-uint16_t debugtab;
 
 void setupInterface() {
   uisetup.begin("uiSetup", false);
-  loadDebugVisibility();
   loadRepeatVisibility();
   loadInvertVisibility();
-}
-
-//Debug tab
-bool debugTabVisible() {
-  return espuiDebugVisible;
-}
-
-void loadDebugVisibility() {
-  espuiDebugVisible = settings.getBool("debugtab", false);
-}
-
-void writeDebugVisibility(bool visible) {
-  settings.putBool("debugtab", visible);
 }
 
 //repeat button + indicator
@@ -82,26 +66,22 @@ void espui_init() {
 
   //create tabs here to get urls with #1, #2, etc.  
   auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
+  auto statstab = ESPUI.addControl(Tab, "", "Statistics");
   auto addonstab = ESPUI.addControl(Tab, "", "Addons");
   auto configtab = ESPUI.addControl(Tab, "", "Config");
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
-  if (debugTabVisible()) debugtab = ESPUI.addControl(Tab, "", "Debug");
-  
+    
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
   //--ui config block
-  auto dbgswitchlabel = ESPUI.addControl(Label, "UI Config (requires Reboot)", "Debug tab : ", None, addonstab, noCallback);
-  ESPUI.setElementStyle(dbgswitchlabel, espuiLSwtLabelStyle);  
-  auto dbg_switch = ESPUI.addControl(Switcher, "", String(espuiDebugVisible), None, dbgswitchlabel, switchDebugCallback);
-  ESPUI.setElementStyle(dbg_switch, getEspuiSwitchStyle(espuiDebugVisible));
-  
-  auto rptswitchlabel = ESPUI.addControl(Label, "", "Repeat feature : ", None, dbgswitchlabel, noCallback);
+ 
+  auto rptswitchlabel = ESPUI.addControl(Label, "UI Config (requires Reboot)", "Repeat feature : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(rptswitchlabel, espuiLSwtLabelStyle);  
-  auto rpt_switch = ESPUI.addControl(Switcher, "", String(espuiRepeatButtonVisible), None, dbgswitchlabel, switchRepeatCallback);
+  auto rpt_switch = ESPUI.addControl(Switcher, "", String(espuiRepeatButtonVisible), None, rptswitchlabel, switchRepeatCallback);
   ESPUI.setElementStyle(rpt_switch, getEspuiSwitchStyle(espuiRepeatButtonVisible));
 
-  auto invrtswitchlabel = ESPUI.addControl(Label, "", "Speed inverter feature : ", None, dbgswitchlabel, noCallback);
+  auto invrtswitchlabel = ESPUI.addControl(Label, "", "Speed inverter feature : ", None, rptswitchlabel, noCallback);
   ESPUI.setElementStyle(invrtswitchlabel, espuiLSwtLabelStyle);  
-  auto invrt_switch = ESPUI.addControl(Switcher, "", String(espuiInvertButtonVisible), None, dbgswitchlabel, switchInvertCallback);
+  auto invrt_switch = ESPUI.addControl(Switcher, "", String(espuiInvertButtonVisible), None, rptswitchlabel, switchInvertCallback);
   ESPUI.setElementStyle(invrt_switch, getEspuiSwitchStyle(espuiInvertButtonVisible));
 
   //--led strip block
@@ -176,22 +156,6 @@ void espui_init() {
   ESPUI.setElementStyle(armStatusLabelId, getEspuiLabelColor("#2c3e50"));
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
 
-  //Console debug tab--------------------------------------------------------------------------------------------------------------
-  if (debugTabVisible()) {
-    serialLabelId = ESPUI.addControl(Label, "Console", "last command", Dark, debugtab, noCallback);
-    ESPUI.setElementStyle(serialLabelId, commandConsoleStyle);
-    logLabelId = ESPUI.addControl(Label, "Console Log", "...", Dark, serialLabelId, noCallback);
-    ESPUI.setElementStyle(logLabelId, commandConsoleStyle);
-    auto cmd_input = ESPUI.addControl(Text, "Command:", "", Dark, serialLabelId, commandCallback);
-    ESPUI.setElementStyle(cmd_input, commandInputStyle);
-    auto highVerboLabel = ESPUI.addControl(Label, "", "High Verbosity", None, serialLabelId, noCallback);
-    ESPUI.setElementStyle(highVerboLabel, espuiSwtLabelStyle);  
-    highVerbosity_switch = ESPUI.addControl(Switcher, "", String(highVerbosity), Dark, serialLabelId, verbosityCallback);
-    ESPUI.setElementStyle(highVerbosity_switch, getEspuiSwitchStyle(highVerbosity));
-    auto firmwareversionLabel = ESPUI.addControl(Label, "", String("       FW ver ") + firmwareVersion(), None, serialLabelId, noCallback);
-    ESPUI.setElementStyle(firmwareversionLabel, espuiSwtLabelStyle);
-  }
-
   //Turntable configuration--------------------------------------------------------------------------------------------------------
   auto durationLabel = ESPUI.addControl(Label, "Duration", "detection: ", None, configtab, noCallback);
   ESPUI.setElementStyle(durationLabel, espuiLongLabelStyle);  
@@ -234,7 +198,23 @@ void espui_init() {
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
   auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
+  //Turntable configuration--------------------------------------------------------------------------------------------------------
 
+  //STATS--------------------------------------------------------------------------------------------------------------------------
+  
+  auto firmwareversionLabel = ESPUI.addControl(Label, "", String("FW ver :") + firmwareVersion(), None, statstab, noCallback);
+  ESPUI.setElementStyle(firmwareversionLabel, espuiLTxtLabelStyle);
+
+  for (int statIndex = 0; statIndex < maxStatIndex(); statIndex++) {
+    auto infoLabel = ESPUI.addControl(Label, "", String(getStatLabel(statIndex)) + String(getStat(statIndex)), ControlColor::None, firmwareversionLabel, noCallback);
+    ESPUI.setElementStyle(infoLabel, espuiStatLabel);
+  }
+
+  auto lastcrashLabel = ESPUI.addControl(Label, "", String("Last crash since poweron :") + getReadableLastCrashReason(), None, firmwareversionLabel, noCallback);
+  ESPUI.setElementStyle(lastcrashLabel, espuiLTxtLabelStyle);
+
+  //STATS--------------------------------------------------------------------------------------------------------------------------
+  
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, noCallback);
   ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);
