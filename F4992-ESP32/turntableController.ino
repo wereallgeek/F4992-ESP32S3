@@ -154,6 +154,8 @@ void turntableSwitchSetup () {
     debouncedButtons[pinnumber].interval(80);
     debouncedButtons[pinnumber].update();
   }
+  //validate User Bypass Request
+  UserBypassRequest = moveOutButtonPressed();
 }
 
 void turntableArmtrayperipheralsSetup() {
@@ -444,6 +446,10 @@ bool armResetNotActive() {
 
 bool reachedArmReset() {
   return debouncedButtons[ARM].read() ==  pressed;
+}
+
+bool moveOutButtonPressed() {
+  return debouncedButtons[SWITCH3].read() ==  pressed;
 }
 
 bool reachedHome() {

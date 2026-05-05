@@ -86,6 +86,8 @@ volatile bool uiAskInfra       = false;
   
 TaskHandle_t Handle_Turntable;
 
+volatile bool UserBypassRequest = false;
+
 //SETUP=========================
 void setup() {
   firstPassCompleted = false;
@@ -100,9 +102,10 @@ void setup() {
   turntableSetup();
   simpleOTAsetup();
 
-
+ 
   wifi_init();
-  espui_init();
+  if (UserBypassRequest) emergencyServerSetup();
+  else espui_init();
 
   simpleOTAbegin();
 
