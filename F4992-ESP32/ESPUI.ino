@@ -220,7 +220,7 @@ void espui_init() {
     ESPUI.setElementStyle(infoLabel, espuiStatLabel);
   }
 
-  auto lastcrashLabel = ESPUI.addControl(Label, "", String("Last crash since poweron :") + getReadableLastCrashReason(), None, firmwareversionLabel, noCallback);
+  auto lastcrashLabel = ESPUI.addControl(Label, "", String("Last crash :") + getReadableLastCrashReason(), None, firmwareversionLabel, noCallback);
   ESPUI.setElementStyle(lastcrashLabel, espuiLTxtLabelStyle);
 
   //STATS--------------------------------------------------------------------------------------------------------------------------
