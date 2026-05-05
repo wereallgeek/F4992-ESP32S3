@@ -11,23 +11,28 @@
 Preferences ledsetup;
 Adafruit_NeoPixel strip(1, PIN_LEDPIXEL, NEO_GRB + NEO_KHZ800);
 
-volatile bool ledPixelEnable     = false;
-volatile int  availablePixels    = 1;
-volatile bool newLedPixelEnable  = false;
-volatile int  newAvailablePixels = 1;
+volatile bool ledPixelEnable        = false;
+volatile int  availablePixels       = 1;
+volatile bool newLedPixelEnable     = false;
+volatile int  newAvailablePixels    = 1;
+volatile int  newChaserSpeed        = 1;
+volatile int  newBreatherAdjustment = 1;
+volatile int  newDesiredBrightness  = 1;
 
 //these needs to be a 1:1 match for the turntable state machine
 enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, MOVECHASER, PULSEDETECT, FOLLOWPLAY};
 LedAnimation animationStyle = NONE;
 enum RGB {RgbR, RgbG, RgbB};
 int baseRgb[3] = {0, 0, 0};
-int desiredBrightness = 50;
+volatile int desiredBrightness = 50;
+
+//breather
+volatile int breatherAdjustment = 50; 
 
 //chaser
-uint32_t chaserColor = strip.Color(255, 0, 0);
 int chaserRangeFrom = 0;
 int chaserRangeTo = 5;
-int chaserSpeed = 111; //for a 1sec animation 1000/number of pixels
+volatile int chaserSpeed = 111; //for a 1sec animation 1000/number of pixels
 bool chaserDirection = true;
 static int currentChaserStep = -1;
 
@@ -38,6 +43,9 @@ void ledPixelSetup() {
   ledsetup.begin("ledsetup", false);
   loadLedPixelEnable();
   loadLedPixelNumber();
+  loadChaserSpeed();
+  loadBreatherAdjustment();
+  loadDesiredBrightness();
 
   strip.begin();
   strip.updateLength(availablePixels);
@@ -90,13 +98,86 @@ void loadLedPixelNumber() {
   newAvailablePixels = availablePixels;
 }
 
+
+void activateChaserSpeed(int spd) {
+  chaserSpeed = spd;
+}
+
+void changeChaserSpeed(int spd) {
+  newChaserSpeed = spd;
+}
+
+void storeChaserSpeed() {
+  ledsetup.putInt("chaser", newChaserSpeed);
+  activateChaserSpeed(newChaserSpeed);
+}
+
+void loadChaserSpeed() {
+  chaserSpeed = ledsetup.getInt("chaser", 111);
+  newChaserSpeed = chaserSpeed;
+}
+
+
+void activateBreatherAdjustment(int adj) {
+  breatherAdjustment = adj;
+}
+
+void changeBreatherAdjustment(int adj) {
+  newBreatherAdjustment = (adj < 1)? 1 : adj;
+}
+
+void storeBreatherAdjustment() {
+  ledsetup.putInt("breather", newBreatherAdjustment);
+  activateBreatherAdjustment(newBreatherAdjustment);
+}
+
+void loadBreatherAdjustment() {
+  breatherAdjustment = ledsetup.getInt("breather", 250);
+  newBreatherAdjustment = breatherAdjustment;
+}
+
+void activateDesiredBrightness(int brt) {
+  desiredBrightness = brt;
+}
+
+void changeDesiredBrightness(int brt) {
+  if (brt < 0) newDesiredBrightness = 0;
+  else if (brt > 255) newDesiredBrightness = 255;
+  else newDesiredBrightness = brt;
+}
+
+void storeDesiredBrightness() {
+  ledsetup.putInt("brightness", newDesiredBrightness);
+  activateDesiredBrightness(newDesiredBrightness);
+}
+
+void loadDesiredBrightness() {
+  desiredBrightness = ledsetup.getInt("brightness", 50);
+  newDesiredBrightness = desiredBrightness;
+}
+
 int numberOfPixels() {
   return availablePixels;
 }
 
+int chaserSpeedValue() {
+  return chaserSpeed;
+}
+
+int breatherAdjValue() {
+  return breatherAdjustment;
+}
+
+int ledBrightnessValue() {
+  return desiredBrightness;
+}
+
 void maintainSetupValues() {
-  if (newLedPixelEnable != ledPixelEnable) storeLedPixelEnable();
-  if (newAvailablePixels != availablePixels) storeLedPixelNumber();
+  if (newLedPixelEnable     != ledPixelEnable)     storeLedPixelEnable();
+  if (newAvailablePixels    != availablePixels)    storeLedPixelNumber();
+  if (newChaserSpeed        != chaserSpeed)        storeChaserSpeed();
+  if (newBreatherAdjustment != breatherAdjustment) storeBreatherAdjustment();
+  if (newDesiredBrightness  != desiredBrightness)  storeDesiredBrightness();
 }
 
 void setAnimationStyle(int style) {
@@ -118,11 +199,6 @@ void setbaseRgb(int ledR, int ledG, int ledB) {
   baseRgb[RgbR] = ledR;
   baseRgb[RgbG] = ledG;
   baseRgb[RgbB] = ledB;
-}
-
-void setDesiredBrightness(int brightness) {
-  if (brightness < 0 || brightness > 255) return;
-  desiredBrightness = brightness;
 }
 
 bool computeLedOverlapTransitionFromArmPosition(uint16_t stepToCompute) {
@@ -206,6 +282,13 @@ void setupChaser(int from, int to) {
   currentChaserStep = from;
 }
 
+void runBreather() {
+  strip.clear();
+  setLedPixelRgbColorToPreset();
+  setLedPixelBrightness((int)(((sin(millis() / (float)breatherAdjustment) + 1.0) / 2.0) * desiredBrightness));
+  strip.show();
+}
+
 void runChaser() {
   // can't chase on a single led.
   if (numberOfPixels() <= 1) {
@@ -258,30 +341,30 @@ void animateLeds() {
 
   if (!ledPixelEnable) {
     turnOffLeds();
-    return;
   }
-
-  switch (animationStyle) {
-    case NONE:
-      if (isHome()) {
-        turnOffLeds();
-      }
-      else showCurrentPosition();
-      break;
-    case WAKEPULSE:
-      turnOnLedPresets();
-      break;
-    case ANIMHOME:  
-    case MOVECHASER:  
-      runChaser();
-      break;
-    case PULSEDETECT:  
-      turnOnLedPresets(); 
-      break;
-    case UPHOME:  
-    case UPMOVE:  
-    case FOLLOWPLAY:  
-      showCurrentPosition();
-      break;
+  else {
+    switch (animationStyle) {
+      case NONE:
+        if (isHome()) {
+          turnOffLeds();
+        }
+        else showCurrentPosition();
+        break;
+      case WAKEPULSE:
+        runBreather();
+        break;
+      case ANIMHOME:  
+      case MOVECHASER:  
+        runChaser();
+        break;
+      case PULSEDETECT:  
+        runBreather(); 
+        break;
+      case UPHOME:  
+      case UPMOVE:  
+      case FOLLOWPLAY:  
+        showCurrentPosition();
+        break;
+    }
   }
 }

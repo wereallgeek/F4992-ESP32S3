@@ -108,6 +108,24 @@ void numLedCallback(Control *sender, int type) {
   }
 }
 
+void ledBrightnessCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    changeDesiredBrightness(sender->value.toInt());
+  }
+}
+
+void ledchaserCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    changeChaserSpeed(sender->value.toInt());
+  }
+}
+
+void ledbreatherCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    changeBreatherAdjustment(sender->value.toInt());
+  }
+}
+
 void buttonInvertCallback(Control *sender, int type) {
   uiInvert = (type == S_ACTIVE);
   switchCallback(sender, type);
@@ -318,10 +336,18 @@ void SerialCommand(String input) {
     uiRequestInit = true;
   }
 
+  else if (input.indexOf("debugoff") > -1) {
+    writeDebugVisibility(false);
+  }
+
+  else if (input.indexOf("debugon") > -1) {
+    writeDebugVisibility(true);
+  }
+
   else if (input.indexOf("cpu") > -1) {
     webSerialPrintln("--- CPU SYSTEM REPORT ---");
     webSerialPrintln("Model: " + getChipModel() + " (" + String(getCpuCores()) + " cores) @ " + String(ESP.getCpuFreqMHz()) + "MHz");
-    webSerialPrintln("Temperature: " + String(getCpuTemperature(), 0) + " C");
+    webSerialPrintln("Temperature: " + String(getCpuTemperature(), 0) + "\xC2\xB0" + "C");
     webSerialPrintln("Last Boot: " + getReadableResetReason());
     webSerialPrintln("Last Crash: " + getReadableLastCrashReason());
     webSerialPrintln("RAM: " + String(getFreeHeap()) + " / " + String(getTotalHeap()) + " bytes free");

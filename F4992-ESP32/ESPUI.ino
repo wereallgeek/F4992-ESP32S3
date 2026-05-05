@@ -13,7 +13,7 @@ const char* espuiTextLabelStyle = "color:#fff;width:25%;height:32px;display:inli
 const char* espuiLongLabelStyle = "color:#fff;width:45%;height:32px;display:inline-block;text-align:right;vertical-align:middle;padding-right:10px;margin-top:20px;line-height:32px;box-sizing:border-box;background:0 0;border:0;box-shadow:none!important;";
 const char* espuiLTxtLabelStyle = "color:#fff;width:65%;height:32px;display:inline-block;text-align:right;vertical-align:middle;padding-right:10px;margin-top:20px;line-height:32px;box-sizing:border-box;background:0 0;border:0;box-shadow:none!important;";
 const char* espuiSwtLabelStyle  = "color:#fff!important;width:45%!important;height:32px!important;background:0 0!important;border:none!important;box-shadow:none!important;display:inline-block!important;font-family:'Segoe UI',Roboto,sans-serif!important;font-size:0.85rem!important;line-height:34px!important;text-align:right!important;vertical-align:top!important;padding-right:10px!important;margin-top:22px!important;";
-const char* espuiLSwtLabelStyle = "color:#fff!important;width:65%!important;height:32px!important;background:0 0!important;border:none!important;box-shadow:none!important;display:inline-block!important;font-family:'Segoe UI',Roboto,sans-serif!important;font-size:.85rem!important;line-height:34px!important;text-align:right!important;vertical-align:top!important;padding-right:10px!important;margin-top:22px!important;";
+const char* espuiLSwtLabelStyle = "color:#fff;width:65%;height:32px;display:inline-block;text-align:right;vertical-align:middle;padding-right:10px;margin-top:7px!important;line-height:20px!important;box-sizing:border-box;background:0 0;border:0;box-shadow:none!important;";
 const char* btnStyle            = "background:#000;color:#fff;font:10px/25px sans-serif;min-width:55px;height:25px;padding:0 5px;border:1px solid #444;display:inline-block;vertical-align:middle;text-align:center!important;";
 const char* commandConsoleStyle = "text-align:left;font:10px monospace;white-space:pre;";
 const char* commandInputStyle   = "color:#000;background:#fff;text-align:left;font:14px monospace;white-space:pre;border:1px solid #444!important;";
@@ -88,33 +88,54 @@ void espui_init() {
   if (debugTabVisible()) debugtab = ESPUI.addControl(Tab, "", "Debug");
   
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
-  auto dbgswitchlabel = ESPUI.addControl(Label, "UI Config", "Debug tab", None, addonstab, noCallback);
+  //--ui config block
+  auto dbgswitchlabel = ESPUI.addControl(Label, "UI Config (requires Reboot)", "Debug tab : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(dbgswitchlabel, espuiLSwtLabelStyle);  
   auto dbg_switch = ESPUI.addControl(Switcher, "", String(espuiDebugVisible), None, dbgswitchlabel, switchDebugCallback);
   ESPUI.setElementStyle(dbg_switch, getEspuiSwitchStyle(espuiDebugVisible));
-
-  auto rptswitchlabel = ESPUI.addControl(Label, "", "Repeat feature", None, dbgswitchlabel, noCallback);
+  
+  auto rptswitchlabel = ESPUI.addControl(Label, "", "Repeat feature : ", None, dbgswitchlabel, noCallback);
   ESPUI.setElementStyle(rptswitchlabel, espuiLSwtLabelStyle);  
   auto rpt_switch = ESPUI.addControl(Switcher, "", String(espuiRepeatButtonVisible), None, dbgswitchlabel, switchRepeatCallback);
   ESPUI.setElementStyle(rpt_switch, getEspuiSwitchStyle(espuiRepeatButtonVisible));
 
-  auto invrtswitchlabel = ESPUI.addControl(Label, "", "Speed inverter feature", None, dbgswitchlabel, noCallback);
+  auto invrtswitchlabel = ESPUI.addControl(Label, "", "Speed inverter feature : ", None, dbgswitchlabel, noCallback);
   ESPUI.setElementStyle(invrtswitchlabel, espuiLSwtLabelStyle);  
   auto invrt_switch = ESPUI.addControl(Switcher, "", String(espuiInvertButtonVisible), None, dbgswitchlabel, switchInvertCallback);
   ESPUI.setElementStyle(invrt_switch, getEspuiSwitchStyle(espuiInvertButtonVisible));
 
+  //--led strip block
   auto ledswitchlabel = ESPUI.addControl(Label, "Led strip", "Ledstrip enabled : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(ledswitchlabel, espuiLSwtLabelStyle);  
   auto led_switch = ESPUI.addControl(Switcher, "", String(useLedPixel()), None, ledswitchlabel, switchLedCallback);
   ESPUI.setElementStyle(led_switch, getEspuiSwitchStyle(useLedPixel()));
-
+  
   auto ledNbEntryLabel = ESPUI.addControl(Label, "", "Number of leds : ", None, ledswitchlabel, noCallback);
   ESPUI.setElementStyle(ledNbEntryLabel, espuiLTxtLabelStyle);  
   auto ledNbEntry = ESPUI.addControl(Text, "", String(numberOfPixels()), Dark, ledswitchlabel, numLedCallback);
   ESPUI.setElementStyle(ledNbEntry, espuiTelStyle);
   ESPUI.setInputType(ledNbEntry, "tel");
 
-  auto addonssave = ESPUI.addControl(Button, "Apply", "Reboot ESP", Peterriver, addonstab, ESPReset);
+  auto ledBrightnessLabel = ESPUI.addControl(Label, "", "Brightness : ", None, ledswitchlabel, noCallback);
+  ESPUI.setElementStyle(ledBrightnessLabel, espuiLTxtLabelStyle);  
+  auto ledBrightness = ESPUI.addControl(Text, "", String(ledBrightnessValue()), Dark, ledswitchlabel, ledBrightnessCallback);
+  ESPUI.setElementStyle(ledBrightness, espuiTelStyle);
+  ESPUI.setInputType(ledBrightness, "tel");
+
+  auto ledchaserLabel = ESPUI.addControl(Label, "", "Chaser speed : ", None, ledswitchlabel, noCallback);
+  ESPUI.setElementStyle(ledchaserLabel, espuiLTxtLabelStyle);  
+  auto ledchaser = ESPUI.addControl(Text, "", String(chaserSpeedValue()), Dark, ledswitchlabel, ledchaserCallback);
+  ESPUI.setElementStyle(ledchaser, espuiTelStyle);
+  ESPUI.setInputType(ledchaser, "tel");
+
+  auto ledBreatherLabel = ESPUI.addControl(Label, "", "Breather adjustment : ", None, ledswitchlabel, noCallback);
+  ESPUI.setElementStyle(ledBreatherLabel, espuiLTxtLabelStyle);  
+  auto ledBreather = ESPUI.addControl(Text, "", String(breatherAdjValue()), Dark, ledswitchlabel, ledbreatherCallback);
+  ESPUI.setElementStyle(ledBreather, espuiTelStyle);
+  ESPUI.setInputType(ledBreather, "tel");
+
+  //--save block
+  auto addonssave = ESPUI.addControl(Button, "Restart", "Reboot turntable", Peterriver, addonstab, ESPReset);
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
 
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
@@ -258,7 +279,7 @@ void espui_init() {
   ESPUI.setElementStyle(mqtt_topic_out_text, espuiTextSetupStyle);
 
   auto wifisave = ESPUI.addControl(Button, "Save", "Save", Peterriver, wifitab, saveWifiDetailsCallback);
-  auto espreset = ESPUI.addControl(Button, "", "Reboot ESP", None, wifisave, ESPReset);
+  auto espreset = ESPUI.addControl(Button, "", "Reboot turntable", None, wifisave, ESPReset);
 
   ESPUI.setEnabled(wifi_ssid_text, true);
   ESPUI.setEnabled(wifi_pass_text, true);
