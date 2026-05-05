@@ -7,37 +7,28 @@
 Preferences ttStats;
 
 enum statsType {
-  START_MANUAL, STOP_MANUAL,
-  START_CMD, STOP_CMD,
-  START_WEB, STOP_WEB,
-  START_MQTT, STOP_MQTT,
-  REPEAT, AUTO_STOP,
-  REJECT, PLAYCOUNT,
-  SIZE17, SIZE30,
+  START_MANUAL, START_WEB, START_CMD, START_MQTT,
+  STOP_MANUAL, STOP_WEB, STOP_CMD, STOP_MQTT,
+  AUTO_STOP, REPEAT, REJECT,
+  PLAYCOUNT, SIZE17, SIZE30,
   BOOTCOUNT,
   MAXCOUNTER
 };
 
 const char* statsKeys[] = {
-  "st_man", "sp_man",
-  "st_cmd", "sp_cmd",
-  "st_web", "sp_web",
-  "st_mqtt", "sp_mqtt",
-  "rep_ct", "sp_auto",
-  "rej_ct", "ply_ct",
-  "sz17", "sz30",
+  "st_man", "st_web", "st_cmd", "st_mqtt",
+  "sp_man", "sp_web", "sp_cmd", "sp_mqtt",
+  "sp_auto", "rep_ct", "rej_ct",
+  "ply_ct", "sz17", "sz30",
   "boot_ct"
 };
 
 const char* statsLabels[] = {
-  "Man Start: ", "Man Stop: ",
-  "Cmd Start: ", "Cmd Stop: ",
-  "Web Start: ", "Web Stop: ",
-  "MQTT Start: ", "MQTT Stop: ",
-  "Repeat: ", "Auto Stop: ",
-  "Reject: ", "Playcount: ",
-  "7\" Record: ", "12\" Record: ",
-  "Bootcount: ", ""
+  "Start (manual): ", "Start (web): ", "Start (serial): ", "Start (mqtt): ",
+  "Stop (manual): ", "Stop (web): ", "Stop (serial): ", "Stop (mqtt): ",
+  "Stop (auto): ", "Repeat: ", "Rejected: ",
+  "Playcount: ", "7\" Record: ", "12\" Record: ",
+  "Bootcount: "
 };
 
 const int startStatType[] = {START_MANUAL, START_CMD, START_WEB, START_MQTT, REPEAT};
@@ -106,20 +97,15 @@ int maxStatIndex() {
 
 void printStatsReport() {
   Serial.println("--- Turntable Stats ---");
-  for (int i = 0; i < MAXCOUNTER; i += 2) {
-    String line = formattedStatsColumn(i);
-    if (i + 1 < MAXCOUNTER && strlen(statsLabels[i + 1]) > 0) {
-      line += "  " + formattedStatsColumn(i + 1);
+  for (int i = 0; i < MAXCOUNTER; i++) {
+    if (strlen(statsLabels[i]) > 0) {
+      Serial.println(formattedStatsColumn(i));
     }
-    Serial.println(line);
   }
 }
 
 String formattedStatsColumn(int index) {
-  String output = String(statsLabels[index]) + numberStats[index];
-  int targetWidth = 19; 
-  while (output.length() < targetWidth) output += " ";
-  return output;
+  return String(statsLabels[index]) + numberStats[index];
 }
 
 void statsReset() {

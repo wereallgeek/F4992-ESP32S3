@@ -17,7 +17,6 @@ const char* espuiLSwtLabelStyle = "color:#fff;width:65%;height:32px;display:inli
 const char* btnStyle            = "background:#000;color:#fff;font:10px/25px sans-serif;min-width:55px;height:25px;padding:0 5px;border:1px solid #444;display:inline-block;vertical-align:middle;text-align:center!important;";
 const char* espuiTelStyle       = "width:75px;height:32px;display:inline-block;vertical-align:top;margin-top:20px;text-align:center;box-sizing:border-box!important;";
 const char* espuiTextSetupStyle = "width:70%;height:32px;display:inline-block;vertical-align:middle;margin-top:20px;box-sizing:border-box;padding-left:10px!important;";
-const char* espuiNumberStyle    = "background:#2c3e50;width:75px;height:32px;border-radius:4px;display:inline-block;border:1px solid #444;font:700 .85rem/32px sans-serif;text-align:center;vertical-align:middle;margin-top:20px!important;";
 const char* espuiStatLabel      = "background:#1e1e1e!important;color:#0f0!important;font-family:monospace!important;font-size:11px!important;width:46%!important;display:inline-block!important;margin:2px 1%!important;padding:4px!important;height:24px!important;line-height:16px!important;border:1px solid #333!important;box-sizing:border-box!important;vertical-align:top!important;";
 
 //Interface conditionality
@@ -148,12 +147,10 @@ void espui_init() {
   ESPUI.setElementStyle(recordsizeLabelId, getEspuiDefaultRecord());
   lifterStatusId = ESPUI.addControl(Label, "", "arm", None, recordsizeLabelId, noCallback);
   ESPUI.setElementStyle(lifterStatusId, espuiIconStyle);
-  armPositionLabelId = ESPUI.addControl(Label, "", "position", None, recordsizeLabelId, noCallback);
-  ESPUI.setElementStyle(armPositionLabelId, espuiNumberStyle);
-  dcmStatusId = ESPUI.addControl(Label, "", "dcm", None, recordsizeLabelId, noCallback);
-  ESPUI.setElementStyle(dcmStatusId, espuiIconStyle);
   armStatusLabelId = ESPUI.addControl(Label, "", "status", Dark, recordsizeLabelId, noCallback);
   ESPUI.setElementStyle(armStatusLabelId, getEspuiLabelColor("#2c3e50"));
+  dcmStatusId = ESPUI.addControl(Label, "", "dcm", None, recordsizeLabelId, noCallback);
+  ESPUI.setElementStyle(dcmStatusId, espuiIconStyle);
   //Tonearm Status-----------------------------------------------------------------------------------------------------------------
 
   //Turntable configuration--------------------------------------------------------------------------------------------------------
@@ -179,7 +176,7 @@ void espui_init() {
   ESPUI.setElementStyle(irTresholdLabelId, espuiTelStyle);
   ESPUI.setInputType(irTresholdLabelId, "tel");
 
-  auto presetLabel = ESPUI.addControl(Label, "Arm Presets", "12\": ", None, configtab, noCallback);
+  auto presetLabel = ESPUI.addControl(Label, "Arm position presets", "12\": ", None, configtab, noCallback);
   ESPUI.setElementStyle(presetLabel, espuiLabelStyle);  
   armPresetValue30LabelId = ESPUI.addControl(Text, "Arm Presets", String(getArmPresetValue(1)), Dark, presetLabel, noCallback);
   ESPUI.setElementStyle(armPresetValue30LabelId, espuiTelStyle);
@@ -194,6 +191,19 @@ void espui_init() {
   armPresetValueEndLabelId = ESPUI.addControl(Text, "", String(getArmPresetValue(3)), Dark, presetLabel, noCallback);
   ESPUI.setElementStyle(armPresetValueEndLabelId, espuiTelStyle);
   ESPUI.setInputType(armPresetValueEndLabelId, "tel");
+
+  auto armstop_button = ESPUI.addControl(Button, "Position tools", "Stop", None, configtab, buttonkMoveNotCallback);
+  ESPUI.setElementStyle(armstop_button, btnStyle);
+  auto end_button = ESPUI.addControl(Button, "", "End", None, armstop_button, buttonMoveEndCallback);
+  ESPUI.setElementStyle(end_button, btnStyle);
+  auto seventeen_button = ESPUI.addControl(Button, "", "6\"", None, armstop_button, buttonkMove17Callback);
+  ESPUI.setElementStyle(seventeen_button, btnStyle);
+  auto thirty_button = ESPUI.addControl(Button, "", "12\"", None, armstop_button, buttonMove30Callback);
+  ESPUI.setElementStyle(thirty_button, btnStyle);
+  auto armhome_button = ESPUI.addControl(Button, "", "Home", None, armstop_button, buttonMoveHomeCallback);
+  ESPUI.setElementStyle(armhome_button, btnStyle);
+  armPositionLabelId = ESPUI.addControl(Label, "", "position", None, armstop_button, noCallback);
+  ESPUI.setElementStyle(armPositionLabelId, espuiStatLabel);
   
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);

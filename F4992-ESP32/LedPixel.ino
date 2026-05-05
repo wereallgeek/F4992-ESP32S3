@@ -305,9 +305,9 @@ void runChaser() {
 
   strip.clear();
 
+  lightCurrentPosition(0, 32, 128);
   setLedPixelRgbColor(chaserRangeFrom, 255, 69, 0);
   setLedPixelRgbColor(chaserRangeTo, 0, 255, 200);
-  lightCurrentPosition(0, 32, 128);
   setLedPixelRgbColorToPreset(currentChaserStep);
 
   setLedPixelBrightnessToPreset();

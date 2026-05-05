@@ -58,6 +58,36 @@ void buttonRepeatCallback(Control *sender, int type) {
   }
 }
 
+void buttonMoveHomeCallback(Control *sender, int type) {
+  if (type == B_UP) {
+    uiAskMoveHome = true;
+  }
+}
+
+void buttonMoveEndCallback(Control *sender, int type) {
+  if (type == B_UP) {
+    uiAskMoveEnd = true;
+  }
+}
+
+void buttonMove30Callback(Control *sender, int type) {
+  if (type == B_UP) {
+    uiAskMove30 = true;
+  }
+}
+
+void buttonkMove17Callback(Control *sender, int type) {
+  if (type == B_UP) {
+    uiAskMove17 = true;
+  }
+}
+
+void buttonkMoveNotCallback(Control *sender, int type) {
+  if (type == B_UP) {
+    uiAskMoveNot = true;
+  }
+}
+
 void switchRepeatCallback(Control *sender, int type) {
   writeRepeatVisibility(type == S_ACTIVE);
   switchCallback(sender, type);

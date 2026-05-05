@@ -239,7 +239,7 @@ void turntableUiUpdate() {
     lastUpdateCycle3 = currentmillis;
     if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
     ttstateDirty = false;
-    if (armpositionDirty) ESPUI.print(armPositionLabelId, String((int)uiArmPosition));
+    if (armpositionDirty) ESPUI.print(armPositionLabelId, String("Current arm position : ") + (int)uiArmPosition);
     armpositionDirty = false;
     if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
     ledstateDirty = false;
