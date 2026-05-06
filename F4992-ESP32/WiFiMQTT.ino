@@ -1,3 +1,7 @@
+#include <map>
+std::map<String, String> lastPublishedValues;
+std::map<String, unsigned long> lastPublishTimes;
+
 //WiFi================================================================================
 void wifi_init() {
   stored_ssid = settings.getString("ssid", "SSID");
@@ -42,6 +46,19 @@ void wifi_init() {
 }
 //WiFi================================================================================
 
+//Topic Out===================================================================
+void publishData(String suffix, String value, unsigned long minInterval = 60000) {
+  unsigned long now = millis();
+  if ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval)) {
+    String topic = stored_mqtt_topic_out + "/" + suffix;
+    if (client.publish(topic.c_str(), value.c_str(), true)) {
+      lastPublishedValues[suffix] = value;
+      lastPublishTimes[suffix] = now;
+    }
+  }
+}
+//Topic Out===================================================================
+
 //MQTT LOOP===================================
 void mqtt_loop() {
   if (wificonnected && mqtt_enabled) {
@@ -51,21 +68,14 @@ void mqtt_loop() {
     }
     client.loop();
     
-    publishData("test_sw", "ON");
-    publishData("cpu_temp", String(getCpuTemperature()));
+    publishData("test_sw", "ON", 250);
+    publishData("cpu_temp", String(getCpuTemperature()), 1000);
   }
 }
 //MQTT LOOP===================================
 
-//Topic Out===================================================================
-void publishData(String suffix, String value) {
-  String topic = stored_mqtt_topic_out + "/" + suffix;
-  client.publish(topic.c_str(), value.c_str(), true);
-}
-//Topic Out===================================================================
-
 //Discovery===================================================================
-void addEntity(String type, String name, String suffix, String dev_class = "", String unit = "") {
+void addEntity(String type, String name, String suffix, String dev_cla = "", String unit = "", String stat_cla = "", String ent_cat = "") {
   String safeName = name;
   safeName.replace(" ", "_");
   
@@ -81,8 +91,10 @@ void addEntity(String type, String name, String suffix, String dev_class = "", S
     payload += "\"cmd_t\":\"" + cmdTopic + "\",";
   }
   
-  if (dev_class != "") payload += "\"dev_cla\":\"" + dev_class + "\",";
-  if (unit != "") payload += "\"unit_of_meas\":\"" + unit + "\",";
+  if (dev_cla != "")  payload += "\"dev_cla\":\"" + dev_cla + "\",";
+  if (unit != "")     payload += "\"unit_of_meas\":\"" + unit + "\",";
+  if (stat_cla != "") payload += "\"stat_cla\":\"" + stat_cla + "\",";
+  if (ent_cat != "")  payload += "\"ent_cat\":\"" + ent_cat + "\",";
 
   payload += "\"uniq_id\":\"" + stored_devicename + "_" + safeName + "\",";
   
@@ -90,18 +102,15 @@ void addEntity(String type, String name, String suffix, String dev_class = "", S
   payload += "\"ids\":[\"" + stored_devicename + "\"],";
   payload += "\"name\":\"" + stored_devicename + "\",";
   payload += "\"mf\":\"We're all Geeks\",";
-  payload += "\"mdl\":\"F4992-ESP32-S3\"";
+  payload += "\"mdl\":\"F4992-ESP32S3 Turntable controller\",";
+  payload += "\"cu\":\"http://" + WiFi.localIP().toString() + "\",";
+  payload += "\"sw\":\"" + firmwareVersion() + "\"";
   payload += "}";
   
   payload += "}";
 
-  Serial.println(discoveryTopic);
-  Serial.println(payload);
   client.publish(discoveryTopic.c_str(), payload.c_str(), true);
 }
-
-
-
 //Discovery===================================================================
 
 //MQTT RECONNECT==============================================================
@@ -113,7 +122,7 @@ void reconnect() {
 
       //Home Assistant Discovery--------------------
       addEntity("switch", "Test Switch", "test_sw");
-      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C");
+      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic");
       //SUBSCRIBE to Topics----------------------------------------------------
       client.subscribe((stored_mqtt_topic_in + "/#").c_str());
       //------------------------------------------------------
