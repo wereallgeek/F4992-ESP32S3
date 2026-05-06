@@ -5,6 +5,7 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   for (int i = 0; i < length; i++) {
     messageTemp += (char)message[i];
   }
+  Serial.println(topic);
   Serial.println(messageTemp);
 
   if (topic == "demo_topic") {

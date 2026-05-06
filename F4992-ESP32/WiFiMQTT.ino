@@ -33,6 +33,7 @@ void wifi_init() {
     MDNS.begin(stored_devicename.c_str());
     MDNS.addService("http", "tcp", 80);
     client.setServer(stored_mqtt_server.c_str(), 1883);
+    client.setBufferSize(512); 
     client.setCallback(mqtt_callback);
   }
   WiFi.setSleep(false);
@@ -50,27 +51,57 @@ void mqtt_loop() {
     }
     client.loop();
     
-    client.publish(stored_mqtt_topic_out.c_str(), "ON", true);
+    publishData("test_sw", "ON");
+    publishData("cpu_temp", String(getCpuTemperature()));
   }
 }
 //MQTT LOOP===================================
 
+//Topic Out===================================================================
+void publishData(String suffix, String value) {
+  String topic = stored_mqtt_topic_out + "/" + suffix;
+  client.publish(topic.c_str(), value.c_str(), true);
+}
+//Topic Out===================================================================
+
 //Discovery===================================================================
-void sendDiscovery() {
-  String discoveryTopic = "homeassistant/switch/" + stored_devicename + "/config";
+void addEntity(String type, String name, String suffix, String dev_class = "", String unit = "") {
+  String safeName = name;
+  safeName.replace(" ", "_");
+  
+  String discoveryTopic = "homeassistant/" + type + "/" + stored_devicename + "_" + safeName + "/config";
+  String stateTopic = stored_mqtt_topic_out + "/" + suffix;
+  String cmdTopic   = stored_mqtt_topic_in  + "/" + suffix;
 
   String payload = "{";
+  payload += "\"name\":\"" + name + "\",";
+  payload += "\"stat_t\":\"" + stateTopic + "\",";
+  
+  if (type == "switch" || type == "light" || type == "number") {
+    payload += "\"cmd_t\":\"" + cmdTopic + "\",";
+  }
+  
+  if (dev_class != "") payload += "\"dev_cla\":\"" + dev_class + "\",";
+  if (unit != "") payload += "\"unit_of_meas\":\"" + unit + "\",";
+
+  payload += "\"uniq_id\":\"" + stored_devicename + "_" + safeName + "\",";
+  
+  payload += "\"dev\":{";
+  payload += "\"ids\":[\"" + stored_devicename + "\"],";
   payload += "\"name\":\"" + stored_devicename + "\",";
-  payload += "\"stat_t\":\"" + stored_mqtt_topic_out + "\",";
-  payload += "\"cmd_t\":\"" + stored_mqtt_topic_in + "\",";
-  payload += "\"uniq_id\":\"" + stored_devicename + "_sw\"";
+  payload += "\"mf\":\"We're all Geeks\",";
+  payload += "\"mdl\":\"F4992-ESP32-S3\"";
   payload += "}";
-  Serial.println("test send");
+  
+  payload += "}";
+
   Serial.println(discoveryTopic);
   Serial.println(payload);
-
   client.publish(discoveryTopic.c_str(), payload.c_str(), true);
 }
+
+
+
 //Discovery===================================================================
 
 //MQTT RECONNECT==============================================================
@@ -80,11 +111,12 @@ void reconnect() {
     if (client.connect(stored_devicename.c_str(), stored_mqtt_user.c_str(), stored_mqtt_pass.c_str())) {
       Serial.println("MQTT connected !");
 
-      //Home Assistant Discovery---------------------
-      sendDiscovery();
-      //SUBSCRIBE to Topics--------------------------
-      client.subscribe(stored_mqtt_topic_in.c_str());
-      //---------------------------------------------
+      //Home Assistant Discovery--------------------
+      addEntity("switch", "Test Switch", "test_sw");
+      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C");
+      //SUBSCRIBE to Topics----------------------------------------------------
+      client.subscribe((stored_mqtt_topic_in + "/#").c_str());
+      //------------------------------------------------------
 
     } else {
       Serial.print("MQTT connection failed : ");
