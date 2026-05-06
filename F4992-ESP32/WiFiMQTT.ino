@@ -49,30 +49,47 @@ void mqtt_loop() {
       return;
     }
     client.loop();
+    
+    client.publish(stored_mqtt_topic_out.c_str(), "ON", true);
   }
 }
 //MQTT LOOP===================================
+
+//Discovery===================================================================
+void sendDiscovery() {
+  String discoveryTopic = "homeassistant/switch/" + stored_devicename + "/config";
+
+  String payload = "{";
+  payload += "\"name\":\"" + stored_devicename + "\",";
+  payload += "\"stat_t\":\"" + stored_mqtt_topic_out + "\",";
+  payload += "\"cmd_t\":\"" + stored_mqtt_topic_in + "\",";
+  payload += "\"uniq_id\":\"" + stored_devicename + "_sw\"";
+  payload += "}";
+  Serial.println("test send");
+  Serial.println(discoveryTopic);
+  Serial.println(payload);
+
+  client.publish(discoveryTopic.c_str(), payload.c_str(), true);
+}
+//Discovery===================================================================
 
 //MQTT RECONNECT==============================================================
 void reconnect() {
   if (millis() - last_millis > mqtt_retry_delay) {
     Serial.println("MQTT connection to : " + stored_mqtt_server);
-    ESPUI.print(statusLabelId, "MQTT connection to : " + stored_mqtt_server);
     if (client.connect(stored_devicename.c_str(), stored_mqtt_user.c_str(), stored_mqtt_pass.c_str())) {
       Serial.println("MQTT connected !");
-      ESPUI.print(statusLabelId, "MQTT connected !");
 
+      //Home Assistant Discovery---------------------
+      sendDiscovery();
       //SUBSCRIBE to Topics--------------------------
       client.subscribe(stored_mqtt_topic_in.c_str());
-      //client.subscribe("demo_topic");
-      //Other topics HERE !
       //---------------------------------------------
 
     } else {
       Serial.print("MQTT connection failed : ");
       Serial.println(client.state());
       Serial.println("Retry in 10 sec");
-      ESPUI.print(statusLabelId, "MQTT connection failed !");
       last_millis = millis();
       return;
     }
