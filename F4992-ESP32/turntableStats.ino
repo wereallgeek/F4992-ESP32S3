@@ -54,7 +54,7 @@ void stats_setup() {
 }
 
 void incrementStat(int type) {
-    numberStats[type]++; 
+  numberStats[type]++; 
   ttStats.putUInt(statsKeys[type], numberStats[type]);
 }
 

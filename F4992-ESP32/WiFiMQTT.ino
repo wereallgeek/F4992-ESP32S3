@@ -2,8 +2,40 @@
 std::map<String, String> lastPublishedValues;
 std::map<String, unsigned long> lastPublishTimes;
 
+bool sendOnReconnect = false;
+
+//stats
+Preferences wirelessStats;
+enum wirelessStatsType {
+  NBWIFICONNECT, NBMQTTCONNECT, 
+  MAXWIRELESS
+};
+
+const char* wirelessStatsKeys[] = {
+  "nbcon_wifi", "nbcon_mqtt"
+};
+
+const char* wirelessStatsLabels[] = {
+  "WiFi Connect Count", "MQTT Connect Count"
+};
+
+volatile uint32_t wirelessNumberStats[MAXWIRELESS];
+
+void incrementWirelessStat(int type) {
+  wirelessNumberStats[type]++; 
+  wirelessStats.putUInt(wirelessStatsKeys[type], wirelessNumberStats[type]);
+}
+
+void wirelessStats_setup() {
+  wirelessStats.begin("mqtt4992", false);
+  for (int i = 0; i < MAXWIRELESS; i++) {
+    wirelessNumberStats[i] = wirelessStats.getUInt(wirelessStatsKeys[i], 0);
+  }
+}
+
 //WiFi================================================================================
 void wifi_init() {
+  wirelessStats_setup();
   stored_ssid = settings.getString("ssid", "SSID");
   stored_pass = settings.getString("pass", "PASSWORD");
   stored_mqtt_server = settings.getString("mqtt_server", "192.168.0.10");
@@ -39,6 +71,7 @@ void wifi_init() {
     client.setServer(stored_mqtt_server.c_str(), 1883);
     client.setBufferSize(512); 
     client.setCallback(mqtt_callback);
+    incrementWirelessStat(NBWIFICONNECT);
   }
   WiFi.setSleep(false);
   Serial.print("\nIP address : ");
@@ -49,7 +82,7 @@ void wifi_init() {
 //Topic Out===================================================================
 void publishData(String suffix, String value, unsigned long minInterval = 250) {
   unsigned long now = millis();
-  if ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval)) {
+  if (sendOnReconnect || ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval))) {
     String topic = stored_mqtt_topic_out + "/" + suffix;
     if (client.publish(topic.c_str(), value.c_str(), true)) {
       lastPublishedValues[suffix] = value;
@@ -66,11 +99,15 @@ void mqtt_loop() {
       reconnect();
       return;
     }
+    else
+    {
+      publishData("test_sw", "ON", 250);    
+      publishAllhWirelessStats();
+      publishAllStats();
+      publisAllCpuInfo();
+      sendOnReconnect = false;
+    }
     client.loop();
-    
-    publishData("test_sw", "ON", 250);
-    publishData("cpu_temp", String(getCpuTemperature()), 1000);
-    publishAllStats();
   }
 }
 //MQTT LOOP===================================
@@ -88,7 +125,9 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
 
   String payload = "{";
   payload += "\"name\":\"" + cleanName + "\",";
-  payload += "\"stat_t\":\"" + stateTopic + "\",";
+  if (type != "button") {
+    payload += "\"stat_t\":\"" + stateTopic + "\",";
+  }
   
   if (icon != "") {
     payload += "\"ic\":\"" + icon + "\",";
@@ -98,7 +137,7 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
     payload += "\"enabled_by_default\":false,";
   }
 
-  if (type == "switch" || type == "light" || type == "number") {
+  if (type == "switch" || type == "light" || type == "number" || type == "button") {
     payload += "\"cmd_t\":\"" + cmdTopic + "\",";
   }
   
@@ -113,8 +152,9 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
   payload += "\"ids\":[\"" + stored_devicename + "\"],";
   payload += "\"name\":\"" + stored_devicename + "\",";
   payload += "\"mf\":\"We're all Geeks\",";
-  payload += "\"mdl\":\"F4992-ESP32S3 Turntable controller\",";
+  payload += "\"mdl\":\"Turntable controller\",";
   payload += "\"cu\":\"http://" + WiFi.localIP().toString() + "\",";
+  payload += "\"hw\":\"F4992-ESP32-S3\",";
   payload += "\"sw\":\"" + firmwareVersion() + "\"";
   payload += "}";
   
@@ -130,11 +170,17 @@ void reconnect() {
     Serial.println("MQTT connection to : " + stored_mqtt_server);
     if (client.connect(stored_devicename.c_str(), stored_mqtt_user.c_str(), stored_mqtt_pass.c_str())) {
       Serial.println("MQTT connected !");
+      incrementWirelessStat(NBMQTTCONNECT);
+
+      lastPublishedValues.clear();
+      lastPublishTimes.clear();
+      sendOnReconnect = true;
 
       //Home Assistant Discovery--------------------
       addEntity("switch", "Test Switch", "test_sw");
-      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic", "");
+      addAllWirelessStatEntities();
       addAllStatEntities();
+      addAllCpuInfoEntities();
       //SUBSCRIBE to Topics----------------------------------------------------
       client.subscribe((stored_mqtt_topic_in + "/#").c_str());
       //------------------------------------------------------
@@ -161,5 +207,53 @@ void publishAllStats() {
   for (int statType = 0; statType < maxStatIndex(); statType++) {
     publishData(getStatKey(statType), String(getStat(statType)));
   }
+}
+
+void addAllWirelessStatEntities() {
+  for (int statType = 0; statType < MAXWIRELESS; statType++) {
+    addEntity("sensor", wirelessStatsLabels[statType], wirelessStatsKeys[statType], "", "", "total_increasing", "diagnostic", "mdi:counter");
+  }
+  addEntity("sensor", "IP", "ip_addr", "", "", "", "diagnostic", "mdi:ip-network");
+  addEntity("sensor", "SSID", "ssid", "", "", "", "diagnostic", "mdi:wifi");
+  addEntity("sensor", "Uptime", "uptime", "duration", "s", "", "diagnostic", "mdi:timer-outline", false);
+  addEntity("sensor", "WiFi Signal", "rssi", "signal_strength", "dBm", "measurement", "diagnostic", "mdi:wifi");
+}
+
+void publishAllhWirelessStats() {
+  for (int statType = 0; statType < MAXWIRELESS; statType++) {
+    publishData(wirelessStatsKeys[statType], String(wirelessNumberStats[statType]));
+  }
+  publishData("ip_addr", WiFi.localIP().toString());
+  publishData("ssid", WiFi.SSID());
+  publishData("uptime", String(getUptimeSeconds()), 5000);
+  publishData("rssi", String(WiFi.RSSI()), 30000);
+}
+
+void addAllCpuInfoEntities() {
+  addEntity("sensor", "Restart Reason", "rst_reason", "", "", "", "diagnostic", "mdi:information-outline");
+  addEntity("sensor", "Last Known Crash", "crash_reason", "", "", "", "diagnostic", "mdi:alert-octagon");
+  addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic", "", false);
+  addEntity("sensor", "CPU Model", "cpu_model", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
+  addEntity("sensor", "CPU Cores", "cpu_cores", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
+  addEntity("sensor", "Free Heap", "free_heap", "data_size", "B", "measurement", "diagnostic", "mdi:memory", false);
+  addEntity("sensor", "Total Heap", "total_heap", "data_size", "B", "", "diagnostic", "mdi:memory", false);
+  addEntity("sensor", "Flash Size", "flash_size", "data_size", "B", "", "diagnostic", "mdi:harddisk", false);
+  addEntity("sensor", "Sketch Size", "sketch_size", "data_size", "B", "", "diagnostic", "mdi:file-code-outline", false);
+  addEntity("sensor", "Free Sketch Space", "free_sketch", "data_size", "B", "", "diagnostic", "mdi:file-code-outline", false);
+  addEntity("button", "Restart", "restart_btn", "restart", "", "", "diagnostic", "mdi:restart");
+}
+
+void publisAllCpuInfo() {
+  publishData("rst_reason", getReadableResetReason());
+  publishData("crash_reason", getReadableLastCrashReason());
+  publishData("cpu_temp", String(getCpuTemperature()), 60000);
+  publishData("cpu_model", getChipModel());
+  publishData("cpu_cores", String(getCpuCores()));
+  publishData("cpu_freq", getCpuFreqMHz()); 
+  publishData("free_heap", String(getFreeHeap()));
+  publishData("total_heap", String(getTotalHeap()));
+  publishData("flash_size", String(getFlashSize()));
+  publishData("sketch_size", String(getSketchSize()));
+  publishData("free_sketch", String(getFreeSketchSpace()));
 }
 //Specific ===================================================================

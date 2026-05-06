@@ -15,6 +15,13 @@ String splitString(String data, char separator, int index) {
 }
 //Split String===========================================================
 
+//Long Uptime============================================================
+unsigned long getUptimeSeconds() {
+  return (unsigned long)(esp_timer_get_time() / 1000000ULL);
+}
+//Long Uptime============================================================
+
+
 //make an MQTT-safe name for topics======================================
 String mqttId(String name) {
   String output = "";
