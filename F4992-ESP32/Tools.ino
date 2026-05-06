@@ -14,3 +14,23 @@ String splitString(String data, char separator, int index) {
   return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 //Split String===========================================================
+
+//make an MQTT-safe name for topics======================================
+String mqttId(String name) {
+  String output = "";
+  for (int i = 0; i < name.length(); i++) {
+    char c = name[i];
+    if (isAlphaNumeric(c)) {
+      output += c;
+    } else if (c == ' ' || c == '(' || c == ')' || c == '"' || c == ':' || c == '-') {
+      if (output.length() > 0 && output[output.length() - 1] != '_') {
+        output += '_';
+      }
+    }
+  }
+  if (output.endsWith("_")) {
+    output.remove(output.length() - 1);
+  }
+  return output;
+}
+//make an MQTT-safe name for topics======================================

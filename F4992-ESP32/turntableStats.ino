@@ -31,6 +31,14 @@ const char* statsLabels[] = {
   "Bootcount: "
 };
 
+const char* statsIcons[] = {
+  "mdi:play", "mdi:play-circle", "mdi:play-circle", "mdi:play-circle",
+  "mdi:stop", "mdi:stop-circle", "mdi:stop-circle", "mdi:stop-circle",
+  "mdi:stop-circle-outline", "mdi:repeat", "mdi:eject",
+  "mdi:counter", "mdi:album", "mdi:disc",
+  "mdi:power-cycle"
+};
+
 const int startStatType[] = {START_MANUAL, START_CMD, START_WEB, START_MQTT, REPEAT};
 const int stopStatType[] = {STOP_MANUAL,   STOP_CMD,  STOP_WEB,  STOP_MQTT,  AUTO_STOP};
 
@@ -82,9 +90,19 @@ uint32_t getStat(int type) {
   return numberStats[type];
 }
 
+String getStatKey(int type) {
+  if (type < 0 || type >= MAXCOUNTER) return "";
+  return String(statsKeys[type]);
+}
+
 String getStatLabel(int type) {
   if (type < 0 || type >= MAXCOUNTER) return "";
   return String(statsLabels[type]);
+}
+
+String getStatIcon(int type) {
+  if (type < 0 || type >= MAXCOUNTER) return "";
+  return String(statsIcons[type]);
 }
 
 uint32_t getBootcount() {

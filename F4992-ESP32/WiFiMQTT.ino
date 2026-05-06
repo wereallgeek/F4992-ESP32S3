@@ -47,7 +47,7 @@ void wifi_init() {
 //WiFi================================================================================
 
 //Topic Out===================================================================
-void publishData(String suffix, String value, unsigned long minInterval = 60000) {
+void publishData(String suffix, String value, unsigned long minInterval = 250) {
   unsigned long now = millis();
   if ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval)) {
     String topic = stored_mqtt_topic_out + "/" + suffix;
@@ -70,23 +70,34 @@ void mqtt_loop() {
     
     publishData("test_sw", "ON", 250);
     publishData("cpu_temp", String(getCpuTemperature()), 1000);
+    publishAllStats();
   }
 }
 //MQTT LOOP===================================
 
 //Discovery===================================================================
-void addEntity(String type, String name, String suffix, String dev_cla = "", String unit = "", String stat_cla = "", String ent_cat = "") {
-  String safeName = name;
-  safeName.replace(" ", "_");
+void addEntity(String type, String name, String suffix, String dev_cla = "", String unit = "", String stat_cla = "", String ent_cat = "", String icon = "", bool enabled = true) {
+  String entityId = mqttId(name); 
+
+  String cleanName = name;
+  cleanName.replace("\"", "\\\""); 
   
-  String discoveryTopic = "homeassistant/" + type + "/" + stored_devicename + "_" + safeName + "/config";
+  String discoveryTopic = "homeassistant/" + type + "/" + stored_devicename + "_" + entityId + "/config";
   String stateTopic = stored_mqtt_topic_out + "/" + suffix;
   String cmdTopic   = stored_mqtt_topic_in  + "/" + suffix;
 
   String payload = "{";
-  payload += "\"name\":\"" + name + "\",";
+  payload += "\"name\":\"" + cleanName + "\",";
   payload += "\"stat_t\":\"" + stateTopic + "\",";
   
+  if (icon != "") {
+    payload += "\"ic\":\"" + icon + "\",";
+  }
+
+  if (!enabled) {
+    payload += "\"enabled_by_default\":false,";
+  }
+
   if (type == "switch" || type == "light" || type == "number") {
     payload += "\"cmd_t\":\"" + cmdTopic + "\",";
   }
@@ -96,7 +107,7 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
   if (stat_cla != "") payload += "\"stat_cla\":\"" + stat_cla + "\",";
   if (ent_cat != "")  payload += "\"ent_cat\":\"" + ent_cat + "\",";
 
-  payload += "\"uniq_id\":\"" + stored_devicename + "_" + safeName + "\",";
+  payload += "\"uniq_id\":\"" + stored_devicename + "_" + entityId + "\",";
   
   payload += "\"dev\":{";
   payload += "\"ids\":[\"" + stored_devicename + "\"],";
@@ -122,7 +133,8 @@ void reconnect() {
 
       //Home Assistant Discovery--------------------
       addEntity("switch", "Test Switch", "test_sw");
-      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic");
+      addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic", "");
+      addAllStatEntities();
       //SUBSCRIBE to Topics----------------------------------------------------
       client.subscribe((stored_mqtt_topic_in + "/#").c_str());
       //------------------------------------------------------
@@ -137,3 +149,17 @@ void reconnect() {
   }
 }
 //MQTT RECONNECT==============================================================
+
+//Specific ===================================================================
+void addAllStatEntities() {
+  for (int statType = 0; statType < maxStatIndex(); statType++) {
+    addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", (statType == maxStatIndex() - 1) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
+  }
+}
+
+void publishAllStats() {
+  for (int statType = 0; statType < maxStatIndex(); statType++) {
+    publishData(getStatKey(statType), String(getStat(statType)));
+  }
+}
+//Specific ===================================================================
