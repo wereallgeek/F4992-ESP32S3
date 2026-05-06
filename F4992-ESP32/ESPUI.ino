@@ -196,7 +196,7 @@ void espui_init() {
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
   auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
-  auto firmwareandcrash = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion() + "  -  Last crash :" + getReadableLastCrashReason(), None, configsave, noCallback);
+  auto firmwareandcrash = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion(), None, configsave, noCallback);
   ESPUI.setElementStyle(firmwareandcrash, espuiLTxtLabelStyle);
 
   //Turntable configuration--------------------------------------------------------------------------------------------------------
