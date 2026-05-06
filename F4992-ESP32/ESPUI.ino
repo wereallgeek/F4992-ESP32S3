@@ -18,6 +18,7 @@ const char* btnStyle            = "background:#000;color:#fff;font:10px/25px san
 const char* espuiTelStyle       = "width:75px;height:32px;display:inline-block;vertical-align:top;margin-top:20px;text-align:center;box-sizing:border-box!important;";
 const char* espuiTextSetupStyle = "width:70%;height:32px;display:inline-block;vertical-align:middle;margin-top:20px;box-sizing:border-box;padding-left:10px!important;";
 const char* espuiStatLabel      = "background:#1e1e1e!important;color:#0f0!important;font-family:monospace!important;font-size:11px!important;width:46%!important;display:inline-block!important;margin:2px 1%!important;padding:4px!important;height:24px!important;line-height:16px!important;border:1px solid #333!important;box-sizing:border-box!important;vertical-align:top!important;";
+const char* espuilargebutton    = "width: 45%; margin: 10px auto; display: block;";
 
 //Interface conditionality
 Preferences uisetup;
@@ -65,14 +66,13 @@ void espui_init() {
 
   //create tabs here to get urls with #1, #2, etc.  
   auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
-  auto statstab = ESPUI.addControl(Tab, "", "Statistics");
   auto addonstab = ESPUI.addControl(Tab, "", "Addons");
   auto configtab = ESPUI.addControl(Tab, "", "Config");
   auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
     
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
+
   //--ui config block
- 
   auto rptswitchlabel = ESPUI.addControl(Label, "UI Config (requires Reboot)", "Repeat feature : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(rptswitchlabel, espuiLSwtLabelStyle);  
   auto rpt_switch = ESPUI.addControl(Switcher, "", String(espuiRepeatButtonVisible), None, rptswitchlabel, switchRepeatCallback);
@@ -82,6 +82,8 @@ void espui_init() {
   ESPUI.setElementStyle(invrtswitchlabel, espuiLSwtLabelStyle);  
   auto invrt_switch = ESPUI.addControl(Switcher, "", String(espuiInvertButtonVisible), None, rptswitchlabel, switchInvertCallback);
   ESPUI.setElementStyle(invrt_switch, getEspuiSwitchStyle(espuiInvertButtonVisible));
+  auto addonreboot = ESPUI.addControl(Button, "", "Reboot turntable", None, rptswitchlabel, ESPReset);
+  ESPUI.setElementStyle(addonreboot, espuilargebutton);
 
   //--led strip block
   auto ledswitchlabel = ESPUI.addControl(Label, "Led strip", "Ledstrip enabled : ", None, addonstab, noCallback);
@@ -112,9 +114,6 @@ void espui_init() {
   auto ledBreather = ESPUI.addControl(Text, "", String(breatherAdjValue()), Dark, ledswitchlabel, ledbreatherCallback);
   ESPUI.setElementStyle(ledBreather, espuiTelStyle);
   ESPUI.setInputType(ledBreather, "tel");
-
-  //--save block
-  auto addonssave = ESPUI.addControl(Button, "Restart", "Reboot turntable", Peterriver, addonstab, ESPReset);
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
 
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
@@ -191,40 +190,17 @@ void espui_init() {
   armPresetValueEndLabelId = ESPUI.addControl(Text, "", String(getArmPresetValue(3)), Dark, presetLabel, noCallback);
   ESPUI.setElementStyle(armPresetValueEndLabelId, espuiTelStyle);
   ESPUI.setInputType(armPresetValueEndLabelId, "tel");
-
-  auto armstop_button = ESPUI.addControl(Button, "Position tools", "Stop", None, configtab, buttonkMoveNotCallback);
-  ESPUI.setElementStyle(armstop_button, btnStyle);
-  auto end_button = ESPUI.addControl(Button, "", "End", None, armstop_button, buttonMoveEndCallback);
-  ESPUI.setElementStyle(end_button, btnStyle);
-  auto seventeen_button = ESPUI.addControl(Button, "", "6\"", None, armstop_button, buttonkMove17Callback);
-  ESPUI.setElementStyle(seventeen_button, btnStyle);
-  auto thirty_button = ESPUI.addControl(Button, "", "12\"", None, armstop_button, buttonMove30Callback);
-  ESPUI.setElementStyle(thirty_button, btnStyle);
-  auto armhome_button = ESPUI.addControl(Button, "", "Home", None, armstop_button, buttonMoveHomeCallback);
-  ESPUI.setElementStyle(armhome_button, btnStyle);
-  armPositionLabelId = ESPUI.addControl(Label, "", "position", None, armstop_button, noCallback);
+  armPositionLabelId = ESPUI.addControl(Label, "", "position", None, presetLabel, noCallback);
   ESPUI.setElementStyle(armPositionLabelId, espuiStatLabel);
   
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
   auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
+  auto firmwareandcrash = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion() + "  -  Last crash :" + getReadableLastCrashReason(), None, configsave, noCallback);
+  ESPUI.setElementStyle(firmwareandcrash, espuiLTxtLabelStyle);
+
   //Turntable configuration--------------------------------------------------------------------------------------------------------
 
-  //STATS--------------------------------------------------------------------------------------------------------------------------
-  
-  auto firmwareversionLabel = ESPUI.addControl(Label, "", String("FW ver :") + firmwareVersion(), None, statstab, noCallback);
-  ESPUI.setElementStyle(firmwareversionLabel, espuiLTxtLabelStyle);
-
-  for (int statIndex = 0; statIndex < maxStatIndex(); statIndex++) {
-    auto infoLabel = ESPUI.addControl(Label, "", String(getStatLabel(statIndex)) + String(getStat(statIndex)), ControlColor::None, firmwareversionLabel, noCallback);
-    ESPUI.setElementStyle(infoLabel, espuiStatLabel);
-  }
-
-  auto lastcrashLabel = ESPUI.addControl(Label, "", String("Last crash :") + getReadableLastCrashReason(), None, firmwareversionLabel, noCallback);
-  ESPUI.setElementStyle(lastcrashLabel, espuiLTxtLabelStyle);
-
-  //STATS--------------------------------------------------------------------------------------------------------------------------
-  
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, noCallback);
   ESPUI.setElementStyle(device_name_text, espuiTextSetupStyle);

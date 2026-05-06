@@ -136,10 +136,6 @@ void turntableCounterSetup() {
   pcnt_channel_set_edge_action(counterChan, PCNT_CHANNEL_EDGE_ACTION_INCREASE, PCNT_CHANNEL_EDGE_ACTION_HOLD);
   pcnt_channel_set_level_action(counterChan, PCNT_CHANNEL_LEVEL_ACTION_INVERSE, PCNT_CHANNEL_LEVEL_ACTION_KEEP);
 
-  //glitch filtering
-  pcnt_glitch_filter_config_t filter_config = { .max_glitch_ns = 20000 };
-  pcnt_unit_set_glitch_filter(counterUnit, &filter_config);
-
   //start
   pcnt_unit_enable(counterUnit);
   pcnt_unit_clear_count(counterUnit);
