@@ -151,7 +151,8 @@ void turntableSwitchSetup () {
     debouncedButtons[pinnumber].update();
   }
   //validate User Bypass Request
-  UserBypassRequest = moveOutButtonPressed();
+  UserTTBypassRequest  = moveInButtonPressed();
+  UserWebBypassRequest = moveOutButtonPressed();
 }
 
 void turntableArmtrayperipheralsSetup() {
@@ -442,6 +443,10 @@ bool armResetNotActive() {
 
 bool reachedArmReset() {
   return debouncedButtons[ARM].read() ==  pressed;
+}
+
+bool moveInButtonPressed() {
+  return debouncedButtons[SWITCH2].read() ==  pressed;
 }
 
 bool moveOutButtonPressed() {

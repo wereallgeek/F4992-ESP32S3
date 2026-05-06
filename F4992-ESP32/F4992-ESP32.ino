@@ -86,7 +86,8 @@ volatile bool uiAskInfra       = false;
   
 TaskHandle_t Handle_Turntable;
 
-volatile bool UserBypassRequest = false;
+volatile bool UserWebBypassRequest = false;
+volatile bool UserTTBypassRequest  = false;
 
 //SETUP=========================
 void setup() {
@@ -104,13 +105,13 @@ void setup() {
 
  
   wifi_init();
-  if (UserBypassRequest) emergencyServerSetup();
+  if (UserWebBypassRequest) emergencyServerSetup();
   else espui_init();
 
   simpleOTAbegin();
 
   firstPassCompleted = true;
-  xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 3, &Handle_Turntable, 1);
+  if (!UserTTBypassRequest) xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 3, &Handle_Turntable, 1);
 
   Serial.println(String("FW ver ") + firmwareVersion());
   Serial.println(String("[") + stored_devicename + "] awoken");
@@ -127,7 +128,7 @@ void loop() {
   mqtt_loop();
 
   //update GUI
-  turntableUiUpdate();
+  if (!UserTTBypassRequest) turntableUiUpdate();
 
   vTaskDelay(1); 
 }
