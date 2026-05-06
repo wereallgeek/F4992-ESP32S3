@@ -41,8 +41,8 @@ void wifi_init() {
   stored_mqtt_server = settings.getString("mqtt_server", "192.168.0.10");
   stored_mqtt_user = settings.getString("mqtt_user", "");
   stored_mqtt_pass = settings.getString("mqtt_pass", "");
-  stored_mqtt_topic_in = settings.getString("mqtt_topic_in", "f4992esp32/incoming");
-  stored_mqtt_topic_out = settings.getString("mqtt_topic_out", "f4992esp32/outgoing");
+  stored_mqtt_topic_in = settings.getString("mqtt_topic_in", "f4992esp32-listen");
+  stored_mqtt_topic_out = settings.getString("mqtt_topic_out", "f4992esp32-talk");
   mqtt_enabled = settings.getBool("mqtt_enabled", false);
 
   //devicename  
