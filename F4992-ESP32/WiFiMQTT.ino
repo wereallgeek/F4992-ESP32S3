@@ -8,7 +8,6 @@ bool timeSynced = false;
 bool sendOnReconnect = false;
 
 //stats
-Preferences wirelessStats;
 enum wirelessStatsType {
   NBWIFICONNECT, NBMQTTCONNECT, 
   MAXWIRELESS
@@ -34,24 +33,10 @@ String computeUTCTime() {
 
 void incrementWirelessStat(int type) {
   wirelessNumberStats[type]++; 
-  wirelessStats.putUInt(wirelessStatsKeys[type], wirelessNumberStats[type]);
 }
-
-void wirelessStats_setup() {
-  wirelessStats.begin("mqtt4992", false);
-  for (int i = 0; i < MAXWIRELESS; i++) {
-    wirelessNumberStats[i] = wirelessStats.getUInt(wirelessStatsKeys[i], 0);
-  }
-}
-
-void wirelessStatsReset() {
-  wirelessStats.clear(); 
-  for (int i = 0; i < MAXWIRELESS; i++) wirelessNumberStats[i] = 0;
-}
-
 //WiFi================================================================================
 void wifi_init() {
-  wirelessStats_setup();
+  for (int i = 0; i < MAXWIRELESS; i++) wirelessNumberStats[i] = 0;
   stored_ssid = settings.getString("ssid", "SSID");
   stored_pass = settings.getString("pass", "PASSWORD");
   stored_mqtt_server = settings.getString("mqtt_server", "192.168.0.10");
@@ -198,7 +183,7 @@ void reconnect() {
   if (millis() - last_millis > mqtt_retry_delay) {
     Serial.println("MQTT connection to : " + stored_mqtt_server);
     if (client.connect(stored_devicename.c_str(), stored_mqtt_user.c_str(), stored_mqtt_pass.c_str())) {
-      Serial.println("MQTT connected !");
+      Serial.println("MQTT connected");
       incrementWirelessStat(NBMQTTCONNECT);
 
       lastPublishedValues.clear();
@@ -255,10 +240,10 @@ void addAllWirelessStatEntities() {
   for (int statType = 0; statType < MAXWIRELESS; statType++) {
     addEntity("sensor", wirelessStatsLabels[statType], wirelessStatsKeys[statType], "", "", "total_increasing", "diagnostic", "mdi:counter");
   }
-  addEntity("sensor", "IP", "ip_addr", "", "", "", "config", "mdi:ip-network");
-  addEntity("sensor", "SSID", "ssid", "", "", "", "config", "mdi:wifi");
+  addEntity("sensor", "IP", "ip_addr", "", "", "", "diagnostic", "mdi:ip-network");
+  addEntity("sensor", "SSID", "ssid", "", "", "", "diagnostic", "mdi:wifi");
   addEntity("sensor", "Last Restart Time", "restart_time", "timestamp", "", "", "diagnostic", "mdi:clock");
-  addEntity("sensor", "WiFi Signal", "rssi", "signal_strength", "dBm", "measurement", "config", "mdi:wifi");
+  addEntity("sensor", "WiFi Signal", "rssi", "signal_strength", "dBm", "measurement", "diagnostic", "mdi:wifi");
 }
 
 void publishAllhWirelessStats() {

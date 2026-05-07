@@ -81,29 +81,29 @@ int getResetReason() {
 
 String getReadableResetReason() {
   switch (lastResetReason) {
-    case ESP_RST_UNKNOWN:   return "Uncertain";
-    case ESP_RST_POWERON:   return "Power-on";
+    case ESP_RST_UNKNOWN:   return "Unknown";
+    case ESP_RST_POWERON:   return "Power-on / Cold start";
     case ESP_RST_EXT:       return "External Reset button";
     case ESP_RST_SW:        return "Software Reset";
-    case ESP_RST_PANIC:     return "Exception - Panic Crash";
-    case ESP_RST_INT_WDT:   return "Watchdog - Interrupt";
-    case ESP_RST_TASK_WDT:  return "Watchdog - Task blocked";
+    case ESP_RST_PANIC:     return "Exception / Crash (Panic)";
+    case ESP_RST_INT_WDT:   return "Watchdog (Interrupt)";
+    case ESP_RST_TASK_WDT:  return "Watchdog (Task blocked)";
     case ESP_RST_WDT:       return "Other Watchdog";
     case ESP_RST_DEEPSLEEP: return "Deep Sleep Wakeup";
-    case ESP_RST_BROWNOUT:  return "Brownout";
+    case ESP_RST_BROWNOUT:  return "Brownout (Voltage drop)";
     case ESP_RST_SDIO:      return "Reset over SDIO";
-    default:                return "Other - " + String(lastResetReason);
+    default:                return "Other (" + String(lastResetReason) + ")";
   }
 }
 
 String getReadableLastCrashReason() {
   switch (lastCrashReason) {
-    case 0:                 return "No crash";
-    case ESP_RST_PANIC:     return "Exception - Panic Crash";
-    case ESP_RST_INT_WDT:   return "Watchdog - Interrupt";
-    case ESP_RST_TASK_WDT:  return "Watchdog - Task blocked";
+    case 0:                 return "None";
+    case ESP_RST_PANIC:     return "Exception / Crash (Panic)";
+    case ESP_RST_INT_WDT:   return "Watchdog (Interrupt)";
+    case ESP_RST_TASK_WDT:  return "Watchdog (Task blocked)";
     case ESP_RST_WDT:       return "Other Watchdog";
-    default:                return "Other - " + String(lastCrashReason);
+    default:                return "Other (" + String(lastCrashReason) + ")";
   }
 }
 //reboot reason==========================================================================================================

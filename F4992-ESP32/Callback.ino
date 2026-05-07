@@ -74,7 +74,6 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   }
 
   else if (topic.indexOf("zeroize") > -1) {
-    wirelessStatsReset();
     statsReset();
   }
 
