@@ -730,8 +730,6 @@ void turntableLoop() {
       startDD();
       setAutoDDspeed();
       nextState = DETECT;
-      desiredPosition = getArmPresetValue(DiscSize);
-      moveArmTo(getArmPresetValue(DISC30)); // begin arm movement to larger disc
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // It is about the time it takes for the arm to get to large disc drop location.
       if (millis() - sensortimer >= (getDetectionDuration())) {
