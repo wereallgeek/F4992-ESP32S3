@@ -2,6 +2,9 @@
 std::map<String, String> lastPublishedValues;
 std::map<String, unsigned long> lastPublishTimes;
 
+time_t bootEpoch = 0; 
+bool timeSynced = false;
+
 bool sendOnReconnect = false;
 
 //stats
@@ -21,6 +24,14 @@ const char* wirelessStatsLabels[] = {
 
 volatile uint32_t wirelessNumberStats[MAXWIRELESS];
 
+String computeUTCTime() {
+  char isoTime[25];
+  struct tm *dt;
+  dt = gmtime(&bootEpoch);
+  strftime(isoTime, sizeof(isoTime), "%Y-%m-%dT%H:%M:%SZ", dt);
+  return String(isoTime);
+}
+
 void incrementWirelessStat(int type) {
   wirelessNumberStats[type]++; 
   wirelessStats.putUInt(wirelessStatsKeys[type], wirelessNumberStats[type]);
@@ -31,6 +42,11 @@ void wirelessStats_setup() {
   for (int i = 0; i < MAXWIRELESS; i++) {
     wirelessNumberStats[i] = wirelessStats.getUInt(wirelessStatsKeys[i], 0);
   }
+}
+
+void wirelessStatsReset() {
+  wirelessStats.clear(); 
+  for (int i = 0; i < MAXWIRELESS; i++) wirelessNumberStats[i] = 0;
 }
 
 //WiFi================================================================================
@@ -66,6 +82,14 @@ void wifi_init() {
     dnsServer.start(DNS_PORT, "*", apIP);
   } else {
     wificonnected = true;
+    configTime(0, 0, "pool.ntp.org", "://google.com");
+    //world time
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo)) {
+      bootEpoch = mktime(&timeinfo);
+      timeSynced = true;
+    }
+    //
     MDNS.begin(stored_devicename.c_str());
     MDNS.addService("http", "tcp", 80);
     client.setServer(stored_mqtt_server.c_str(), 1883);
@@ -101,9 +125,9 @@ void mqtt_loop() {
     }
     else
     {
-      publishData("test_sw", "ON", 250);    
-      publishAllhWirelessStats();
+      publishTurntableData();
       publishAllStats();
+      publishAllhWirelessStats();
       publisAllCpuInfo();
       sendOnReconnect = false;
     }
@@ -129,6 +153,11 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
     payload += "\"stat_t\":\"" + stateTopic + "\",";
   }
   
+  if (type == "binary_sensor" || type == "switch") {
+    payload += "\"pl_on\":\"ON\",";
+    payload += "\"pl_off\":\"OFF\",";
+  }
+
   if (icon != "") {
     payload += "\"ic\":\"" + icon + "\",";
   }
@@ -176,13 +205,13 @@ void reconnect() {
       lastPublishTimes.clear();
       sendOnReconnect = true;
 
-      //Home Assistant Discovery--------------------
-      addEntity("switch", "Test Switch", "test_sw");
-      addAllWirelessStatEntities();
-      addAllStatEntities();
-      addAllCpuInfoEntities();
-      //SUBSCRIBE to Topics----------------------------------------------------
+      //SUBSCRIBE to Topics-----------------------------------
       client.subscribe((stored_mqtt_topic_in + "/#").c_str());
+      //Home Assistant Discovery------------------------------
+      addTurntableEntities();
+      addAllStatEntities();
+      addAllWirelessStatEntities();
+      addAllCpuInfoEntities();
       //------------------------------------------------------
 
     } else {
@@ -197,6 +226,19 @@ void reconnect() {
 //MQTT RECONNECT==============================================================
 
 //Specific ===================================================================
+void addTurntableEntities() {
+  addEntity("button", "Repeat",     "repeat",      "", "", "", "", "mdi:repeat-once");
+  addEntity("switch", "Move In",    "move_in",     "", "", "", "", "mdi:arrow-expand-left");
+  addEntity("switch", "Move Out",   "move_out",    "", "", "", "", "mdi:arrow-expand-right");
+  addEntity("button", "Up/Down",    "up_down",     "", "", "", "", "mdi:arrow-expand-vertical");
+  addEntity("button", "Start/Stop", "start_stop",  "", "", "", "", "mdi:record-player");
+}
+
+void publishTurntableData() {
+  publishData("move_in",  uiPressMoveIn  ? "ON" : "OFF");
+  publishData("move_out", uiPressMoveOut ? "ON" : "OFF");
+}
+
 void addAllStatEntities() {
   for (int statType = 0; statType < maxStatIndex(); statType++) {
     addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", (statType == maxStatIndex() - 1) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
@@ -213,10 +255,10 @@ void addAllWirelessStatEntities() {
   for (int statType = 0; statType < MAXWIRELESS; statType++) {
     addEntity("sensor", wirelessStatsLabels[statType], wirelessStatsKeys[statType], "", "", "total_increasing", "diagnostic", "mdi:counter");
   }
-  addEntity("sensor", "IP", "ip_addr", "", "", "", "diagnostic", "mdi:ip-network");
-  addEntity("sensor", "SSID", "ssid", "", "", "", "diagnostic", "mdi:wifi");
-  addEntity("sensor", "Uptime", "uptime", "duration", "s", "", "diagnostic", "mdi:timer-outline", false);
-  addEntity("sensor", "WiFi Signal", "rssi", "signal_strength", "dBm", "measurement", "diagnostic", "mdi:wifi");
+  addEntity("sensor", "IP", "ip_addr", "", "", "", "config", "mdi:ip-network");
+  addEntity("sensor", "SSID", "ssid", "", "", "", "config", "mdi:wifi");
+  addEntity("sensor", "Last Restart Time", "restart_time", "timestamp", "", "", "diagnostic", "mdi:clock");
+  addEntity("sensor", "WiFi Signal", "rssi", "signal_strength", "dBm", "measurement", "config", "mdi:wifi");
 }
 
 void publishAllhWirelessStats() {
@@ -225,7 +267,7 @@ void publishAllhWirelessStats() {
   }
   publishData("ip_addr", WiFi.localIP().toString());
   publishData("ssid", WiFi.SSID());
-  publishData("uptime", String(getUptimeSeconds()), 5000);
+  publishData("restart_time", computeUTCTime(), 60000);
   publishData("rssi", String(WiFi.RSSI()), 30000);
 }
 
@@ -240,7 +282,7 @@ void addAllCpuInfoEntities() {
   addEntity("sensor", "Flash Size", "flash_size", "data_size", "B", "", "diagnostic", "mdi:harddisk", false);
   addEntity("sensor", "Sketch Size", "sketch_size", "data_size", "B", "", "diagnostic", "mdi:file-code-outline", false);
   addEntity("sensor", "Free Sketch Space", "free_sketch", "data_size", "B", "", "diagnostic", "mdi:file-code-outline", false);
-  addEntity("button", "Restart", "restart_btn", "restart", "", "", "diagnostic", "mdi:restart");
+  addEntity("button", "Restart", "restart_btn", "restart", "", "", "config", "mdi:restart");
 }
 
 void publisAllCpuInfo() {

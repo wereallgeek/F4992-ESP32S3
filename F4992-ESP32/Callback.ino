@@ -1,16 +1,90 @@
 //MQTT CALLBACK===================================================
 void mqtt_callback(String topic, byte *message, unsigned int length) {
-  String messageTemp;
+  String payload;
   //Read the Payload
   for (int i = 0; i < length; i++) {
-    messageTemp += (char)message[i];
+    payload += (char)message[i];
   }
-  Serial.println(topic);
-  Serial.println(messageTemp);
 
-  if (topic == "demo_topic") {
-    client.publish("response_topic", "PONG");
-    Serial.println("Hello World");
+  topic.toLowerCase();
+
+  if (topic.indexOf("test_sw") > -1) {
+    Serial.println("received test switch");
+    if (payload.indexOf("ON") > -1) {
+      Serial.println("test switch goes ON");
+    }
+    else if (payload.indexOf("OFF") > -1) {
+      Serial.println("test switch goes OFF");
+    }
+  }
+
+  else if (topic.indexOf("restart_btn") > -1) {
+    ESP.restart();
+  }
+
+  else if (topic.indexOf("gohome") > -1) {
+    uiAskMoveHome = true;
+  }
+
+  else if (topic.indexOf("goend") > -1) {
+    uiAskMoveEnd = true;
+  }
+
+  else if (topic.indexOf("go30") > -1) {
+    uiAskMove30 = true;
+  }
+
+  else if (topic.indexOf("go17") > -1) {
+    uiAskMove17 = true;
+  }
+
+  else if (topic.indexOf("gostill") > -1) {
+    uiAskMoveNot = true;
+  }
+
+  else if (topic.indexOf("start_stop") > -1) {
+    uiPressStartStop = true;
+    uiTypeStartStop = MQTT;
+  }
+
+  else if (topic.indexOf("up_down") > -1) {
+    uiPressUpDown = true;
+  }
+
+  else if (topic.indexOf("move_out") > -1) {
+    if (payload.indexOf("ON") > -1) {
+      uiPressMoveOut = true;
+    }
+    else if (payload.indexOf("OFF") > -1) {
+      uiPressMoveOut = false;
+    }
+  }
+
+  else if (topic.indexOf("move_in") > -1) {
+    if (payload.indexOf("ON") > -1) {
+      uiPressMoveIn = true;
+    }
+    else if (payload.indexOf("OFF") > -1) {
+      uiPressMoveIn = false;
+    }
+  }
+
+  else if (topic.indexOf("repeat") > -1) {
+    uiPressRepeat = true;
+  }
+
+  else if (topic.indexOf("zeroize") > -1) {
+    wirelessStatsReset();
+    statsReset();
+  }
+
+  else if (topic.indexOf("init") > -1) {
+    uiRequestInit = true;
+  }
+
+  else {
+    Serial.println(topic);
+    Serial.println(payload);
   }
 
 }
