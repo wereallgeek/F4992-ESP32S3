@@ -2,6 +2,8 @@
 std::map<String, String> lastPublishedValues;
 std::map<String, unsigned long> lastPublishTimes;
 
+bool firsttime = true;
+
 time_t bootEpoch = 0; 
 bool timeSynced = false;
 
@@ -173,11 +175,6 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
   payload += "}";
   
   payload += "}";
-
-  /*if  (type == "sensor") {
-    Serial.println(discoveryTopic);
-    Serial.println(payload);
-  }*/
 
   client.publish(discoveryTopic.c_str(), payload.c_str(), true);
 }

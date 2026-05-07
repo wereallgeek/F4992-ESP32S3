@@ -80,8 +80,13 @@ void setupOTA(AsyncWebServer &otaServer, const char* path) {
     }, 
     [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
       if (!index) {
+        otaupdateInProgress  = true;
+        client.disconnect();
+
         Serial.printf("Update start: %s\n", filename.c_str());
-        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { 
+        uint32_t maxSketchSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+
+        if (!Update.begin(maxSketchSpace, U_FLASH)) { 
           Update.printError(Serial);
         }
       }
@@ -89,13 +94,14 @@ void setupOTA(AsyncWebServer &otaServer, const char* path) {
         if (Update.write(data, len) != len) {
           Update.printError(Serial);
         }
-        yield();
+        delay(1);
       }
       if (final) {
         if (Update.end(true)) {
           Serial.printf("Update end: %u bytes\n", index + len);
         } else {
           Update.printError(Serial);
+          otaupdateInProgress = false; 
         }
       }
     });

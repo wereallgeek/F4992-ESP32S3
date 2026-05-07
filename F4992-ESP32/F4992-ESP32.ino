@@ -52,7 +52,7 @@ unsigned long last_millis = 0;
 #include <ESPUI.h>
 uint16_t wifi_ssid_text, wifi_pass_text;
 uint16_t mqtt_server_text, mqtt_topic_in_text, mqtt_topic_out_text, mqtt_user_text, mqtt_pass_text, mqtt_enabled_switch;
-
+volatile bool otaupdateInProgress = false;
 String option;
 String stored_ssid, stored_pass;
 String stored_mqtt_server, stored_mqtt_user, stored_mqtt_pass, stored_mqtt_topic_in, stored_mqtt_topic_out;
@@ -120,22 +120,24 @@ void setup() {
 
 //LOOP==========================================
 void loop() {
-  if (!wificonnected) dnsServer.processNextRequest();
-  if (Serial.available()) {
-    String input = Serial.readStringUntil('\n');
-    SerialCommand(input);
-  }
-  mqtt_loop();
+  if (!otaupdateInProgress) {
+    if (!wificonnected) dnsServer.processNextRequest();
+    if (Serial.available()) {
+      String input = Serial.readStringUntil('\n');
+      SerialCommand(input);
+    }
+    mqtt_loop();
 
-  //update GUI
-  if (!UserTTBypassRequest) turntableUiUpdate();
+    //update GUI
+    if (!UserTTBypassRequest) turntableUiUpdate();
+  }
 
   vTaskDelay(1); 
 }
 //core 1 - handles everything but ESPUI
 void TaskTurntable(void * pvParameters) {
   for(;;) {
-    turntableLoop();
+    if (!otaupdateInProgress) turntableLoop();
     vTaskDelay(1);
   }
 }
