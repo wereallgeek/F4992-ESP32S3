@@ -366,13 +366,14 @@ void resetDiskSize() {
   verboseDiskChange();
 }
 
-void computeDiscSize() {
+int computeDiscSize() {
   bool recent30cmSensed = (DetectionTime[DISC30] > millis() - getIrCycleDuration());
   bool recent17cmSensed = (DetectionTime[DISC17] > millis() - getIrCycleDuration());
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
   verboseDiskChange();
+  return DiscSize;
 }
 
 bool discPresent() {
@@ -734,8 +735,7 @@ void turntableLoop() {
       nextState = DETECT;
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // It is about the time it takes for the arm to get to large disc drop location.
-      if (millis() - sensortimer >= (getDetectionDuration())) {
-        computeDiscSize();
+      if (computeDiscSize() == NODISC || (millis() - sensortimer >= (getDetectionDuration()))) {        
         desiredPosition = getArmPresetValue(DiscSize);
         moveArmTo(desiredPosition);
         if (DiscSize == NODISC)

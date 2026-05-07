@@ -71,8 +71,8 @@ unsigned long lastUpdateCycle2 = 0;
 unsigned long lastUpdateCycle3 = 0; 
 
 //Storage variables
-#define DEFIRCYCLEDURATION         4500
-#define DEFDETECTIONDURATION       3500
+#define DEFIRCYCLEDURATION         1500
+#define DEFDETECTIONDURATION       3000
 #define DEFMUTEDURATION            1000
 #define DEFUPDURATION              350
 #define DEFIRTRESHOLD              1500
