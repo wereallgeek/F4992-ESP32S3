@@ -8,17 +8,7 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
 
   topic.toLowerCase();
 
-  if (topic.indexOf("test_sw") > -1) {
-    Serial.println("received test switch");
-    if (payload.indexOf("ON") > -1) {
-      Serial.println("test switch goes ON");
-    }
-    else if (payload.indexOf("OFF") > -1) {
-      Serial.println("test switch goes OFF");
-    }
-  }
-
-  else if (topic.indexOf("restart_btn") > -1) {
+  if (topic.indexOf("restart_btn") > -1) {
     ESP.restart();
   }
 
@@ -42,16 +32,16 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     uiAskMoveNot = true;
   }
 
-  else if (topic.indexOf("start_stop") > -1) {
+  else if (topic.indexOf("tt_startstop") > -1) {
     uiPressStartStop = true;
     uiTypeStartStop = MQTT;
   }
 
-  else if (topic.indexOf("up_down") > -1) {
+  else if (topic.indexOf("tt_updown") > -1) {
     uiPressUpDown = true;
   }
 
-  else if (topic.indexOf("move_out") > -1) {
+  else if (topic.indexOf("tt_mv_out") > -1) {
     if (payload.indexOf("ON") > -1) {
       uiPressMoveOut = true;
     }
@@ -60,7 +50,7 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     }
   }
 
-  else if (topic.indexOf("move_in") > -1) {
+  else if (topic.indexOf("tt_mv_in") > -1) {
     if (payload.indexOf("ON") > -1) {
       uiPressMoveIn = true;
     }
@@ -69,8 +59,17 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     }
   }
 
-  else if (topic.indexOf("repeat") > -1) {
+  else if (topic.indexOf("tt_rpt") > -1) {
     uiPressRepeat = true;
+  }
+
+  else if (topic.indexOf("tt_sft_inv") > -1) {
+    if (payload.indexOf("ON") > -1) {
+      uiInvert = true;
+    }
+    else if (payload.indexOf("OFF") > -1) {
+      uiInvert = false;
+    }
   }
 
   else if (topic.indexOf("zeroize") > -1) {
@@ -178,7 +177,7 @@ void switchLedCallback(Control *sender, int type) {
 }
 
 void switchCallback(Control *sender, int type) {
-  ESPUI.setElementStyle(sender->id, getEspuiSwitchStyle(type == S_ACTIVE));
+  reflectSwitchPosition(sender->id, (type == S_ACTIVE));
 }
 
 void numLedCallback(Control *sender, int type) {

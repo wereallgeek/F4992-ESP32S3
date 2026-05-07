@@ -58,6 +58,7 @@ volatile int     printedDiscSize   = 1;
 volatile bool    previousRepeat    = false;
 volatile bool    previousDD33      = false;
 volatile bool    previousArmLifter = true;
+volatile bool    previousUiInvert  = true;
 volatile int32_t previousPosition  = -1;
 volatile int     previousDcm       = 0;
 volatile int     previousDiscSize  = 0;
@@ -225,6 +226,8 @@ void turntableUiUpdate() {
     repeatDirty = false; 
     if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
     dcmDirty = false;
+    if(uiInvert != previousUiInvert) if (invertbuttonVisible()) reflectSwitchPosition(spd_switch, uiInvert);
+    previousUiInvert = uiInvert;
   }
   else if (currentmillis - lastUpdateCycle2 >= 955) {
     lastUpdateCycle2 = currentmillis;
@@ -276,6 +279,18 @@ void turntableReport() {
   turntableSensorReport();
 
   Serial.println((String(sizename[getDiscSize()])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (getRepeatState() ? " | -REPEAT-" : " | norepeat"));
+}
+
+String getUiSizeName() {
+  return sizename[printedDiscSize];
+}
+
+String getUiRecordSize() {
+  return uiDd3Active ? "33" : "45";
+}
+
+int getUipreviousDcm() {
+  return previousDcm;
 }
 
 void turntableSensorReport() {
@@ -426,6 +441,10 @@ const char* turntableStatus(int stateIndex) {
   if (stateIndex < IDLE || 
       stateIndex > PLAY) return "Error";
   return TurntableStateDesc[stateIndex];
+}
+
+const char* turntableCurrentStatus() {
+  return turntableStatus(getCurrentState());
 }
 
 void ttConfigSetup() {

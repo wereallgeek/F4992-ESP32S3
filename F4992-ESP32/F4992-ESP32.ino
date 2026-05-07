@@ -58,10 +58,10 @@ String stored_ssid, stored_pass;
 String stored_mqtt_server, stored_mqtt_user, stored_mqtt_pass, stored_mqtt_topic_in, stored_mqtt_topic_out;
 bool mqtt_enabled = false;
 
-bool softSpeedInverter = false;
+volatile bool softSpeedInverter = false;
 
 //ESPUI turntable GUI fields
-uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId;
+uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch;
 uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
 //ESPUI==================================================================================================================
 

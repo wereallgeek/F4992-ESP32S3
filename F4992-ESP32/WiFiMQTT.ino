@@ -174,6 +174,11 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
   
   payload += "}";
 
+  /*if  (type == "sensor") {
+    Serial.println(discoveryTopic);
+    Serial.println(payload);
+  }*/
+
   client.publish(discoveryTopic.c_str(), payload.c_str(), true);
 }
 //Discovery===================================================================
@@ -212,21 +217,40 @@ void reconnect() {
 
 //Specific ===================================================================
 void addTurntableEntities() {
-  addEntity("button", "Repeat",     "repeat",      "", "", "", "", "mdi:repeat-once");
-  addEntity("switch", "Move In",    "move_in",     "", "", "", "", "mdi:arrow-expand-left");
-  addEntity("switch", "Move Out",   "move_out",    "", "", "", "", "mdi:arrow-expand-right");
-  addEntity("button", "Up/Down",    "up_down",     "", "", "", "", "mdi:arrow-expand-vertical");
-  addEntity("button", "Start/Stop", "start_stop",  "", "", "", "", "mdi:record-player");
+  addEntity("switch", "Repeat",       "tt_rpt",       "", "", "", "", "mdi:repeat");
+  addEntity("switch", "Move In",      "tt_mv_in",     "", "", "", "", "mdi:arrow-expand-left");
+  addEntity("switch", "Move Out",     "tt_mv_out",    "", "", "", "", "mdi:arrow-expand-right");
+  addEntity("button", "Up/Down",      "tt_updown",    "", "", "", "", "mdi:arrow-expand-vertical");
+  addEntity("button", "Start/Stop",   "tt_startstop", "", "", "", "", "mdi:record-player");
+  addEntity("switch", "Invert speed", "tt_sft_inv",   "", "", "", "", "mdi:sync-circle");
+
+  addEntity("sensor", "Record Speed", "tt_spd",     "", "", "", "", "mdi:gauge");
+  addEntity("sensor", "Record Size",  "tt_size",    "", "", "", "", "mdi:album");
+  addEntity("sensor", "Arm Lifter",   "tt_armlift", "", "", "", "", "mdi:arrow-expand-up", false);
+  addEntity("sensor", "Status",       "tt_status",  "", "", "", "", "mdi:information-slab-box-outline");
+  addEntity("sensor", "DCM status",   "tt_dcm",     "", "", "", "", "mdi:cog-box", false);
+  
+  addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "", "", "", "", "mdi:arrow-collapse-right");
 }
 
 void publishTurntableData() {
-  publishData("move_in",  uiPressMoveIn  ? "ON" : "OFF");
-  publishData("move_out", uiPressMoveOut ? "ON" : "OFF");
+  publishData("tt_rpt",     getRepeatState()  ? "ON" : "OFF");
+  publishData("tt_sft_inv", softSpeedInverter ? "ON" : "OFF");
+  publishData("tt_mv_in",   uiPressMoveIn     ? "ON" : "OFF");
+  publishData("tt_mv_out",  uiPressMoveOut    ? "ON" : "OFF");
+
+  publishData("tt_spd",     getUiRecordSize() + " rpm");
+  publishData("tt_size",    getUiSizeName());
+  publishData("tt_armlift", (armLifter() == getArmUpLevel() ? " armUp " : "armDown"));
+  publishData("tt_status",  turntableCurrentStatus());
+  publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
+
+  publishData("tt_armlim",  reachedArmReset() ? "ON" : "OFF");
 }
 
 void addAllStatEntities() {
   for (int statType = 0; statType < maxStatIndex(); statType++) {
-    addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", (statType == maxStatIndex() - 1) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
+    addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", ((statType < 8) || (statType == maxStatIndex() - 1)) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
   }
 }
 

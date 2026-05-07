@@ -58,6 +58,10 @@ void writeInvertVisibility(bool visible) {
   settings.putBool("invertbtn", visible);
 }
 
+void reflectSwitchPosition(uint16_t id, bool state) {
+  ESPUI.updateSwitcher(id, state);
+  ESPUI.setElementStyle(id, getEspuiSwitchStyle(state));
+}
 
 //ESPUI=====================================================================================================================
 void espui_init() {
@@ -134,7 +138,7 @@ void espui_init() {
     ESPUI.setElementStyle(repeatId, getEspuiIndicatorColor("#2c3e50"));
   }
   if (espuiInvertButtonVisible) {
-    auto spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
+    spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
     ESPUI.setElementStyle(spd_switch, getEspuiSwitchStyle(false));
   }
   //Turntable Controls-------------------------------------------------------------------------------------------------------------
