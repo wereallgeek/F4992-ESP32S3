@@ -16,8 +16,8 @@ const char* onOffIndicatorColor[] = {"#2c3e50", "#e67e22"};
 const char* armIcons[] =            {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] =            {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
 
-const char* statusHexColor[] =      {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22", "#497a98",   "#3489c9"};
-const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Playing"};
+const char* statusHexColor[] =      {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22", "#497a98",   "#ad221d",   "#3489c9"};
+const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Rejecting", "Playing"};
 const char* sizename[] =            {"NODISC", "30cm", "17cm"};
 
 const char* record33style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,#0000 8%),radial-gradient(#555 18%,#111 19%);border:4px double #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";

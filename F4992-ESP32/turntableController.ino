@@ -93,11 +93,12 @@ DetectedSize DiscSize =           NODISC;
 enum ArmPositions                 {HOME, START30, START17, END};
 uint16_t  desiredPosition =       0;
 
-enum TurntableState                {IDLE,      INITIAL,        GOHOME,      UPTOHOME,    UPTOMOVE,    MOVE,      DETECT,      PLAY};
+enum TurntableState                {IDLE, INITIAL, GOHOME, UPTOHOME, UPTOMOVE, MOVE, DETECT, NOGO, PLAY};
 
 TurntableState currentState =      IDLE;
 TurntableState nextState =         IDLE;
 
+volatile unsigned long rejectTime = 0;
 
 //prototypes to make arduino IDE happy 
 void changeState(TurntableState newState); 
@@ -325,6 +326,7 @@ void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) Serial.print(String(millis()) + " - "); //state change remains in low verbosity
   if(firstPassCompleted) Serial.println(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
   currentState = newState;
+  if (newState == NOGO) rejectTime = millis();
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
 }
 
@@ -740,7 +742,7 @@ void turntableLoop() {
         {
           nextState = IDLE;
           incrementReject();
-          changeState(GOHOME); 
+          changeState(NOGO); 
         }
         else
         {
@@ -751,6 +753,11 @@ void turntableLoop() {
         }
       }
       //set record speed and change state
+      break;
+    case NOGO:
+      if (millis() - rejectTime >= 1000) {
+        changeState(nextState);
+      }
       break;
     case PLAY:
       setAutoDDspeed();

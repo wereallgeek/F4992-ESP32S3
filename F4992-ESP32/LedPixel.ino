@@ -20,7 +20,7 @@ volatile int  newBreatherAdjustment = 1;
 volatile int  newDesiredBrightness  = 1;
 
 //these needs to be a 1:1 match for the turntable state machine
-enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, MOVECHASER, PULSEDETECT, FOLLOWPLAY};
+enum LedAnimation {NONE, WAKEPULSE, ANIMHOME, UPHOME, UPMOVE, MOVECHASER, PULSEDETECT, WARNREJECT, FOLLOWPLAY};
 LedAnimation animationStyle = NONE;
 enum RGB {RgbR, RgbG, RgbB};
 int baseRgb[3] = {0, 0, 0};
@@ -282,6 +282,13 @@ void setupChaser(int from, int to) {
   currentChaserStep = from;
 }
 
+void runFlasher() {
+  strip.clear();
+  setLedPixelRgbColorToPreset();
+  setLedPixelBrightness(((millis() % 333) < 166) ? desiredBrightness : 0);
+  strip.show();
+}
+
 void runBreather() {
   strip.clear();
   setLedPixelRgbColorToPreset();
@@ -364,6 +371,9 @@ void animateLeds() {
       case UPMOVE:  
       case FOLLOWPLAY:  
         showCurrentPosition();
+        break;
+      case WARNREJECT:
+        runFlasher();
         break;
     }
   }
