@@ -35,7 +35,7 @@ const char* statsIcons[] = {
   "mdi:play", "mdi:play-circle", "mdi:play-circle", "mdi:play-circle",
   "mdi:stop", "mdi:stop-circle", "mdi:stop-circle", "mdi:stop-circle",
   "mdi:stop-circle-outline", "mdi:repeat", "mdi:eject",
-  "mdi:counter", "mdi:album", "mdi:disc",
+  "mdi:counter", "mdi:disc", "mdi:record-circle",
   "mdi:power-cycle"
 };
 
