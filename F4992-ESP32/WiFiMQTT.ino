@@ -286,7 +286,7 @@ void publishAllhWirelessStats() {
 void addAllCpuInfoEntities() {
   addEntity("sensor", "Restart Reason", "rst_reason", "", "", "", "diagnostic", "mdi:information-outline");
   addEntity("sensor", "Last Known Crash", "crash_reason", "", "", "", "diagnostic", "mdi:alert-octagon");
-  addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic", "", false);
+  addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "°C", "measurement", "diagnostic", "", false);
   addEntity("sensor", "CPU Model", "cpu_model", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "CPU Cores", "cpu_cores", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "CPU Frequency", "cpu_freq", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
