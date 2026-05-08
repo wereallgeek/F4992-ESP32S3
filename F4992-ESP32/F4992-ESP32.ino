@@ -10,6 +10,7 @@
  This project is meant to function as a replacement F-4992 microcomputer board
   for a linear tracking turntable model P-L35, P-L45 or P-L55 (and perhaps others)
 */
+volatile int taskDelay = 1;
 uint16_t logLabelId; 
 
 //Turntable config========
@@ -132,13 +133,13 @@ void loop() {
     if (!UserTTBypassRequest) turntableUiUpdate();
   }
 
-  vTaskDelay(1); 
+  vTaskDelay(taskDelay); 
 }
 //core 1 - handles everything but ESPUI
 void TaskTurntable(void * pvParameters) {
   for(;;) {
     if (!otaupdateInProgress) turntableLoop();
-    vTaskDelay(1);
+    vTaskDelay(taskDelay);
   }
 }
 //LOOP==========================================

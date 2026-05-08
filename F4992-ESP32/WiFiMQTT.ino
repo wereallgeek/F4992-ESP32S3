@@ -37,6 +37,10 @@ void incrementWirelessStat(int type) {
   wirelessNumberStats[type]++; 
 }
 //WiFi================================================================================
+void setWifiSleep(bool sleepEnable) {
+  WiFi.setSleep(sleepEnable);
+}
+
 void wifi_init() {
   for (int i = 0; i < MAXWIRELESS; i++) wirelessNumberStats[i] = 0;
   stored_ssid = settings.getString("ssid", "SSID");
@@ -84,7 +88,7 @@ void wifi_init() {
     client.setCallback(mqtt_callback);
     incrementWirelessStat(NBWIFICONNECT);
   }
-  WiFi.setSleep(false);
+  setWifiSleep(false);
   Serial.print("\nIP address : ");
   Serial.println(WiFi.getMode() == WIFI_AP ? WiFi.softAPIP() : WiFi.localIP());
 }

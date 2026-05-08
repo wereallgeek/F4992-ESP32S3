@@ -81,6 +81,7 @@ void setupOTA(AsyncWebServer &otaServer, const char* path) {
     [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final){
       if (!index) {
         otaupdateInProgress  = true;
+        WiFi.setSleep(false);
         client.disconnect();
 
         Serial.printf("Update start: %s\n", filename.c_str());

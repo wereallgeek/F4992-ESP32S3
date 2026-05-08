@@ -326,6 +326,8 @@ void changeState(TurntableState newState) {
   currentState = newState;
   if (newState == NOGO) rejectTime = millis();
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
+  setWifiSleep(currentState == IDLE);
+  taskDelay = (currentState == IDLE) ? 20 : 1;
 }
 
 bool isState(TurntableState state) {
