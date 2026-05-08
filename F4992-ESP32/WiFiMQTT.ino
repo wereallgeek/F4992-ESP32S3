@@ -91,11 +91,11 @@ void wifi_init() {
 //WiFi================================================================================
 
 //Topic Out===================================================================
-void publishData(String suffix, String value, unsigned long minInterval = 250) {
+void publishData(String suffix, String value, unsigned long minInterval = 250, bool retain = true) {
   unsigned long now = millis();
   if (sendOnReconnect || ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval))) {
     String topic = stored_mqtt_topic_out + "/" + suffix;
-    if (client.publish(topic.c_str(), value.c_str(), true)) {
+    if (client.publish(topic.c_str(), value.c_str(), retain)) {
       lastPublishedValues[suffix] = value;
       lastPublishTimes[suffix] = now;
     }
@@ -224,6 +224,7 @@ void addTurntableEntities() {
   addEntity("sensor", "Record Speed", "tt_spd",     "", "", "", "", "mdi:gauge");
   addEntity("sensor", "Record Size",  "tt_size",    "", "", "", "", "mdi:album");
   addEntity("sensor", "Arm Lifter",   "tt_armlift", "", "", "", "", "mdi:arrow-expand-up", false);
+  addEntity("sensor", "Arm Position", "tt_armpos",  "", "", "", "", "mdi:pan-horizontal");
   addEntity("sensor", "Status",       "tt_status",  "", "", "", "", "mdi:information-slab-box-outline");
   addEntity("sensor", "DCM status",   "tt_dcm",     "", "", "", "", "mdi:cog-box", false);
   
@@ -239,6 +240,7 @@ void publishTurntableData() {
   publishData("tt_spd",     getUiRecordSize() + " rpm");
   publishData("tt_size",    getUiSizeName());
   publishData("tt_armlift", (armLifter() == getArmUpLevel() ? " armUp " : "armDown"));
+  publishData("tt_armpos",  String(getUiArmPosition()));
   publishData("tt_status",  turntableCurrentStatus());
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
 

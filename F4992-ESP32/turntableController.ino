@@ -205,8 +205,6 @@ void turntablePeripheralUpdate() {
   //armdown timer
   if (isArmDown()) armdowntime = millis();
   else armuptime = millis();
-  //reset switch
-  if (isHome()) resetDiskSize();
   //process Mute
   setMute(millis() - armuptime < getMuteDuration());
   compuselect();
@@ -259,12 +257,12 @@ int value17cm() {
 
 bool sense30() {
   int sensed30value = value30cm();
-  return irMinimum < sensed30value && sensed30value < getIrTreshold();
+  return (irMinimum < sensed30value && sensed30value < getIrTreshold());
 }
 
 bool sense17() {
   int sensed17value = value17cm();
-  return irMinimum < sensed17value && sensed17value < getIrTreshold();
+  return (irMinimum < sensed17value && sensed17value < getIrTreshold());
 }
 
 void compuselect() {
@@ -363,7 +361,7 @@ void resetArmposition() {
 
 void resetDiskSize() {
   DiscSize = NODISC;
-  verboseDiskChange();
+  verboseDiskChange(DiscSize);
 }
 
 int computeDiscSize() {
@@ -372,7 +370,7 @@ int computeDiscSize() {
   if (recent30cmSensed && recent17cmSensed) DiscSize = NODISC;
   else if (recent30cmSensed)                DiscSize = DISC17;
   else                                      DiscSize = DISC30;
-  verboseDiskChange();
+  verboseDiskChange(DiscSize);
   return DiscSize;
 }
 
@@ -708,7 +706,10 @@ void turntableLoop() {
       break;
     case INITIAL:
       moveArmOut();
-      if (reachedArmReset()) changeState(IDLE);
+      if (reachedArmReset()) {
+        resetDiskSize();
+        changeState(IDLE);
+      }
       break;
     case GOHOME:
       nextState = IDLE;
@@ -718,20 +719,21 @@ void turntableLoop() {
       break;
     case UPTOHOME:
       raiseArm();
-      if (armdowntime < millis() - getUpDuration()) changeState(GOHOME);
+      if (armdowntime < millis() - getUpDuration()) {
+        resetDiskSize();
+        changeState(GOHOME);
+      }
       break;
     case UPTOMOVE:
       raiseArm();
       if (armdowntime < millis() - getUpDuration()) changeState(MOVE);
       break;
     case MOVE:
-      setAutoDDspeed();
       moveArmTo(desiredPosition);
       if (reachedPosition()) changeState(nextState);
       break;
     case DETECT:
       startDD();
-      setAutoDDspeed();
       nextState = DETECT;
       //section 2 automatic disk selection timing says Input for 2.5 sec
       // It is about the time it takes for the arm to get to large disc drop location.
@@ -760,7 +762,6 @@ void turntableLoop() {
       }
       break;
     case PLAY:
-      setAutoDDspeed();
       if (isOverPlatter() && isTurning()) playRecord();
       
       if (reachedEndPosition()) {
@@ -780,6 +781,7 @@ void turntableLoop() {
       }
       break;
     }
+  setAutoDDspeed();
   //handle inputs
   updateKeys();
   computeKeys();

@@ -53,8 +53,6 @@ volatile const char* uiTurntableStatus;
 volatile const char* uiStatusHexColor;
 volatile const char* uiOnOffIndicatorColor;
 
-volatile int     printedDiscSize   = 1;
-
 volatile bool    previousRepeat    = false;
 volatile bool    previousDD33      = false;
 volatile bool    previousArmLifter = true;
@@ -88,82 +86,80 @@ volatile int irTreshold =          DEFIRTRESHOLD;
 bool computeRepeatDirty() {
   bool repeat = getRepeatState();
   if (previousRepeat != repeat) {
-    uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
     previousRepeat = repeat;
+    uiOnOffIndicatorColor = onOffIndicatorColor[repeat ? 1 : 0];
     return true;
   }
   return false;
 }
 
 bool computeDcmDirty() {
-  bool haschanged = false;
   int currentDcm = getDCM();
-  if (previousDcm != currentDcm) haschanged = true;
-  previousDcm = currentDcm;
-  uidcmIcon = dcmIcons[currentDcm];
-  return haschanged;
+  if (previousDcm != currentDcm) {
+    previousDcm = currentDcm;  
+    uidcmIcon = dcmIcons[currentDcm];
+    return true;
+  }
+  return false;
 }
 
 bool computeArmstateDirty() {
-  bool haschanged = false;
   int currentState = getCurrentState();
-  if (previousArmState != currentState) haschanged = true;
-  previousArmState = currentState;
-  uiStatusHexColor = statusHexColor[currentState];
-  return haschanged;
+  if (previousArmState != currentState) {
+    previousArmState = currentState;
+    uiStatusHexColor = statusHexColor[currentState];
+    return true;
+  }
+  return false;
 }
 
 bool computeTtstateDirty() {
-  bool haschanged = false;
   int currentState = getCurrentState();
-  if (previousTtState != currentState) haschanged = true;
-  previousTtState = currentState;
-  uiTurntableStatus = TurntableStateDesc[currentState];
-  return haschanged;
+  if (previousTtState != currentState) {
+    previousTtState = currentState;  
+    uiTurntableStatus = TurntableStateDesc[currentState];
+    return true;
+  }
+  return false;
 }
 
 bool computeLedstateDirty() {
-  bool haschanged = false;
   int currentState = getCurrentState();
-  if (previousLedState != currentState) haschanged = true;
-  previousLedState = currentState;
-  uiStatusHexColor = statusHexColor[currentState];
-  return haschanged;
+  if (previousLedState != currentState) {
+    previousLedState = currentState;  
+    uiStatusHexColor = statusHexColor[currentState];
+    return true;
+  }
+  return false;
 }
 
 bool computeDd33Dirty() {
-  bool haschanged = false;
-  if (previousDD33 != dd33active()) haschanged=true;
-  previousDD33 = dd33active();
-  uiDd3Active = dd33active();
-  return haschanged;
-}
-
-bool computeDisksizeDirty() {
-  bool haschanged = false;
-  int currentDiscSize = getDiscSize();
-  if (printedDiscSize != currentDiscSize) haschanged = true;
-  printedDiscSize = currentDiscSize;
-  uiRecordStyle = recordStyles[currentDiscSize];
-  return haschanged;
+  if (previousDD33 != dd33active()) {
+    uiDd3Active = dd33active();
+    previousDD33 = dd33active();  
+    return true;
+  }
+  return false;
 }
 
 bool computeArmlifterDirty() {
-  bool haschanged = false;
   bool currentArmLifter = armLifter();
-  if (previousArmLifter != currentArmLifter) haschanged = true;
-  previousArmLifter = currentArmLifter;
-  uiLifterIcon = (currentArmLifter == getArmUpLevel()) ? armIcons[1] : armIcons[0];
-  return haschanged;
+  if (previousArmLifter != currentArmLifter) {
+    previousArmLifter = currentArmLifter;
+    uiLifterIcon = (currentArmLifter == getArmUpLevel()) ? armIcons[1] : armIcons[0];
+    return true;
+  }
+  return false;
 }
 
 bool computeArmpositionDirty() {
-  bool haschanged = false;
   int32_t currentArmPosition = armPosition();
-  if (previousPosition != currentArmPosition) haschanged = true;
-  previousPosition = currentArmPosition;
-  uiArmPosition = currentArmPosition;
-  return haschanged;
+  if (previousPosition != currentArmPosition) {
+    uiArmPosition = currentArmPosition;
+    previousPosition = currentArmPosition;
+    return true;
+  }
+  return false;
 }
 
 void dirtyComputation() {
@@ -171,7 +167,6 @@ void dirtyComputation() {
   if (computeRepeatDirty()) repeatDirty = true;
   if (computeDcmDirty()) dcmDirty = true;
   if (computeDd33Dirty()) dd33Dirty = true;
-  if (computeDisksizeDirty()) disksizeDirty = true;
   if (computeArmlifterDirty()) armlifterDirty = true;
   if (computeTtstateDirty()) ttstateDirty = true;
   if (computeArmpositionDirty()) armpositionDirty = true;
@@ -220,42 +215,65 @@ void turntableUiUpdate() {
 
   if (currentmillis - lastUpdateCycle1 >= 802) {
     lastUpdateCycle1 = currentmillis;
-    if(armstateDirty) changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
-    armstateDirty = false; 
-    if(repeatDirty) changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor);
-    repeatDirty = false; 
-    if(dcmDirty) ESPUI.print(dcmStatusId, (char *)uidcmIcon);
-    dcmDirty = false;
-    if(uiInvert != previousUiInvert) if (invertbuttonVisible()) reflectSwitchPosition(spd_switch, uiInvert);
-    previousUiInvert = uiInvert;
+    if(armstateDirty) {
+      changeEspuiLabelColor(armStatusLabelId, (char *)uiStatusHexColor);
+      armstateDirty = false; 
+    }
+    if(repeatDirty) {
+      changeEspuiIndicatorColor(repeatId, (char *)uiOnOffIndicatorColor);
+      repeatDirty = false; 
+    }
+    if(dcmDirty) {
+      ESPUI.print(dcmStatusId, (char *)uidcmIcon);
+      dcmDirty = false;
+    }
+    if(uiInvert != previousUiInvert) {
+      if (invertbuttonVisible()) reflectSwitchPosition(spd_switch, uiInvert);
+      previousUiInvert = uiInvert;
+    }
   }
   else if (currentmillis - lastUpdateCycle2 >= 955) {
     lastUpdateCycle2 = currentmillis;
-    if (dd33Dirty) ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
-    dd33Dirty = false;
-    if (disksizeDirty) ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);
-    disksizeDirty = false;
-    if (armlifterDirty) ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
-    armlifterDirty = false;
+    if (dd33Dirty) {
+      ESPUI.updateControlValue(recordsizeLabelId, uiDd3Active ? "33" : "45");
+      dd33Dirty = false;
+    }
+    if (disksizeDirty) { 
+      ESPUI.setElementStyle(recordsizeLabelId, (char *)uiRecordStyle);
+      disksizeDirty = false;
+    }
+    if (armlifterDirty) {
+      ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
+      armlifterDirty = false;
+    }
   }
   else if (currentmillis - lastUpdateCycle3 >= 1024) {
     lastUpdateCycle3 = currentmillis;
-    if (ttstateDirty) ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
-    ttstateDirty = false;
-    if (armpositionDirty) ESPUI.print(armPositionLabelId, String("Current arm position : ") + (int)uiArmPosition);
-    armpositionDirty = false;
-    if (ledstateDirty) changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
-    ledstateDirty = false;
+    if (ttstateDirty) {
+      ESPUI.print(armStatusLabelId, (char *)uiTurntableStatus);
+      ttstateDirty = false;
+    }
+    if (armpositionDirty) {
+      ESPUI.print(armPositionLabelId, String("Current arm position : ") + (int)uiArmPosition);
+      armpositionDirty = false;
+    }
+    if (ledstateDirty) {
+      changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
+      ledstateDirty = false;
+    }
   }
 }
 // ============ Turntable user interface Change Computation =================
 
 
 // ============ Debug console helper =================
-void verboseDiskChange() {
-  int currentDiscSize = getDiscSize();
-  if (highVerbosity && previousDiscSize != currentDiscSize)  Serial.println(String(millis()) + " - Detected " + sizename[currentDiscSize]);
-  previousDiscSize = currentDiscSize;
+void verboseDiskChange(int currentDiscSize) {
+  if (previousDiscSize != currentDiscSize) {
+    if (highVerbosity)  Serial.println(String(millis()) + " - Detected " + sizename[currentDiscSize]);
+    previousDiscSize = currentDiscSize;
+    uiRecordStyle = recordStyles[currentDiscSize];
+    disksizeDirty = true;
+  }  
 }
 
 void turntableReport() {
@@ -282,7 +300,7 @@ void turntableReport() {
 }
 
 String getUiSizeName() {
-  return sizename[printedDiscSize];
+  return sizename[previousDiscSize];
 }
 
 String getUiRecordSize() {
@@ -291,6 +309,10 @@ String getUiRecordSize() {
 
 int getUipreviousDcm() {
   return previousDcm;
+}
+
+int getUiArmPosition() {
+  return uiArmPosition;
 }
 
 void turntableSensorReport() {
