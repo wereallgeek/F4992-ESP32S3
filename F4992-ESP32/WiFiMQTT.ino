@@ -289,6 +289,7 @@ void addAllCpuInfoEntities() {
   addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "C", "measurement", "diagnostic", "", false);
   addEntity("sensor", "CPU Model", "cpu_model", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "CPU Cores", "cpu_cores", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
+  addEntity("sensor", "CPU Frequency", "cpu_freq", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "Free Heap", "free_heap", "data_size", "B", "measurement", "diagnostic", "mdi:memory", false);
   addEntity("sensor", "Total Heap", "total_heap", "data_size", "B", "", "diagnostic", "mdi:memory", false);
   addEntity("sensor", "Flash Size", "flash_size", "data_size", "B", "", "diagnostic", "mdi:harddisk", false);

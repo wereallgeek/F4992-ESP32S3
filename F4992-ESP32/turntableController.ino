@@ -328,6 +328,7 @@ void changeState(TurntableState newState) {
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
   setWifiSleep(currentState == IDLE);
   taskDelay = (currentState == IDLE) ? 20 : 1;
+  setCpuFrequencyMhz((currentState == IDLE) ? 80 : 240); 
 }
 
 bool isState(TurntableState state) {
