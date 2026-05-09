@@ -710,6 +710,7 @@ void turntableLoop() {
     case INITIAL:
       moveArmOut();
       if (reachedArmReset()) {
+        requestCompleteStatusRedraw();
         resetDiskSize();
         changeState(IDLE);
       }

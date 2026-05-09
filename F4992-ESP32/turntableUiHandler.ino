@@ -21,7 +21,7 @@ const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Le
 const char* sizename[] =            {"NODISC", "30cm", "17cm"};
 
 const char* record33style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,#0000 8%),radial-gradient(#555 18%,#111 19%);border:4px double #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";
-const char* record45style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 25%,#0000 26%),radial-gradient(#555 45%,#111 46%);border:4px solid #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";
+const char* record45style = "width:70px;height:70px;border-radius:50%;background:radial-gradient(circle,#000 25%,#0000 26%),radial-gradient(#555 45%,#111 46%);border:4px solid #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3rem;margin-left:20px!important;";
 const char* recordNodiscStyle = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 4%,#0000 5%),radial-gradient(#777 5%,#333 6%);border:2px solid #444;color:#0000;line-height:80px;text-align:center;display:inline-block;vertical-align:middle;margin-left:20px!important;";
 
 const char* recordStyles[] =      { recordNodiscStyle, record33style, record45style };
@@ -58,11 +58,11 @@ volatile bool    previousDD33      = false;
 volatile bool    previousArmLifter = true;
 volatile bool    previousUiInvert  = true;
 volatile int32_t previousPosition  = -1;
-volatile int     previousDcm       = 0;
-volatile int     previousDiscSize  = 0;
-volatile int     previousArmState  = 0;
-volatile int     previousLedState  = 0;
-volatile int     previousTtState   = 0;
+volatile int     previousDcm       = -1;
+volatile int     previousDiscSize  = -1;
+volatile int     previousArmState  = -1;
+volatile int     previousLedState  = -1;
+volatile int     previousTtState   = -1;
 
 unsigned long lastUpdateCycle1 = 0; 
 unsigned long lastUpdateCycle2 = 0; 
@@ -175,8 +175,10 @@ void dirtyComputation() {
 
 void requestComputation() {
   requestInvert(uiInvert);
-  if (uiPressRepeat) requestRepeat();
-  uiPressRepeat = false;
+  if (uiPressRepeat) {
+    requestRepeat();
+    uiPressRepeat = false;
+  }
   if (uiPressMoveIn) {
     if (armPosition() >= getArmPresetValue(END)) uiPressMoveIn = false;
     else stepTonearmIn();
@@ -185,29 +187,49 @@ void requestComputation() {
     if (armPosition() <= getArmPresetValue(HOME)) uiPressMoveOut = false;
     else stepTonearmOut();
   }
-  if (uiPressUpDown) requestUpDown();
-  uiPressUpDown = false;
-  if (uiPressStartStop) requestStartStop(uiTypeStartStop);
-  uiPressStartStop = false;
+  if (uiPressUpDown) {
+    requestUpDown();
+    uiPressUpDown = false;
+  }
+  if (uiPressStartStop) {
+    requestStartStop(uiTypeStartStop);
+    uiPressStartStop = false;
+  }
 
-  if (uiAskMoveHome) requestHome();
-  uiAskMoveHome = false;
-  if (uiAskMoveEnd) requestGoEnd();
-  uiAskMoveEnd = false;
-  if (uiAskMove30) requestGo30();
-  uiAskMove30 = false;
-  if (uiAskMove17) requestGo17();
-  uiAskMove17 = false;
-  if (uiAskMoveNot) requestGoStill();
-  uiAskMoveNot = false;
+  if (uiAskMoveHome) {
+    requestHome();
+    uiAskMoveHome = false;
+  }
+  if (uiAskMoveEnd) {
+    requestGoEnd();
+    uiAskMoveEnd = false;
+  }
+  if (uiAskMove30) {
+    requestGo30();
+    uiAskMove30 = false;
+  }
+  if (uiAskMove17) {
+    requestGo17();
+    uiAskMove17 = false;
+  }
+  if (uiAskMoveNot) {
+    requestGoStill();
+    uiAskMoveNot = false;
+  }
 
-  if (uiRequestInit) requestInitBypass();
-  uiRequestInit = false;
+  if (uiRequestInit) {
+    requestInitBypass();
+    uiRequestInit = false;
+  }
 
-  if (uiAskReport) turntableReport();
-  uiAskReport = false;
-  if (uiAskInfra) turntableIrReport();
-  uiAskInfra = false;
+  if (uiAskReport) {
+    turntableReport();
+    uiAskReport = false;
+  }
+  if (uiAskInfra) {
+    turntableIrReport();
+    uiAskInfra = false;
+  }
 }
 
 void turntableUiUpdate() {
@@ -266,7 +288,15 @@ void turntableUiUpdate() {
 // ============ Turntable user interface Change Computation =================
 
 
-// ============ Debug console helper =================
+// ============ UI helper =================
+void requestCompleteStatusRedraw() {
+  armlifterDirty = true;
+  dd33Dirty = true;
+  dcmDirty = true;
+  armstateDirty = true;
+  previousDiscSize = -1;
+}
+
 void verboseDiskChange(int currentDiscSize) {
   if (previousDiscSize != currentDiscSize) {
     if (highVerbosity)  Serial.println(String(millis()) + " - Detected " + sizename[currentDiscSize]);
@@ -329,7 +359,7 @@ void turntableIrReport() {
   Serial.println((String("  17-")) + value17cm());
   Serial.println("=======================================");
 }
-// ============ Debug console helper =================
+// ============ UI helper =================
 
 // ======== LED INTERFACE =========
 void ledAnimationSetState(int state, uint16_t currentPosition, uint16_t targetPosition) {

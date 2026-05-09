@@ -33,8 +33,8 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   }
 
   else if (topic.indexOf("tt_startstop") > -1) {
-    uiPressStartStop = true;
     uiTypeStartStop = MQTT;
+    uiPressStartStop = true;
   }
 
   else if (topic.indexOf("tt_updown") > -1) {
@@ -120,8 +120,8 @@ void buttonUpdownCallback(Control *sender, int type) {
 
 void buttonStartStopCallback(Control *sender, int type) {
   if (type == B_UP) {
-    uiPressStartStop = true;
     uiTypeStartStop = WEB;
+    uiPressStartStop = true;
   }
 }
 
@@ -389,8 +389,8 @@ void SerialCommand(String input) {
   }
 
   else if (input.indexOf("stop") > -1 || input.indexOf("start") > -1 || input.indexOf("play") > -1) {
-    uiPressStartStop = true;
     uiTypeStartStop = SERIAL;
+    uiPressStartStop = true;
   }
 
   else if (input.indexOf("up") > -1 || input.indexOf("down") > -1 || input.indexOf("pause") > -1) {

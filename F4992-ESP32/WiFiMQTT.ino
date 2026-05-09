@@ -84,7 +84,7 @@ void wifi_init() {
     MDNS.begin(stored_devicename.c_str());
     MDNS.addService("http", "tcp", 80);
     client.setServer(stored_mqtt_server.c_str(), 1883);
-    client.setBufferSize(512); 
+    client.setBufferSize(1024); 
     client.setCallback(mqtt_callback);
     incrementWirelessStat(NBWIFICONNECT);
   }
@@ -128,7 +128,7 @@ void mqtt_loop() {
 //MQTT LOOP===================================
 
 //Discovery===================================================================
-void addEntity(String type, String name, String suffix, String dev_cla = "", String unit = "", String stat_cla = "", String ent_cat = "", String icon = "", bool enabled = true) {
+void addEntity(String type, String name, String suffix, String deviceClass = "", String unit = "", String stateClass = "", String entityClass = "", String icon = "", bool enabled = true) {
   String entityId = mqttId(name); 
 
   String cleanName = name;
@@ -161,10 +161,11 @@ void addEntity(String type, String name, String suffix, String dev_cla = "", Str
     payload += "\"cmd_t\":\"" + cmdTopic + "\",";
   }
   
-  if (dev_cla != "")  payload += "\"dev_cla\":\"" + dev_cla + "\",";
-  if (unit != "")     payload += "\"unit_of_meas\":\"" + unit + "\",";
-  if (stat_cla != "") payload += "\"stat_cla\":\"" + stat_cla + "\",";
-  if (ent_cat != "")  payload += "\"ent_cat\":\"" + ent_cat + "\",";
+  if (deviceClass != "")   payload += "\"dev_cla\":\"" + deviceClass + "\",";
+  if (unit != "")          payload += "\"unit_of_meas\":\"" + unit   + "\",";
+  if (stateClass != "")    payload += "\"stat_cla\":\"" + stateClass + "\",";
+  if (entityClass != "")   payload += "\"ent_cat\":\"" + entityClass + "\",";
+  
 
   payload += "\"uniq_id\":\"" + stored_devicename + "_" + entityId + "\",";
   
@@ -218,21 +219,22 @@ void reconnect() {
 
 //Specific ===================================================================
 void addTurntableEntities() {
-  addEntity("switch", "Repeat",       "tt_rpt",       "", "", "", "", "mdi:repeat");
-  addEntity("switch", "Move In",      "tt_mv_in",     "", "", "", "", "mdi:arrow-expand-left");
-  addEntity("switch", "Move Out",     "tt_mv_out",    "", "", "", "", "mdi:arrow-expand-right");
-  addEntity("button", "Up/Down",      "tt_updown",    "", "", "", "", "mdi:arrow-expand-vertical");
-  addEntity("button", "Start/Stop",   "tt_startstop", "", "", "", "", "mdi:record-player");
-  addEntity("switch", "Invert speed", "tt_sft_inv",   "", "", "", "", "mdi:sync-circle");
+  //addEntity( type,    name,         suffix,         deviceClass unit     stateClass     ent  icon                     enabled)
+  addEntity("switch", "Repeat",       "tt_rpt",       "",         "",       "",            "", "mdi:repeat");
+  addEntity("switch", "Move In",      "tt_mv_in",     "",         "",       "",            "", "mdi:arrow-expand-left");
+  addEntity("switch", "Move Out",     "tt_mv_out",    "",         "",       "",            "", "mdi:arrow-expand-right");
+  addEntity("button", "Up/Down",      "tt_updown",    "",         "",       "",            "", "mdi:arrow-expand-vertical");
+  addEntity("button", "Start/Stop",   "tt_startstop", "",         "",       "",            "", "mdi:record-player");
+  addEntity("switch", "Invert speed", "tt_sft_inv",   "",         "",       "",            "", "mdi:sync-circle");
 
-  addEntity("sensor", "Record Speed", "tt_spd",     "", "", "", "", "mdi:gauge");
-  addEntity("sensor", "Record Size",  "tt_size",    "", "", "", "", "mdi:album");
-  addEntity("sensor", "Arm Lifter",   "tt_armlift", "", "", "", "", "mdi:arrow-expand-up", false);
-  addEntity("sensor", "Arm Position", "tt_armpos",  "", "", "", "", "mdi:pan-horizontal");
-  addEntity("sensor", "Status",       "tt_status",  "", "", "", "", "mdi:information-slab-box-outline");
-  addEntity("sensor", "DCM status",   "tt_dcm",     "", "", "", "", "mdi:cog-box", false);
+  addEntity("sensor", "Record Speed", "tt_spd",       "",         "rpm",    "measurement", "", "mdi:gauge");
+  addEntity("sensor", "Record Size",  "tt_size",      "",         "",       "",            "", "mdi:album");
+  addEntity("sensor", "Arm Lifter",   "tt_armlift",   "",         "",       "",            "", "mdi:arrow-expand-up", false);
+  addEntity("sensor", "Arm Position", "tt_armpos",    "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
+  addEntity("sensor", "Status",       "tt_status",    "",         "",       "",            "", "mdi:information-slab-box-outline");
+  addEntity("sensor", "DCM status",   "tt_dcm",       "",         "",       "",            "", "mdi:cog-box",         false);
   
-  addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "", "", "", "", "mdi:arrow-collapse-right");
+  addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "motion", "", "", "", "mdi:arrow-collapse-right");
 }
 
 void publishTurntableData() {
@@ -241,9 +243,9 @@ void publishTurntableData() {
   publishData("tt_mv_in",   uiPressMoveIn     ? "ON" : "OFF");
   publishData("tt_mv_out",  uiPressMoveOut    ? "ON" : "OFF");
 
-  publishData("tt_spd",     getUiRecordSize() + " rpm");
+  publishData("tt_spd",     getUiRecordSize());
   publishData("tt_size",    getUiSizeName());
-  publishData("tt_armlift", (armLifter() == getArmUpLevel() ? " armUp " : "armDown"));
+  publishData("tt_armlift", (armLifter() == getArmUpLevel() ? "Raised" : "Lowered"));
   publishData("tt_armpos",  String(getUiArmPosition()));
   publishData("tt_status",  turntableCurrentStatus());
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
@@ -253,7 +255,7 @@ void publishTurntableData() {
 
 void addAllStatEntities() {
   for (int statType = 0; statType < maxStatIndex(); statType++) {
-    addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", ((statType < 8) || (statType == maxStatIndex() - 1)) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
+    addEntity("sensor", getStatLabel(statType), getStatKey(statType), "", "", "total_increasing", (statType == maxStatIndex() - 1) ? "diagnostic" : "", getStatIcon(statType), (statType < 8) ? false : true);
   }
 }
 
