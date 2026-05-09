@@ -80,6 +80,12 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     uiRequestInit = true;
   }
 
+  else if (topic.indexOf("tt_vol") > -1) {
+    if (volumeChangerActivated()) {
+      setDesiredVolumePercent(payload.toInt());
+    }
+  }
+
   else {
     Serial.println(topic);
     Serial.println(payload);
@@ -431,6 +437,14 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("stats") > -1) {
     printStatsReport();
+  }
+
+  else if (input.indexOf("volume") > -1) {
+    if (volumeChangerActivated()) {
+      String volumeLevel = splitString(input, ' ', 1);
+      Serial.println("Volume to " + volumeLevel);
+      setDesiredVolumePercent(volumeLevel.toInt());
+    }
   }
 
   else if (input.indexOf("info") > -1) {

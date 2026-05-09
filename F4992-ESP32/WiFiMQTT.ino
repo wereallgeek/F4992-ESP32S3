@@ -117,6 +117,7 @@ void mqtt_loop() {
     else
     {
       publishTurntableData();
+      publishVolumeData();
       publishAllStats();
       publishAllhWirelessStats();
       publisAllCpuInfo();
@@ -201,6 +202,7 @@ void reconnect() {
       client.subscribe((stored_mqtt_topic_in + "/#").c_str());
       //Home Assistant Discovery------------------------------
       addTurntableEntities();
+      addVolumeEntities();
       addAllStatEntities();
       addAllWirelessStatEntities();
       addAllCpuInfoEntities();
@@ -251,6 +253,24 @@ void publishTurntableData() {
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
 
   publishData("tt_armlim",  reachedArmReset() ? "ON" : "OFF");
+}
+
+void addVolumeEntities() {
+  if (!volumeChangerActivated()) return;
+  addEntity("number", "Volume", "tt_volume", "", "%", "", "", "mdi:volume-high");
+  addEntity("sensor", "Computed Volume", "tt_c_vol", "", "%", "", "", "mdi:volume-high");
+  addEntity("sensor", "Desired Volume", "tt_d_vol", "", "%", "measurement", "", "mdi:target-variant", false);
+  addEntity("sensor", "Raw Volume", "tt_raw_vol", "", "pwm", "measurement", "", "mdi:sine-wave", false);
+  addEntity("sensor", "Volume Muting", "tt_vol_mute", "", "", "", "", "mdi:volume-mute", false);
+}
+
+void publishVolumeData() {
+  if (!volumeChangerActivated()) return;
+  publishData("tt_vol",      String(getVolumePercent()));
+  publishData("tt_c_vol",      String(getVolumePercent()));
+  publishData("tt_d_vol",    String(getDesiredVolumePercent()));
+  publishData("tt_raw_vol",  String(getVolumePWM()));
+  publishData("tt_vol_mute", getVolumeMuteActivation() ? "Mute" : "Play");
 }
 
 void addAllStatEntities() {

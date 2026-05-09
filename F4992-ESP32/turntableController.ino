@@ -222,7 +222,14 @@ void setLifter(int lifterPosition) {
 }
 
 void setMute(bool activateMute) {
-  digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
+  if (volumeChangerActivated())
+  {
+    activateSoundMute(activateMute);
+  }
+  else
+  {
+    digitalWrite(PIN_MUTING, activateMute ? mutesound : playsound );
+  }
 }
 
 bool getMute() {
@@ -502,6 +509,7 @@ void turntableSetup() {
 
   stats_setup();
   ledPixelSetup();
+  setupVolumeFader();
   ttConfigSetup();
 
   turntableCompuselectorSetup();
@@ -796,6 +804,8 @@ void turntableLoop() {
   dirtyComputation();
   requestComputation();
 
+  //compute volume
+  volumeFaderLoop();
   //update LedPixels
   animateLeds();
 }
