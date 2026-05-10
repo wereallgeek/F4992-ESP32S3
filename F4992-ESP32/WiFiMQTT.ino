@@ -41,6 +41,25 @@ void setWifiSleep(bool sleepEnable) {
   WiFi.setSleep(sleepEnable);
 }
 
+bool isNetworkActive() {
+  return (isWifiConnected()|| isAnAccessPoint());
+}
+
+bool isWifiConnected() {
+  return (WiFi.status() == WL_CONNECTED);
+}
+
+bool isAnAccessPoint() {
+  return (WiFi.getMode() & WIFI_AP);
+}
+
+String getNetworkIpAddress() {
+  if (isAnAccessPoint()) return WiFi.softAPIP().toString();
+  else if (isWifiConnected()) return WiFi.localIP().toString();
+  else return "";
+}
+
+
 void wifi_init() {
   for (int i = 0; i < MAXWIRELESS; i++) wirelessNumberStats[i] = 0;
   stored_ssid = settings.getString("ssid", "SSID");
@@ -87,6 +106,7 @@ void wifi_init() {
     client.setBufferSize(1024); 
     client.setCallback(mqtt_callback);
     incrementWirelessStat(NBWIFICONNECT);
+    uiAskfwupdate = true;
   }
   setWifiSleep(false);
   Serial.print("\nIP address : ");

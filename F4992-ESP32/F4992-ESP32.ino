@@ -62,7 +62,7 @@ bool mqtt_enabled = false;
 volatile bool softSpeedInverter = false;
 
 //ESPUI turntable GUI fields
-uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch;
+uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch, firmwareUpdate;
 uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
 //ESPUI==================================================================================================================
 
@@ -86,7 +86,8 @@ volatile bool uiAskMoveNot     = false;
 volatile bool uiRequestInit    = false;
 volatile bool uiAskReport      = false;
 volatile bool uiAskInfra       = false;
-  
+volatile bool uiAskfwupdate    = false;
+
 TaskHandle_t Handle_Turntable;
 
 volatile bool UserWebBypassRequest = false;

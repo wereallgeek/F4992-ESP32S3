@@ -216,8 +216,8 @@ void espui_init() {
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
   auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
-  auto firmwaredisplay = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion(), None, configsave, noCallback);
-  ESPUI.setElementStyle(firmwaredisplay, espuiLTxtLabelStyle);
+  firmwareUpdate = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion(), None, configsave, noCallback);
+  ESPUI.setElementStyle(firmwareUpdate, espuiLTxtLabelStyle);
 
   //Turntable configuration--------------------------------------------------------------------------------------------------------
 
