@@ -292,6 +292,10 @@ void turntableUiUpdate() {
       changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
       ledstateDirty = false;
     }
+    if (uiAskfwupdate) {
+      setEspuiFirmwareUpdateText();
+      uiAskfwupdate = false;
+    }
   }
 }
 // ============ Turntable user interface Change Computation =================

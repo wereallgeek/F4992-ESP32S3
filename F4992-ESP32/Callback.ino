@@ -355,6 +355,12 @@ void commandCallback(Control* sender, int type) {
 }
 //ESPUI command===============================
 
+//OTA link ===================================
+void setEspuiFirmwareUpdateText() {
+  if (uiAskfwupdate && isNetworkActive()) ESPUI.updateControlValue(firmwareUpdate, String("FW v") + firmwareVersion() + "  " + linkToOTA() );
+  else ESPUI.updateControlValue(firmwareUpdate, String("FW v") + firmwareVersion());
+}
+//OTA link ===================================
 
 //Serial setup===============================================================
 void SerialCommand(String input) {
