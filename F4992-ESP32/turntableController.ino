@@ -700,7 +700,13 @@ void requestInvert(bool invertRequested) {
 
 void requestInitBypass() {
   initializationCompleted = true;
+  completeInitialization();
   changeState(IDLE);
+}
+
+void completeInitialization() {
+  requestCompleteStatusRedraw();
+  resetDiskSize();
 }
 
 void turntableLoop() {
@@ -718,8 +724,7 @@ void turntableLoop() {
     case INITIAL:
       moveArmOut();
       if (reachedArmReset()) {
-        requestCompleteStatusRedraw();
-        resetDiskSize();
+        completeInitialization();
         changeState(IDLE);
       }
       break;
