@@ -220,6 +220,21 @@ void verbosityCallback(Control *sender, int type) {
   switchCallback(sender, type);
 }
 //Turntable ESPUI callback========================
+
+//volume control setup callback===================
+void volMinPwmCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    storeMinpwmvalue(sender->value.toInt());
+  }
+}
+
+void switchVolActCallback(Control *sender, int type) {
+  storeVolumeControlEnable(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+//volume control setup callback===================
+
+
 //config settings callback
 void saveTurntableDetailsCallback(Control *sender, int type) {
   if (type == B_UP) {    

@@ -727,7 +727,10 @@ void turntableLoop() {
       nextState = IDLE;
       desiredPosition = getArmPresetValue(HOME);
       moveArmOut();
-      if (reachedHome()) changeState(nextState);
+      if (reachedHome()) {
+        if (volumeChangerActivated()) storeCurrentDesiredVolumePercent();
+        changeState(nextState);
+      }
       break;
     case UPTOHOME:
       raiseArm();

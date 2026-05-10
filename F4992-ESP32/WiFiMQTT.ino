@@ -258,19 +258,19 @@ void publishTurntableData() {
 void addVolumeEntities() {
   if (!volumeChangerActivated()) return;
   addEntity("number", "Volume", "tt_volume", "", "%", "", "", "mdi:volume-high");
-  addEntity("sensor", "Computed Volume", "tt_c_vol", "", "%", "", "", "mdi:volume-high");
-  addEntity("sensor", "Desired Volume", "tt_d_vol", "", "%", "measurement", "", "mdi:target-variant", false);
-  addEntity("sensor", "Raw Volume", "tt_raw_vol", "", "pwm", "measurement", "", "mdi:sine-wave", false);
+  addEntity("sensor", "Computed Volume", "tt_c_vol", "", "%", "", "", "mdi:volume-source");
+  addEntity("sensor", "Desired Volume", "tt_d_vol", "", "%", "measurement", "", "mdi:volume-equal", false);
+  addEntity("sensor", "Raw Volume", "tt_raw_vol", "", "pwm", "measurement", "", "mdi:volume-vibrate", false);
   addEntity("sensor", "Volume Muting", "tt_vol_mute", "", "", "", "", "mdi:volume-mute", false);
 }
 
 void publishVolumeData() {
   if (!volumeChangerActivated()) return;
-  publishData("tt_vol",      String(getVolumePercent()));
-  publishData("tt_c_vol",      String(getVolumePercent()));
+  publishData("tt_volume",   String(getDesiredVolumePercent()));
+  publishData("tt_c_vol",    String(getVolumePercent()));
   publishData("tt_d_vol",    String(getDesiredVolumePercent()));
   publishData("tt_raw_vol",  String(getVolumePWM()));
-  publishData("tt_vol_mute", getVolumeMuteActivation() ? "Mute" : "Play");
+  publishData("tt_vol_mute", getVolumeMuteActivation() ? "Muted" : "Audible");
 }
 
 void addAllStatEntities() {

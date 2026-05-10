@@ -4,7 +4,10 @@
 // Handles optionnal volume fader
 //
 //================================================
-const bool volumeFaderActive = true; //TODO make it tunable.
+Preferences volumeControlSetup;
+volatile bool volumeFaderActive = true;
+volatile int minpwmvalue = 0;
+
 const long volumeDelayFast = 10;
 const long volumeDelaySlow = 100;
 unsigned long volumeFaderTime = 0;
@@ -17,11 +20,42 @@ volatile int volumePwmValue = 0;
 int previouwVolumePwmValue = 0;
 
 void setupVolumeFader() {
-  desiredVolumePercent = 100;
+  volumeControlSetup.begin("volumesetup", false);
+  loadVolumeControlEnable();
+  loadDesiredVolumePercent();
+  loadMinpwmvalue();
+}
+
+void loadVolumeControlEnable() {
+  volumeFaderActive = volumeControlSetup.getBool("volctrl", false);
+}
+
+void loadDesiredVolumePercent() {
+  desiredVolumePercent = volumeControlSetup.getInt("dvolpct", 100);
+}
+
+void loadMinpwmvalue() {
+  minpwmvalue = volumeControlSetup.getInt("minpwm", 125);
+}
+
+void storeVolumeControlEnable(bool newEnabledState) {
+  if (newEnabledState != volumeControlSetup.getBool("volctrl", false)) volumeControlSetup.putBool("volctrl", newEnabledState);
+}
+
+void storeCurrentDesiredVolumePercent() {
+  if (desiredVolumePercent != volumeControlSetup.getInt("dvolpct", 100)) volumeControlSetup.putInt("dvolpct", desiredVolumePercent);
+}
+
+void storeMinpwmvalue(int newPwm) {
+  if (newPwm != volumeControlSetup.getInt("minpwm", 125)) volumeControlSetup.putInt("minpwm", newPwm);
 }
 
 bool volumeChangerActivated() {
   return volumeFaderActive;
+}
+
+int currentMinPwm() {
+  return minpwmvalue;
 }
 
 long activeVolumeDelay() {
@@ -55,7 +89,7 @@ bool getVolumeMuteActivation() {
 
 int computeVolumePwm() {
   if (currentVolumePercent <= 0) return 0;
-  return map(currentVolumePercent, 0, 100, 125, 255); //TODO 125 is tunable. where do we set the lower value?
+  return map(currentVolumePercent, 0, 100, minpwmvalue, 255);
 }
 
 void volumeChanges() {
