@@ -26,6 +26,8 @@ const char* wirelessStatsLabels[] = {
 volatile uint32_t wirelessNumberStats[MAXWIRELESS];
 
 String computeUTCTime() {
+  if (!timeSynced)return "";
+
   char isoTime[25];
   struct tm *dt;
   dt = gmtime(&bootEpoch);
