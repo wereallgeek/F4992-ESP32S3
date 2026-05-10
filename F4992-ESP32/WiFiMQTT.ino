@@ -141,13 +141,41 @@ void addEntity(String type, String name, String suffix, String deviceClass = "",
 
   String payload = "{";
   payload += "\"name\":\"" + cleanName + "\",";
-  if (type != "button") {
-    payload += "\"stat_t\":\"" + stateTopic + "\",";
+  if (type == "media_player") {
+    payload += "\"availability\":{";
+    payload += "\"topic\":\"" + stored_mqtt_topic_out + "/available\",";
+    payload += "\"payload_available\":\"Online\",";
+    payload += "\"payload_not_available\":\"Offline\"";
+    payload += "},";
+
+    payload += "\"state_state_topic\":\"" + stateTopic + "\",";
+    payload += "\"state_title_topic\":\"" + stored_mqtt_topic_out + "/tt_status\",";
+    payload += "\"state_duration_topic\":\"" + stored_mqtt_topic_out + "/media_duration\",";
+    payload += "\"state_position_topic\":\"" + stored_mqtt_topic_out + "/media_position\",";
+    if (volumeChangerActivated()) {
+      payload += "\"state_volume_topic\":\"" + stored_mqtt_topic_out + "/get_volume\",";
+      payload += "\"command_volume_topic\":\"" + stored_mqtt_topic_in + "/set_volume\",";
+    }
+    payload += "\"command_play_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_play_payload\":\"play\",";
+    payload += "\"command_pause_topic\":\"" + stored_mqtt_topic_in + "/tt_updown\",";
+    payload += "\"command_pause_payload\":\"\",";
+    payload += "\"command_stop_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_stop_payload\":\"stop\",";
   }
-  
-  if (type == "binary_sensor" || type == "switch") {
-    payload += "\"pl_on\":\"ON\",";
-    payload += "\"pl_off\":\"OFF\",";
+  else {
+    if (type != "button") {
+      payload += "\"stat_t\":\"" + stateTopic + "\",";
+    }
+    
+    if (type == "binary_sensor" || type == "switch") {
+      payload += "\"pl_on\":\"ON\",";
+      payload += "\"pl_off\":\"OFF\",";
+    }
+
+    if (type == "switch" || type == "light" || type == "number" || type == "button") {
+      payload += "\"cmd_t\":\"" + cmdTopic + "\",";
+    }
   }
 
   if (icon != "") {
@@ -156,10 +184,6 @@ void addEntity(String type, String name, String suffix, String deviceClass = "",
 
   if (!enabled) {
     payload += "\"enabled_by_default\":false,";
-  }
-
-  if (type == "switch" || type == "light" || type == "number" || type == "button") {
-    payload += "\"cmd_t\":\"" + cmdTopic + "\",";
   }
   
   if (deviceClass != "")   payload += "\"dev_cla\":\"" + deviceClass + "\",";
@@ -221,20 +245,21 @@ void reconnect() {
 
 //Specific ===================================================================
 void addTurntableEntities() {
-  //addEntity( type,    name,         suffix,         deviceClass unit     stateClass     ent  icon                     enabled)
-  addEntity("switch", "Repeat",       "tt_rpt",       "",         "",       "",            "", "mdi:repeat");
-  addEntity("switch", "Move In",      "tt_mv_in",     "",         "",       "",            "", "mdi:arrow-expand-left");
-  addEntity("switch", "Move Out",     "tt_mv_out",    "",         "",       "",            "", "mdi:arrow-expand-right");
-  addEntity("button", "Up/Down",      "tt_updown",    "",         "",       "",            "", "mdi:arrow-expand-vertical");
-  addEntity("button", "Start/Stop",   "tt_startstop", "",         "",       "",            "", "mdi:record-player");
-  addEntity("switch", "Invert speed", "tt_sft_inv",   "",         "",       "",            "", "mdi:sync-circle");
+  //addEntity( type,        name,         suffix,         deviceClass unit     stateClass     ent  icon                     enabled)
+  addEntity("media_player", "Turntable",    "media",        "",         "",       "",            "", "mdi:record-player");
+  addEntity("switch",       "Repeat",       "tt_rpt",       "",         "",       "",            "", "mdi:repeat");
+  addEntity("switch",       "Move In",      "tt_mv_in",     "",         "",       "",            "", "mdi:arrow-expand-left");
+  addEntity("switch",       "Move Out",     "tt_mv_out",    "",         "",       "",            "", "mdi:arrow-expand-right");
+  addEntity("button",       "Up/Down",      "tt_updown",    "",         "",       "",            "", "mdi:arrow-expand-vertical");
+  addEntity("button",       "Start/Stop",   "tt_startstop", "",         "",       "",            "", "mdi:record-player");
+  addEntity("switch",       "Invert speed", "tt_sft_inv",   "",         "",       "",            "", "mdi:sync-circle");
 
-  addEntity("sensor", "Record Speed", "tt_spd",       "",         "rpm",    "measurement", "", "mdi:gauge");
-  addEntity("sensor", "Record Size",  "tt_size",      "",         "",       "",            "", "mdi:album");
-  addEntity("sensor", "Arm Lifter",   "tt_armlift",   "",         "",       "",            "", "mdi:arrow-expand-up", false);
-  addEntity("sensor", "Arm Position", "tt_armpos",    "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
-  addEntity("sensor", "Status",       "tt_status",    "",         "",       "",            "", "mdi:information-slab-box-outline");
-  addEntity("sensor", "DCM status",   "tt_dcm",       "",         "",       "",            "", "mdi:cog-box",         false);
+  addEntity("sensor",       "Record Speed", "tt_spd",       "",         "rpm",    "measurement", "", "mdi:gauge");
+  addEntity("sensor",       "Record Size",  "tt_size",      "",         "",       "",            "", "mdi:album");
+  addEntity("sensor",       "Arm Lifter",   "tt_armlift",   "",         "",       "",            "", "mdi:arrow-expand-up", false);
+  addEntity("sensor",       "Arm Position", "tt_armpos",    "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
+  addEntity("sensor",       "Status",       "tt_status",    "",         "",       "",            "", "mdi:information-slab-box-outline");
+  addEntity("sensor",       "DCM status",   "tt_dcm",       "",         "",       "",            "", "mdi:cog-box",         false);
   
   addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "motion", "", "", "", "mdi:arrow-collapse-right");
 }
@@ -253,6 +278,11 @@ void publishTurntableData() {
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
 
   publishData("tt_armlim",  reachedArmReset() ? "ON" : "OFF");
+  //mediaplayer
+  publishData("available", "Online", 36000, true);
+  publishData("media", turntableCurrentMediaplayerStatus(), 750); 
+  publishData("media_duration", String(approximateRecordLenght(), 0), 10000);
+  publishData("media_position", String(currentPositionInSeconds(), 1), 750);
 }
 
 void addVolumeEntities() {
@@ -267,10 +297,11 @@ void addVolumeEntities() {
 void publishVolumeData() {
   if (!volumeChangerActivated()) return;
   publishData("tt_volume",   String(getDesiredVolumePercent()));
+  publishData("get_volume",  String(getDesiredVolumeZeroOne(), 2));
   publishData("tt_c_vol",    String(getVolumePercent()));
   publishData("tt_d_vol",    String(getDesiredVolumePercent()));
   publishData("tt_raw_vol",  String(getVolumePWM()));
-  publishData("tt_vol_mute", getVolumeMuteActivation() ? "Muted" : "Audible");
+  publishData("tt_vol_mute", getVolumeMuteActivation() ? "ON" : "OFF");
 }
 
 void addAllStatEntities() {

@@ -631,6 +631,53 @@ void requestStartStop(int actionType) {
   else changeState(UPTOHOME); //undetermined state, going home.
 }
 
+void requestJustStop(int actionType) {
+  //just stop must not send start/stop if not currently playing as it would be seen as play
+  //it can cover these cases and will let the "normal" start/play action handle everything.
+  //|---------------------------|--------------------------|
+  //|        Condition          |          Result          |
+  //|---------------------------|--------------------------|
+  //| Lifter |ArmReset |  DDSS  | Auto-  |  DDSS  | repeat |
+  //| (p31)  | (p25)   | (p38)  | operat |  (p38) |        |
+  //|---------------------------|--------------------------|
+  //| UP (L)*| away(H) | ON (L) |      RETURN     |  Clear |
+  //|---------------------------|--------------------------|
+  //| DN (H) | away(H) | ON (L) |      RETURN     |  Clear |
+  //|---------------------------|--------------------------|
+  //|During autostart operation |      RETURN     |  Clear |
+  //|---------------------------|--------------------------|
+  //|During autoreturn operation|        ---      |  Clear |
+  //|---------------------------|--------------------------|
+  if ((armLifter() == armUp   && armResetNotActive() && isTurning()) ||
+      (armLifter() == armDown && armResetNotActive() && isTurning()) ||
+      (isState(DETECT)) ||
+      (isState(GOHOME) || isState(UPTOHOME))) requestStartStop(actionType);
+  //does not do anything in the rest of the cases
+}
+
+void requestJustStart(int actionType) {
+  // special case - IDLE when not home should act as a up/down (as opposed to stop in hardware start/stop)
+  if (isState(IDLE) && armLifter() == armUp && !isHome()) requestUpDown();
+  //just start must not send start/stop if it alreasy is playing as it  woulc be seen as stop
+  //it can cover these cases and will let the "normal" start/play action handle everything.
+  //|---------------------------|--------------------------|
+  //|        Condition          |          Result          |
+  //|---------------------------|--------------------------|
+  //| Lifter |ArmReset |  DDSS  | Auto-  |  DDSS  | repeat |
+  //| (p31)  | (p25)   | (p38)  | operat |  (p38) |        |
+  //|---------------------------|--------------------------|
+  //| UP (L) | HOME(L) | OFF(H) |    START        |   ---  |
+  //|---------------------------|--------------------------|
+  //| UP (L) | away(H) | OFF(H) |  ---   | ON (L) |   ---  |
+  //|---------------------------|--------------------------|
+  //| DN (H) | away(H) | OFF(H) |  ---   | ON (L) |   ---  |
+  //|---------------------------|--------------------------|
+  else if ((armLifter() == armUp   && reachedArmReset()  && !isTurning()) ||
+          (armLifter() == armUp   && armResetNotActive() && !isTurning()) ||
+          (armLifter() == armDown && armResetNotActive() && !isTurning())) requestStartStop(actionType);
+  //does not do anything in the rest of the cases
+}
+
 void requestHome() {
   if(highVerbosity) Serial.println(String(millis()) + " - request HOME");
   nextState = IDLE;

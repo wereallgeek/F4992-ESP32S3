@@ -8,8 +8,7 @@ Preferences volumeControlSetup;
 volatile bool volumeFaderActive = true;
 volatile int minpwmvalue = 0;
 
-const long volumeDelayFast = 10;
-const long volumeDelaySlow = 100;
+const long volumeDelay        = 21;
 unsigned long volumeFaderTime = 0;
 
 volatile int desiredVolumePercent = 0;
@@ -58,17 +57,19 @@ int currentMinPwm() {
   return minpwmvalue;
 }
 
-long activeVolumeDelay() {
-  return muteActivation? volumeDelayFast : volumeDelaySlow;
-}
-
 void setDesiredVolumePercent(int newVolume) {
   if (newVolume < 0 || newVolume > 100) return;
   desiredVolumePercent = newVolume;
 }
 
+void setDesiredVolumeZeroOne(float newVolume) {
+  if (newVolume < 0 || newVolume > 1) return;
+  desiredVolumePercent = (int)(newVolume * 100);
+}
+
 void activateSoundMute(bool toMute) {
   muteActivation = toMute;
+  if (muteActivation) writeMuteValue(0);
 }
 
 int getVolumePercent() {
@@ -77,6 +78,13 @@ int getVolumePercent() {
 
 int getDesiredVolumePercent() {
   return desiredVolumePercent;
+}
+
+float getDesiredVolumeZeroOne() {
+  float volumeZeroOne = (float)desiredVolumePercent / 100.0f;
+  if (volumeZeroOne < 0.0f) return 0.0f;
+  if (volumeZeroOne > 1.0f) return 1.0f;
+  return volumeZeroOne;
 }
 
 int getVolumePWM() {
@@ -99,15 +107,23 @@ void volumeChanges() {
   volumePwmValue = computeVolumePwm();
 }
 
+void writeMuteValue(int pwmToActivate) {
+  if (!volumeFaderActive) return;
+  int safepwm = pwmToActivate;
+  if (pwmToActivate < 0)   safepwm = 0;
+  if (pwmToActivate > 255) safepwm = 255;
+  analogWrite(PIN_MUTING, safepwm);
+  previouwVolumePwmValue = pwmToActivate;
+}
+
 void volumeFaderLoop() {
   if (!volumeFaderActive) return;
-  if (volumeFaderTime < millis() - activeVolumeDelay())
+  if (volumeFaderTime < millis() - volumeDelay)
   {
     volumeChanges();
     volumeFaderTime = millis();
     if (previouwVolumePwmValue != volumePwmValue) {
-      analogWrite(PIN_MUTING, volumePwmValue);
-      previouwVolumePwmValue = volumePwmValue;
+      writeMuteValue(volumePwmValue);      
     }
   }
 }

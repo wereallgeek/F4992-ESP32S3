@@ -16,8 +16,10 @@ const char* onOffIndicatorColor[] = {"#2c3e50", "#e67e22"};
 const char* armIcons[] =            {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
 const char* dcmIcons[] =            {"\xF0\x9F\x92\xA4", "\xE2\x87\x90", "\xE2\x8E\x8C", "\xE2\x87\x92"};
 
-const char* statusHexColor[] =      {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22", "#497a98",   "#ad221d",   "#3489c9"};
-const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",  "Detecting", "Rejecting", "Playing"};
+const char* statusHexColor[] =      {"#2c3e50", "#515453",      "#c9845e",   "#b95522",   "#b95522",   "#c97e22",   "#497a98",   "#ad221d",   "#3489c9"};
+const char* TurntableStateDesc[] =  {"Idle",    "Initializing", "Returning", "Leaving",   "Raising",   "Moving",    "Detecting", "Rejecting", "Playing"};
+const char* TurntableSqttMedia[] =  {"idle",    "off",          "buffering", "buffering", "buffering",  "buffering", "buffering","buffering", "playing"};
+
 const char* sizename[] =            {"NODISC", "30cm", "17cm"};
 
 const char* record33style = "width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#000 7%,#0000 8%),radial-gradient(#555 18%,#111 19%);border:4px double #222;color:#fffc;line-height:80px;text-align:center;font-weight:700;display:inline-block;vertical-align:middle;font-size:3.2rem;margin-left:20px!important;";
@@ -195,7 +197,14 @@ void requestComputation() {
     requestStartStop(uiTypeStartStop);
     uiPressStartStop = false;
   }
-
+  if (uiPressJustStart) {
+    requestJustStart(uiTypeStartStop);
+    uiPressJustStart = false;
+  }
+  if (uiPressJustStop) {
+    requestJustStop(uiTypeStartStop);
+    uiPressJustStop = false;
+  }
   if (uiAskMoveHome) {
     requestHome();
     uiAskMoveHome = false;
@@ -329,6 +338,34 @@ void turntableReport() {
   Serial.println((String(sizename[getDiscSize()])) + (softSpeedInverter ? " | -INVERT-" : " | noinvert") + (getRepeatState() ? " | -REPEAT-" : " | norepeat"));
 }
 
+
+// ================== turntable computational methods =======================
+int approximateRecordNumberOfSteps() {
+  return ArmPresets[END] - (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+}
+
+float approximateRecordLenght() {
+  // approximate record lenght since it varies from disc to disc
+  return (getUiRecordSize() == "33") ? 1320.0 : 360.0;
+}
+
+float currentPositionInSeconds() {
+  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+  int endStep = ArmPresets[END];
+  int currentStep = uiArmPosition;
+
+  // travel computation
+  float totalTravel = (float)(endStep - startStep);
+  float currentTravel = (float)(currentStep - startStep);
+
+  float ratio = currentTravel / totalTravel;
+  // filter
+  ratio = constrain(ratio, 0.0, 1.0);
+
+  // Mapping : (Steps parcourus / Steps totaux) * Durée en secondes
+  return ratio * approximateRecordLenght();
+}
+
 String getUiSizeName() {
   return sizename[previousDiscSize];
 }
@@ -344,6 +381,7 @@ int getUipreviousDcm() {
 int getUiArmPosition() {
   return uiArmPosition;
 }
+// ================== turntable computational methods =======================
 
 void turntableSensorReport() {
   Serial.print("Sensors:");
@@ -495,8 +533,19 @@ const char* turntableStatus(int stateIndex) {
   return TurntableStateDesc[stateIndex];
 }
 
+const char* turntableMediaplayerStatus(int stateIndex) {
+  if (stateIndex < IDLE || 
+      stateIndex > PLAY) return "off";
+  if (getCurrentState() == IDLE && armPosition() > getArmPresetValue(HOME)) return "paused";
+  return TurntableSqttMedia[stateIndex];
+}
+
 const char* turntableCurrentStatus() {
   return turntableStatus(getCurrentState());
+}
+
+const char* turntableCurrentMediaplayerStatus() {
+  return turntableMediaplayerStatus(getCurrentState());
 }
 
 void ttConfigSetup() {

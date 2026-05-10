@@ -86,6 +86,37 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     }
   }
 
+  else if (topic.indexOf("set_volume") > -1) {
+    if (volumeChangerActivated()) {
+      setDesiredVolumeZeroOne(payload.toFloat());
+    }
+  }
+
+  else if (topic.indexOf("media") > -1) {
+    if (payload.indexOf("play") > -1) {
+      uiTypeStartStop = MQTT;
+      uiPressJustStart = true;
+    }
+    else if (payload.indexOf("pause") > -1) {
+      uiPressUpDown = true;
+    }
+    else if (payload.indexOf("stop") > -1) {
+      uiTypeStartStop = MQTT;
+      uiPressJustStop = true;
+    }
+    else if (payload.indexOf("next") > -1) {
+      //unused at this point
+    }
+    else if (payload.indexOf("previous") > -1) {
+      //unused at this point
+    }
+    else {
+      Serial.println("media player unknown command");
+      Serial.println(topic);
+      Serial.println(payload);
+    }
+  }
+
   else {
     Serial.println(topic);
     Serial.println(payload);
