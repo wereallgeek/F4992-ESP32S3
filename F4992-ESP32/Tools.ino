@@ -21,6 +21,14 @@ unsigned long getUptimeSeconds() {
 }
 //Long Uptime============================================================
 
+//time conversion========================================================
+String secondsToText(float seconds) {
+  int totalsecs = (seconds);
+  int mins = totalsecs / 60;
+  int secs = totalsecs % 60;
+  return String(mins) + ":" + (secs < 10 ? "0" : "") + secs;
+}
+//time conversion========================================================
 
 //make an MQTT-safe name for topics======================================
 String mqttId(String name) {

@@ -357,6 +357,25 @@ float approximateRecordLenght() {
   return (getUiRecordSize() == "33") ? 1320.0 : 360.0;
 }
 
+String elaboratedTurntableForState(int stateToReport, int destPos, bool discSize30, bool spd33) {
+  if (stateToReport == PLAY) return String(turntableStatus(stateToReport)) + (discSize30 ? " large record at " : " small record at ") + (spd33 ? "33 rpm" : "45 rpm");
+  if (stateToReport == MOVE) return String(turntableStatus(stateToReport)) + " to " + secondsToText(positionToSeconds(destPos));
+  return turntableStatus(stateToReport);
+}
+
+String elaboratedTurntableStatus() {
+  return elaboratedTurntableForState(getCurrentState(), getDesiredPosition(), getDiscSize() == 1, dd33active());
+}
+
+String elaboratedTimeForState(int stateToReport, float posInSecs, float lenghtInSecs) {  
+  if (stateToReport == PLAY || stateToReport == UPTOMOVE || stateToReport == MOVE) return secondsToText(posInSecs) + "/" + secondsToText(lenghtInSecs);
+  return "";
+}
+
+String elaboratedTimeStatus() {  
+  return elaboratedTimeForState(getCurrentState(), currentPositionInSeconds(), approximateRecordLenght());
+}
+
 int computePositionStepFromPercent(int targetPercent) {
   int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
   int endStep = ArmPresets[END];
@@ -373,11 +392,11 @@ int currentPositionPercent() {
   return constrain(percent, 0, 100);
 }
 
-float currentPositionInSeconds() {
+float positionToSeconds(int position) {
   int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
   int endStep = ArmPresets[END];
-  int currentStep = uiArmPosition;
-
+  int currentStep = position;
+  
   // travel computation
   float totalTravel = (float)(endStep - startStep);
   float currentTravel = (float)(currentStep - startStep);
@@ -388,6 +407,10 @@ float currentPositionInSeconds() {
 
   // Mapping : (Steps parcourus / Steps totaux) * Durée en secondes
   return ratio * approximateRecordLenght();
+}
+
+float currentPositionInSeconds() {
+  return positionToSeconds(uiArmPosition);
 }
 
 String getUiSizeName() {
@@ -404,6 +427,10 @@ int getUipreviousDcm() {
 
 int getUiArmPosition() {
   return uiArmPosition;
+}
+
+bool isPlaying() {
+  return getCurrentState() == PLAY;
 }
 // ================== turntable computational methods =======================
 
