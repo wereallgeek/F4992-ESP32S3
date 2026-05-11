@@ -171,7 +171,7 @@ void addEntity(String type, String name, String suffix, String deviceClass = "",
     payload += "},";
 
     payload += "\"state_state_topic\":\"" + stateTopic + "\",";
-    payload += "\"state_title_topic\":\"" + stored_mqtt_topic_out + "/tt_status\",";
+    payload += "\"state_title_topic\":\"" + stored_mqtt_topic_out + "/tt_title\",";
     payload += "\"state_duration_topic\":\"" + stored_mqtt_topic_out + "/media_duration\",";
     payload += "\"state_position_topic\":\"" + stored_mqtt_topic_out + "/media_position\",";
     if (volumeChangerActivated()) {
@@ -289,11 +289,13 @@ void addTurntableEntities() {
   addEntity("sensor",       "Record Size",  "tt_size",          "",         "",       "",            "", "mdi:album");
   addEntity("sensor",       "Arm Lifter",   "tt_armlift",       "",         "",       "",            "", "mdi:arrow-expand-up", false);
   addEntity("sensor",       "Arm Position", "tt_armpos",        "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
-  addEntity("sensor",       "Status",       "tt_status",        "",         "",       "",            "", "mdi:information-slab-box-outline");
+  addEntity("sensor",       "Status",       "tt_status",        "",         "",       "",            "", "mdi:information-slab-box-outline", false);
   addEntity("sensor",       "DCM status",   "tt_dcm",           "",         "",       "",            "", "mdi:cog-box",         false);
   addEntity("sensor", "Approximate Duration", "media_duration", "duration", "s",      "",            "", "mdi:timer-play-outline");
   addEntity("sensor", "Elapsed time",         "media_position", "duration", "s",      "",            "", "mdi:timer-play-outline");
   addEntity("number", "Set Arm Position",   "tt_arm_pct",       "",         "%",      "",            "", "mdi:timeline-clock-outline");
+  addEntity("sensor", "Progression",        "tt_timedesc",      "",         "",       "",            "", "mdi:timer-play-outline");
+  addEntity("sensor",       "Information",  "tt_title",        "",         "",       "",            "", "mdi:information-slab-box-outline");
   
   addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "motion", "", "", "", "mdi:arrow-collapse-right");
 }
@@ -309,14 +311,16 @@ void publishTurntableData() {
   publishData("tt_armlift", (armLifter() == getArmUpLevel() ? "Raised" : "Lowered"));
   publishData("tt_armpos",  String(getUiArmPosition()));
   publishData("tt_status",  turntableCurrentStatus());
+  publishData("tt_title", elaboratedTurntableStatus());
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
 
   publishData("tt_armlim",  reachedArmReset() ? "ON" : "OFF");
   //mediaplayer
   publishData("available", "Online", 36000, true);
   publishData("media", turntableCurrentMediaplayerStatus(), 750); 
-  publishData("media_duration", String(approximateRecordLenght(), 0), 10000);
-  publishData("media_position", String(currentPositionInSeconds(), 1), 750);
+  publishData("media_duration", isPlaying() ? String(approximateRecordLenght(), 0) : "0", 10000);
+  publishData("media_position", isPlaying() ? String(currentPositionInSeconds(), 1) : "0", 750);
+  publishData("tt_timedesc", elaboratedTimeStatus(), 750);
   publishData("tt_arm_pct", String(currentPositionPercent()));
 }
 
