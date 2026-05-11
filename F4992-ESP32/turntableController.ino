@@ -712,6 +712,14 @@ void requestGoStill() {
   requestMove(armPosition());
 }
 
+void requestGoToAndPlay(int newPosition) {
+  if(highVerbosity) Serial.println(String(millis()) + " - request go to (%) " + String(newPosition));
+  if (!initializationCompleted) return;
+  desiredPosition = newPosition;
+  nextState = PLAY;
+  changeState(UPTOMOVE);
+}
+
 void requestUpDown() {
   if(highVerbosity) Serial.println(String(millis()) + " - request UP/DOWN");
   if (!initializationCompleted) return;

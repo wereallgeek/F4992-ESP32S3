@@ -92,6 +92,21 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     }
   }
 
+  else if (topic.indexOf("tt_arm_pct") > -1) {
+    uiToPercent = payload.toInt();
+    uiAskMoveTo = true;
+  }
+
+  else if (topic.indexOf("tt_ffwd") > -1) {
+    uiToPercent = constrain((currentPositionPercent() + 1), 0, 100);
+    uiAskMoveTo = true;
+  }
+
+  else if (topic.indexOf("tt_rew") > -1) {
+    uiToPercent = constrain((currentPositionPercent() - 1), 0, 100);
+    uiAskMoveTo = true;
+  }
+
   else if (topic.indexOf("media") > -1) {
     if (payload.indexOf("play") > -1) {
       uiTypeStartStop = MQTT;
@@ -105,10 +120,12 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
       uiPressJustStop = true;
     }
     else if (payload.indexOf("next") > -1) {
-      //unused at this point
+      uiToPercent = constrain((currentPositionPercent() + 1), 0, 100);
+      uiAskMoveTo = true;
     }
     else if (payload.indexOf("previous") > -1) {
-      //unused at this point
+      uiToPercent = constrain((currentPositionPercent() - 1), 0, 100);
+      uiAskMoveTo = true;
     }
     else {
       Serial.println("media player unknown command");

@@ -105,7 +105,7 @@ void wifi_init() {
     MDNS.begin(stored_devicename.c_str());
     MDNS.addService("http", "tcp", 80);
     client.setServer(stored_mqtt_server.c_str(), 1883);
-    client.setBufferSize(1024); 
+    client.setBufferSize(2048); 
     client.setCallback(mqtt_callback);
     incrementWirelessStat(NBWIFICONNECT);
     uiAskfwupdate = true;
@@ -180,10 +180,16 @@ void addEntity(String type, String name, String suffix, String deviceClass = "",
     }
     payload += "\"command_play_topic\":\"" + cmdTopic + "\",";
     payload += "\"command_play_payload\":\"play\",";
+    payload += "\"command_playpause_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_playpause_payload\":\"play\",";
     payload += "\"command_pause_topic\":\"" + stored_mqtt_topic_in + "/tt_updown\",";
     payload += "\"command_pause_payload\":\"\",";
-    payload += "\"command_stop_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_stop_topic\":\"" + cmdTopic + "\",";  
     payload += "\"command_stop_payload\":\"stop\",";
+    payload += "\"command_next_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_next_payload\":\"next\",";
+    payload += "\"command_previous_topic\":\"" + cmdTopic + "\",";
+    payload += "\"command_previous_payload\":\"previous\",";
   }
   else {
     if (type != "button") {
@@ -267,21 +273,27 @@ void reconnect() {
 
 //Specific ===================================================================
 void addTurntableEntities() {
-  //addEntity( type,        name,         suffix,         deviceClass unit     stateClass     ent  icon                     enabled)
-  addEntity("media_player", "Turntable",    "media",        "",         "",       "",            "", "mdi:record-player");
-  addEntity("switch",       "Repeat",       "tt_rpt",       "",         "",       "",            "", "mdi:repeat");
-  addEntity("switch",       "Move In",      "tt_mv_in",     "",         "",       "",            "", "mdi:arrow-expand-left");
-  addEntity("switch",       "Move Out",     "tt_mv_out",    "",         "",       "",            "", "mdi:arrow-expand-right");
-  addEntity("button",       "Up/Down",      "tt_updown",    "",         "",       "",            "", "mdi:arrow-expand-vertical");
-  addEntity("button",       "Start/Stop",   "tt_startstop", "",         "",       "",            "", "mdi:record-player");
-  addEntity("switch",       "Invert speed", "tt_sft_inv",   "",         "",       "",            "", "mdi:sync-circle");
+  //addEntity( type,        name,         suffix,             deviceClass unit     stateClass     ent  icon                     enabled)
+  addEntity("media_player", "Turntable",    "media",            "",         "",       "",            "", "mdi:record-player");
+  addEntity("switch",       "Repeat",       "tt_rpt",           "",         "",       "",            "", "mdi:repeat");
+  addEntity("switch",       "Move In",      "tt_mv_in",         "",         "",       "",            "", "mdi:arrow-expand-left");
+  addEntity("switch",       "Move Out",     "tt_mv_out",        "",         "",       "",            "", "mdi:arrow-expand-right");
+  addEntity("button",       "Up/Down",      "tt_updown",        "",         "",       "",            "", "mdi:arrow-expand-vertical");
+  addEntity("button",       "Start/Stop",   "tt_startstop",     "",         "",       "",            "", "mdi:record-player");
+  addEntity("switch",       "Invert speed", "tt_sft_inv",       "",         "",       "",            "", "mdi:sync-circle");
 
-  addEntity("sensor",       "Record Speed", "tt_spd",       "",         "rpm",    "measurement", "", "mdi:gauge");
-  addEntity("sensor",       "Record Size",  "tt_size",      "",         "",       "",            "", "mdi:album");
-  addEntity("sensor",       "Arm Lifter",   "tt_armlift",   "",         "",       "",            "", "mdi:arrow-expand-up", false);
-  addEntity("sensor",       "Arm Position", "tt_armpos",    "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
-  addEntity("sensor",       "Status",       "tt_status",    "",         "",       "",            "", "mdi:information-slab-box-outline");
-  addEntity("sensor",       "DCM status",   "tt_dcm",       "",         "",       "",            "", "mdi:cog-box",         false);
+  addEntity("button",       "FFWD",         "tt_ffwd",          "",         "",       "",            "", "mdi:fast-forward");
+  addEntity("button",       "REW",          "tt_rew",           "",         "",       "",            "", "mdi:rewind");
+
+  addEntity("sensor",       "Record Speed", "tt_spd",           "",         "rpm",    "measurement", "", "mdi:gauge");
+  addEntity("sensor",       "Record Size",  "tt_size",          "",         "",       "",            "", "mdi:album");
+  addEntity("sensor",       "Arm Lifter",   "tt_armlift",       "",         "",       "",            "", "mdi:arrow-expand-up", false);
+  addEntity("sensor",       "Arm Position", "tt_armpos",        "distance", "steps",  "measurement", "", "mdi:pan-horizontal");
+  addEntity("sensor",       "Status",       "tt_status",        "",         "",       "",            "", "mdi:information-slab-box-outline");
+  addEntity("sensor",       "DCM status",   "tt_dcm",           "",         "",       "",            "", "mdi:cog-box",         false);
+  addEntity("sensor", "Approximate Duration", "media_duration", "duration", "s",      "",            "", "mdi:timer-play-outline");
+  addEntity("sensor", "Elapsed time",         "media_position", "duration", "s",      "",            "", "mdi:timer-play-outline");
+  addEntity("number", "Set Arm Position",   "tt_arm_pct",       "",         "%",      "",            "", "mdi:timeline-clock-outline");
   
   addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "motion", "", "", "", "mdi:arrow-collapse-right");
 }
@@ -305,6 +317,7 @@ void publishTurntableData() {
   publishData("media", turntableCurrentMediaplayerStatus(), 750); 
   publishData("media_duration", String(approximateRecordLenght(), 0), 10000);
   publishData("media_position", String(currentPositionInSeconds(), 1), 750);
+  publishData("tt_arm_pct", String(currentPositionPercent()));
 }
 
 void addVolumeEntities() {
