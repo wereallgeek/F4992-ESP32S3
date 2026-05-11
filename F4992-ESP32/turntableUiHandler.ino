@@ -225,6 +225,10 @@ void requestComputation() {
     requestGoStill();
     uiAskMoveNot = false;
   }
+  if (uiAskMoveTo) {
+    requestGoToAndPlay(computePositionStepFromPercent(uiToPercent));
+    uiAskMoveTo = false;
+  }
 
   if (uiRequestInit) {
     requestInitBypass();
@@ -351,6 +355,22 @@ int approximateRecordNumberOfSteps() {
 float approximateRecordLenght() {
   // approximate record lenght since it varies from disc to disc
   return (getUiRecordSize() == "33") ? 1320.0 : 360.0;
+}
+
+int computePositionStepFromPercent(int targetPercent) {
+  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+  int endStep = ArmPresets[END];
+  if (startStep == endStep) return 0;
+  return map(constrain(targetPercent, 0, 100), 0, 100, startStep, endStep);
+}
+
+int currentPositionPercent() {
+  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+  int endStep = ArmPresets[END];
+  int currentStep = uiArmPosition;
+  if (startStep == endStep) return 0;
+  int percent = map(currentStep, startStep, endStep, 0, 100);
+  return constrain(percent, 0, 100);
 }
 
 float currentPositionInSeconds() {
