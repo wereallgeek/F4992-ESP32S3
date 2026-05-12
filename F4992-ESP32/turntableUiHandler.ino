@@ -289,7 +289,7 @@ void turntableUiUpdate() {
       ttstateDirty = false;
     }
     if (armpositionDirty) {
-      ESPUI.print(armPositionLabelId, String("Current arm position : ") + (int)uiArmPosition);
+      ESPUI.print(armPositionLabelId, String("Current : ") + (int)uiArmPosition);
       armpositionDirty = false;
     }
     if (ledstateDirty) {

@@ -374,8 +374,8 @@ void commandCallback(Control* sender, int type) {
 
 //OTA link ===================================
 void setEspuiFirmwareUpdateText() {
-  if (uiAskfwupdate && isNetworkActive()) ESPUI.updateControlValue(firmwareUpdate, String("FW v") + firmwareVersion() + "  " + linkToOTA() );
-  else ESPUI.updateControlValue(firmwareUpdate, String("FW v") + firmwareVersion());
+  if (uiAskfwupdate && isNetworkActive()) ESPUI.updateControlValue(firmwareUpdate, linkToOTA() );
+  else ESPUI.updateControlValue(firmwareUpdate, "");
 }
 //OTA link ===================================
 

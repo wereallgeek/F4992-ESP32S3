@@ -133,7 +133,7 @@ void emergencyServerSetup() {
 String linkToOTA() {
   if (isNetworkActive()) {
     String ipadress = getNetworkIpAddress();
-    return "   <a href='http://" + ipadress + ":" + String(OTAPORT) +"' target='_blank' style='color: #00e676; text-decoration: none;'>[update]</a>";
+    return "   <a href='http://" + ipadress + ":" + String(OTAPORT) +"' target='_blank' style='color: #00e676; text-decoration: none;'>[OTA]</a>";
   }
   return "";
 }
