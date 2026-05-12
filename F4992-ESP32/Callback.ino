@@ -107,6 +107,16 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     uiAskMoveTo = true;
   }
 
+  else if (topic.indexOf("tt_play") > -1) {
+    uiTypeStartStop = MQTT;
+    uiPressJustStart = true;
+  }
+
+  else if (topic.indexOf("tt_stop") > -1) {
+    uiTypeStartStop = MQTT;
+    uiPressJustStop = true;
+  }
+  
   else if (topic.indexOf("media") > -1) {
     if (payload.indexOf("play") > -1) {
       uiTypeStartStop = MQTT;

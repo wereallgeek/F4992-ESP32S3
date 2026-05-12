@@ -282,6 +282,9 @@ void addTurntableEntities() {
   addEntity("button",       "Start/Stop",   "tt_startstop",     "",         "",       "",            "", "mdi:record-player");
   addEntity("switch",       "Invert speed", "tt_sft_inv",       "",         "",       "",            "", "mdi:sync-circle");
 
+  addEntity("button",       "Play",         "tt_play",          "",         "",       "",            "", "mdi:play");
+  addEntity("button",       "Stop",         "tt_stop",          "",         "",       "",            "", "mdi:stop");
+
   addEntity("button",       "FFWD",         "tt_ffwd",          "",         "",       "",            "", "mdi:fast-forward");
   addEntity("button",       "REW",          "tt_rew",           "",         "",       "",            "", "mdi:rewind");
 
