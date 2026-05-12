@@ -72,14 +72,15 @@ void espui_init() {
 
   //create tabs here to get urls with #1, #2, etc.
   auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
-  auto addonstab = ESPUI.addControl(Tab, "", "Addons");
-  auto configtab = ESPUI.addControl(Tab, "", "Config");
-  auto wifitab = ESPUI.addControl(Tab, "", "WiFi");
+  auto wifitab    = ESPUI.addControl(Tab, "", "WiFi");
+  auto addonstab  = ESPUI.addControl(Tab, "", "Addons");
+  auto configtab  = ESPUI.addControl(Tab, "", "H/W");
+  auto updatetab  = ESPUI.addControl(Tab, "", "F/W");
 
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
 
   //--ui config block
-  auto rptswitchlabel = ESPUI.addControl(Label, "WebUI config (requires reboot)", "P-L55 Repeat : ", None, addonstab, noCallback);
+  auto rptswitchlabel = ESPUI.addControl(Label, "WebUI config <br>(requires reboot)", "P-L55 Repeat : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(rptswitchlabel, espuiLSwtLabelStyle);
   auto rpt_switch = ESPUI.addControl(Switcher, "", String(espuiRepeatButtonVisible), None, rptswitchlabel, switchRepeatCallback);
   ESPUI.setElementStyle(rpt_switch, getEspuiSwitchStyle(espuiRepeatButtonVisible));
@@ -92,12 +93,12 @@ void espui_init() {
   ESPUI.setElementStyle(addonreboot, espuilargebutton);
 
   //--volume control
-  auto rptvollabel = ESPUI.addControl(Label, "HA Volume Control (requires reboot + rediscover)", "Volume Control enabled : ", None, addonstab, noCallback);
+  auto rptvollabel = ESPUI.addControl(Label, "HA Volume Control <br>(requires reboot + rediscover)", "Volume enabled : ", None, addonstab, noCallback);
   ESPUI.setElementStyle(rptvollabel, espuiLSwtLabelStyle);
   auto vol_switch = ESPUI.addControl(Switcher, "", String(volumeChangerActivated()), None, rptvollabel, switchVolActCallback);
   ESPUI.setElementStyle(vol_switch, getEspuiSwitchStyle(volumeChangerActivated()));
 
-  auto minpwmEntryLabel = ESPUI.addControl(Label, "", "Volume low PWM boundary : ", None, rptvollabel, noCallback);
+  auto minpwmEntryLabel = ESPUI.addControl(Label, "", "Vol zero PWM : ", None, rptvollabel, noCallback);
   ESPUI.setElementStyle(minpwmEntryLabel, espuiLTxtLabelStyle);
   auto minpwmEntry = ESPUI.addControl(Text, "", String(currentMinPwm()), Dark, rptvollabel, volMinPwmCallback);
   ESPUI.setElementStyle(minpwmEntry, espuiTelStyle);
@@ -216,10 +217,15 @@ void espui_init() {
   auto configsave = ESPUI.addControl(Button, "Save", "Save", Peterriver, configtab, saveTurntableDetailsCallback);
   auto configApply = ESPUI.addControl(Button, "", "Apply", None, configsave, applyTurntableDetailsCallback);
   auto coinfigReset = ESPUI.addControl(Button, "", "Reset to default", None, configsave, resetTurntableDetailsCallback);
-  firmwareUpdate = ESPUI.addControl(Label, "", String("FW v") + firmwareVersion(), None, configsave, noCallback);
-  ESPUI.setElementStyle(firmwareUpdate, espuiLTxtLabelStyle);
 
   //Turntable configuration--------------------------------------------------------------------------------------------------------
+
+  //update tab --------------------------------------------------------------------------------------------------------------------
+  auto versionLabel = ESPUI.addControl(Label, "Current firmware", firmwareVersion(), None, updatetab, noCallback);
+  ESPUI.setElementStyle(versionLabel, espuiLTxtLabelStyle);
+  firmwareUpdate = ESPUI.addControl(Label, "", "", None, versionLabel, noCallback);
+  ESPUI.setElementStyle(firmwareUpdate, espuiTextLabelStyle);
+  //update tab --------------------------------------------------------------------------------------------------------------------
 
   //WiFi---------------------------------------------------------------------------------------------------------------------------
   device_name_text = ESPUI.addControl(Text, "Device name", stored_devicename, Dark, wifitab, noCallback);
