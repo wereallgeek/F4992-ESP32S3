@@ -300,7 +300,9 @@ void addTurntableEntities() {
   addEntity("sensor", "Progression",        "tt_timedesc",      "",         "",       "",            "", "mdi:timer-play-outline");
   addEntity("sensor",       "Information",  "tt_title",        "",         "",       "",            "", "mdi:information-slab-box-outline");
   
-  addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",  "motion", "", "", "", "mdi:arrow-collapse-right");
+
+  addEntity("binary_sensor", "Arm Reset Switch",    "tt_armlim",    "motion", "", "", "", "mdi:arrow-collapse-right");
+  addEntity("binary_sensor", "Platter is spinning", "tt_spinning",  "running", "", "", "", "mdi:rotate-right");
 }
 
 void publishTurntableData() {
@@ -317,7 +319,8 @@ void publishTurntableData() {
   publishData("tt_title", elaboratedTurntableStatus());
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
 
-  publishData("tt_armlim",  reachedArmReset() ? "ON" : "OFF");
+  publishData("tt_armlim", reachedArmReset() ? "ON" : "OFF");
+  publishData("tt_spinning",     isTurning() ? "ON" : "OFF");
   //mediaplayer
   publishData("available", "Online", 36000, true);
   publishData("media", turntableCurrentMediaplayerStatus(), 750); 
