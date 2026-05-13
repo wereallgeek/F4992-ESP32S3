@@ -207,7 +207,11 @@ bool computeLedOverlapTransitionFromArmPosition(uint16_t stepToCompute) {
 }
 
 int computeLedFromArmPosition(uint16_t stepToCompute) {
-  return (stepToCompute * (numberOfPixels() - 1)) / getArmMaxValue();
+  return (int)computeExactLedFromArmPosition(stepToCompute);
+}
+
+float computeExactLedFromArmPosition(uint16_t stepToCompute) {
+  return (float)(stepToCompute * (numberOfPixels() - 1)) / getArmMaxValue();
 }
 
 void setLedAnimationMode(int style, const char* hexColor, uint16_t currentPosition, uint16_t targetPosition) {
@@ -229,6 +233,25 @@ void setLedPixelHexColor(const char* hexColor) {
   }
 }
 
+void addLedPixelRgbColor(int ledIndex, int ledR, int ledG, int ledB) {
+  if (ledR < 0 || ledR > 255 ||
+      ledG < 0 || ledG > 255 ||
+      ledB < 0 || ledB > 255 ||
+      ledIndex < 0 || ledIndex >= numberOfPixels()) return;
+
+  uint32_t currentPackedColor = strip.getPixelColor(ledIndex); 
+
+  int currentR = (currentPackedColor >> 16) & 0xFF;
+  int currentG = (currentPackedColor >> 8)  & 0xFF;
+  int currentB = currentPackedColor         & 0xFF;
+
+  int newR = currentR + ledR; if (newR > 255) newR = 255;
+  int newG = currentG + ledG; if (newG > 255) newG = 255;
+  int newB = currentB + ledB; if (newB > 255) newB = 255;
+
+  setLedPixelRgbColor(ledIndex, newR, newG, newB);
+}
+
 void setLedPixelRgbColor(int ledIndex, int ledR, int ledG, int ledB) {
   if (ledR < 0 || ledR > 255 ||
       ledG < 0 || ledG > 255 ||
@@ -242,6 +265,10 @@ void setLedPixelRgbColor(int ledR, int ledG, int ledB) {
   for (int ledIndex = 0; ledIndex < numberOfPixels(); ledIndex++) {
     setLedPixelRgbColor(ledIndex, ledR, ledG, ledB);
   }
+}
+
+void setLedPixelRgbColorToPreset(int ledIndex, float intensity) {
+  setLedPixelRgbColor(ledIndex, baseRgb[RgbR] * intensity, baseRgb[RgbG] * intensity, baseRgb[RgbB] * intensity);
 }
 
 void setLedPixelRgbColorToPreset() {
@@ -261,11 +288,37 @@ void setLedPixelBrightnessToPreset() {
   setLedPixelBrightness(desiredBrightness);
 }
 
+void addLightToCurrentPosition(int ledR, int ledG, int ledB) {
+  float exactLedPosition = computeExactLedFromArmPosition(armPosition());
+  int firstLed = (int)exactLedPosition;
+  float fraction = exactLedPosition - firstLed;
+
+  float intensityFirst = sqrt(1.0f - fraction);
+  float intensitySecond = sqrt(fraction);
+
+  addLedPixelRgbColor(firstLed, ledR * intensityFirst, ledG * intensityFirst, ledB * intensityFirst);
+
+  int secondLed = firstLed + 1;
+  if (secondLed < numberOfPixels()) {
+    addLedPixelRgbColor(secondLed, ledR * intensitySecond, ledG * intensitySecond, ledB * intensitySecond);
+  }
+}
+
 void lightCurrentPosition(int ledR, int ledG, int ledB) {
-  int currentArmLedToLight = computeLedFromArmPosition(armPosition());
-  setLedPixelRgbColor(currentArmLedToLight, ledR, ledG, ledB);
-  if (computeLedOverlapTransitionFromArmPosition(armPosition())) 
-      setLedPixelRgbColor(currentArmLedToLight + 1, ledR, ledG, ledB);
+  float exactLedPosition = computeExactLedFromArmPosition(armPosition());
+  
+  int firstLed = (int)exactLedPosition;
+  float fraction = exactLedPosition - firstLed;
+
+  float intensityFirst = sqrt(1.0f - fraction);
+  float intensitySecond = sqrt(fraction);
+
+  setLedPixelRgbColor(firstLed, ledR * intensityFirst, ledG * intensityFirst, ledB * intensityFirst);
+
+  int secondLed = firstLed + 1;
+  if (secondLed < numberOfPixels()) {
+    setLedPixelRgbColor(secondLed, ledR * intensitySecond, ledG * intensitySecond, ledB * intensitySecond);
+  }
 }
 
 void showCurrentPosition() {
@@ -303,7 +356,7 @@ void runChaser() {
     return; 
   }
   
-    static unsigned long lastUpdate = 0;
+  static unsigned long lastUpdate = 0;
 
   if (millis() - lastUpdate < chaserSpeed) return;
   lastUpdate = millis();
@@ -312,10 +365,25 @@ void runChaser() {
 
   strip.clear();
 
-  lightCurrentPosition(0, 32, 128);
-  setLedPixelRgbColor(chaserRangeFrom, 255, 69, 0);
-  setLedPixelRgbColor(chaserRangeTo, 0, 255, 200);
-  setLedPixelRgbColorToPreset(currentChaserStep);
+  float exactLedPosition = computeExactLedFromArmPosition(armPosition());
+
+  float distFrom  = fabs(exactLedPosition - chaserRangeFrom);
+  float distTo    = fabs(exactLedPosition - chaserRangeTo);
+  float distChase = fabs(exactLedPosition - currentChaserStep);
+  
+
+
+  float fadeFrom  = distFrom < 1.0f ? distFrom : 1.0f;
+  float fadeTo    = distTo < 1.0f ? distTo : 1.0f;
+  float fadeChase = distChase < 1.0f ? distChase : 1.0f;
+
+
+  setLedPixelRgbColor(chaserRangeFrom, 255 * fadeFrom, 69 * fadeFrom, 0);
+  setLedPixelRgbColor(chaserRangeTo, 0 * fadeTo, 255 * fadeTo, 200);
+
+  setLedPixelRgbColorToPreset(currentChaserStep, fadeChase);
+
+  addLightToCurrentPosition(0, 32, 128);
 
   setLedPixelBrightnessToPreset();
   strip.show();
