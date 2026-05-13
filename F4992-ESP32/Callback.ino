@@ -93,18 +93,24 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   }
 
   else if (topic.indexOf("tt_arm_pct") > -1) {
-    uiToPosition = computePositionStepFromPercent(payload.toInt());
-    uiAskMoveTo = true;
+    if (!isHome()) {
+      uiToPosition = computePositionStepFromPercent(payload.toInt());
+      uiAskMoveTo = true;
+    }
   }
 
   else if (topic.indexOf("tt_ffwd") > -1) {
-    uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
-    uiAskMoveTo = true;
+    if (!isHome()) {
+      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
+      uiAskMoveTo = true;
+    }
   }
 
   else if (topic.indexOf("tt_rew") > -1) {
-    uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
-    uiAskMoveTo = true;
+    if (!isHome()) {
+      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
+      uiAskMoveTo = true;
+    }
   }
 
   else if (topic.indexOf("tt_play") > -1) {
@@ -130,12 +136,16 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
       uiPressJustStop = true;
     }
     else if (payload.indexOf("next") > -1) {
-      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
-      uiAskMoveTo = true;
+      if (!isHome()) {
+        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
+        uiAskMoveTo = true;
+      }
     }
     else if (payload.indexOf("previous") > -1) {
-      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
-      uiAskMoveTo = true;
+      if (!isHome()) {
+        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
+        uiAskMoveTo = true;
+      }
     }
     else {
       Serial.println("media player unknown command");
