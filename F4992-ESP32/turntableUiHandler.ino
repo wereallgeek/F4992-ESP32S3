@@ -226,7 +226,7 @@ void requestComputation() {
     uiAskMoveNot = false;
   }
   if (uiAskMoveTo) {
-    requestGoToAndPlay(computePositionStepFromPercent(uiToPercent));
+    requestGoToAndPlay(uiToPosition);
     uiAskMoveTo = false;
   }
 
@@ -390,6 +390,20 @@ int currentPositionPercent() {
   if (startStep == endStep) return 0;
   int percent = map(currentStep, startStep, endStep, 0, 100);
   return constrain(percent, 0, 100);
+}
+
+int computePositionStepFromSeconds(float targetSeconds) {
+  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+  int endStep = ArmPresets[END];
+  if (startStep == endStep) return startStep;
+
+  float totalSeconds = approximateRecordLenght();
+  if (totalSeconds <= 0.0) return startStep;
+
+  float ratio = targetSeconds / totalSeconds;
+  ratio = constrain(ratio, 0.0, 1.0);
+
+  return startStep + (int)(ratio * (float)(endStep - startStep));
 }
 
 float positionToSeconds(int position) {
