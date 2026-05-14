@@ -15,16 +15,17 @@ see https://github.com/n3odym3/ESPUI_Serial_MQTT_Template
 
 The main Turntable handling code had been coded by Marsupial and the project is documented at [We're all geeks](https://wereallgeeks.wordpress.com/tag/linear-turntable-retrofit/).
 
-## Hardware
-
-The F4992-ESP32-S3 turntable controller software is meant to be run as a F4992 replacement daughterboard. The target daughterboard PCB hosts the ESP32-S3 to rehost the turntable's original PD7507C CPU. 
-It takes full control of all of the turntable's CPU and adds functionality.
-
 The original F4992 microprocessor daughterboard was designed and developped by Sansui in the 1980s and used in a range of linear tracking turntable - notably the *P-L35*, *P-L45* and *P-L55*. 
 
 I have developped this replacement F4992 microprocessor board because I had acquired a Sansui P-L45 turntable that had suffered catastrophic surcharge causing the CPU to stop functionning. This project is aimed at replacing or upgrading such turntables.
 
-Here is the F4992 pinoutand what GPIO addresses on the ESP32-S3 as used in the turntable controller.
+
+## Hardware
+
+The F4992-ESP32-S3 turntable controller software is meant to be run as a F4992 replacement daughterboard. The target daughterboard PCB hosts the ESP32-S3 to place the turntable's original PD7507C CPU. 
+It takes full control of all of the turntable's peripherals and adds functionality.
+
+Here is the F4992 pinout and matching GPIO addresses on the ESP32-S3 as used in the turntable controller.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/F4992-ESP32S3-pinout.png">
@@ -32,7 +33,7 @@ Here is the F4992 pinoutand what GPIO addresses on the ESP32-S3 as used in the t
 
 
 
-The replacement daughterboard PCB will be made available at PCBWay's shared projects - link to follow - PCBWay supplied the PCBs for prototypes phase 1 and 2 of this project. Thanks again.
+The replacement daughterboard PCB will be made available at PCBWay's shared projects - **link to follow** - PCBWay supplied the PCBs for prototypes phase 1 and 2 of this project. Thanks again.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/PCBv2.png">
@@ -43,19 +44,21 @@ The replacement daughterboard PCB will be made available at PCBWay's shared proj
 
 When the F4992-ESP32-S3 turntable controller is powered ON, it will :
 
-- Load the settings stored in the flash memory (SSID, password, MQTT server, MQTT topic, stats, custom variables)
+- Load the settings stored in the flash memory (Name, SSID, password, MQTT server, MQTT topic, stats, custom variables)
 - Try to connect to the last saved WiFi
 - Create a ESPUI Graphical User Interface (unless instructed not to do so - see bootup bypass below)
-	- If the ESPUI interface is bypassed, create an emergency port80 webpage server
-- Start an OTA update server at same address, port 4992
-- Enables a serial console (which is really only useful when testing the PCB out of the turntable)
+	- If the ESPUI interface is bypassed, create an emergency port80 webpage server instead
+- Start a firmware update (OTA) server at same address, port 4992
+- Enables a serial console (which is really only useful when testing the PCB out of the turntable) to answer to (debug) commands
 - Run the turntable controller software (unless instructed not to do so - see bootup bypass below)
-- If the F4992-ESP32-S3 turntable controller **is** connected to the WiFi 	
+- **If** the F4992-ESP32-S3 turntable controller **is** connected to the WiFi 	
+	- Connects to WiFi, receives its IP address
+	- Prints IP address to the serial console to help first setup
 	- Connect to the MQTT broker (if MQTT is enabled in settings - see web interface)
 - If the ESP **is not** connected to the WiFi 
 	- Create an access point (you can connect you smartphone to the acces point to have access to the GUI at **192.168.4.1**)
 
-The F4992-ESP32-S3 turntable controller does **not** have to be connected to wifi to function, but not being online limit its functionality. That said, the turntable is fully usable offline, and configuration can be done trough its own access point if needed.
+Note: The F4992-ESP32-S3 turntable controller does **not** have to be connected to wifi to function, but not being online limit its functionality. That said, the turntable is fully usable offline, and configuration can be done trough its own access point if needed.
 
 ## Default GUI
 
