@@ -22,10 +22,10 @@ I have developped this replacement F4992 microprocessor board because I had acqu
 
 ## Hardware
 
-The F4992-ESP32-S3 turntable controller software is meant to be run as a F4992 replacement daughterboard. The target daughterboard PCB hosts the ESP32-S3 to place the turntable's original PD7507C CPU. 
-It takes full control of all of the turntable's peripherals and adds functionality.
+The F4992-ESP32-S3 turntable controller software is meant to be run as a F4992 replacement daughterboard. The target daughterboard PCB hosts the ESP32-S3 and when installed on the turntable's motherboard acts as the turntable's original PD7507C CPU. 
+It takes full control of all of the turntable's peripherals and adds new functionality.
 
-Here is the F4992 pinout and matching GPIO addresses on the ESP32-S3 as used in the turntable controller.
+Here is the daughterboard/motherboard interface pinout and matching GPIO addresses on the ESP32-S3 as used in the turntable controller.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/F4992-ESP32S3-pinout.png">
