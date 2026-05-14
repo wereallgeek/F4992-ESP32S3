@@ -70,11 +70,11 @@ Through the Access point or WiFi, accessing port 80 (normal port) of the F4992-E
 
 The header shows the turntable control, which can be used instead of the physical buttons on the unit.
 
-The Status tab shows information on what the turntable is currently doing.
-the WiFi tab serves to setup the unit's name, WiFi and MQTT. it is important to press ENTER on all fields and press SAVE. changes will occur on reboot.
-The addons tab serves for some add-ons configuration such as software variants of turntable functions, software volume operations (experimental) and Led pixel strip addition.
-The H/W tab is where to tune the turntable controller functionality.
-the F/W tab shows current firmware version and offers a link to the Over-The-Air (OTA) firmware update server
+- The Status tab shows information on what the turntable is currently doing.
+- The WiFi tab serves to setup the unit's name, WiFi and MQTT. it is important to press ENTER on all fields and press SAVE. changes will occur on reboot.
+- The addons tab serves for some add-ons configuration such as software variants of turntable functions, software volume operations (experimental) and Led pixel strip addition.
+- The H/W tab is where to tune the turntable controller functionality.
+- The F/W tab shows current firmware version and offers a link to the Over-The-Air (OTA) firmware update server
 
 ## MQTT - using the Turntable as an IOT in Home Assistant.
 
