@@ -78,8 +78,8 @@ The header shows the turntable control, which can be used instead of the physica
 
 ## MQTT - using the Turntable as an IOT in Home Assistant.
 
-When connected to WiFi, if the MQTT is properly setup, the turntable will connect to the MQTT broker and let Home Assistant autodiscover discovers it.
-Lots of turntable data is available trough MQTT - current state, debug information, usage statistics. In addition to the main device, a *media player* can be discovered if HACS add-on mqtt_media_player is installed.
+When connected to WiFi, if the MQTT is properly setup, the turntable will connect to the MQTT broker and let Home Assistant autodiscover it.
+Lots of turntable data is available trough MQTT - current state, debug information, usage statistics. In addition to the main device, a *media player* can be discovered if HACS add-on [mqtt_media_player](https://github.com/bkbilly/mqtt_media_player) is installed.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/homeassistant.png">
