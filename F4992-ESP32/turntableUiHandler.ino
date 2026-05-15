@@ -9,8 +9,8 @@
 Preferences ttConfig;
 //repeats
 //this needs to match ArmPositions
-const uint16_t PresetDefaults[] =   {0,      188,       1050,      1444};
-uint16_t ArmPresets[] =             {0,      188,       1050,      1444};
+const uint16_t PresetDefaults[] =   {0,      191,       1048,      1435};
+uint16_t ArmPresets[] =             {0,      191,       1048,      1435};
 
 const char* onOffIndicatorColor[] = {"#2c3e50", "#e67e22"};
 const char* armIcons[] =            {"\xE2\xA4\x93", "\xE2\xA8\xAA"}; 
@@ -71,16 +71,18 @@ unsigned long lastUpdateCycle2 = 0;
 unsigned long lastUpdateCycle3 = 0; 
 
 //Storage variables
-#define DEFIRCYCLEDURATION         1500
+#define DEFIRCYCLEDURATION         2500
 #define DEFDETECTIONDURATION       3000
-#define DEFMUTEDURATION            1000
+#define DEFMUTEDURATION            575
 #define DEFUPDURATION              350
 #define DEFIRTRESHOLD              1500
+#define DEFFFWDREWLEN              2000
 volatile int irCycleDuration =     DEFIRCYCLEDURATION;
 volatile int detectionDuration =   DEFDETECTIONDURATION;
 volatile int muteDuration =        DEFMUTEDURATION;
 volatile int upDuration =          DEFUPDURATION;
 volatile int irTreshold =          DEFIRTRESHOLD;
+volatile int ffwdRevLenInMs =      DEFFFWDREWLEN;
 
 
 
@@ -528,6 +530,18 @@ int getMuteDuration() {
   return muteDuration;
 }
 
+void readFfwdRewLenghtFromStorage(){
+  setFfwdRewLenght(ttConfig.getUShort("revffwdlen", DEFFFWDREWLEN));
+}
+
+void setFfwdRewLenght(int lenghtInmiliseconds) {
+  ffwdRevLenInMs = lenghtInmiliseconds;
+}
+
+int getFfwdRewLenght(){
+  return ffwdRevLenInMs;
+}
+
 void readUpDurationFromStorage(){
   setUpDuration(ttConfig.getUShort("upDuration", DEFUPDURATION));
 }
@@ -621,6 +635,7 @@ void readTurntablePresetValuesFromStorage() {
   readArmPresetValuesFromStorage();
   readDetectionDurationFromStorage();
   readMuteDurationFromStorage();
+  readFfwdRewLenghtFromStorage();
   readUpDurationFromStorage();
   readIrCycleDurationFromStorage();
   readIrTresholdFromStorage();
@@ -633,6 +648,7 @@ void outputTurntableDetailsValues() {
   if(highVerbosity) {
     Serial.println(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
     Serial.println(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
+    Serial.println(String("FFWD & REW lenght ") + getFfwdRewLenght() + String(" ms"));
     Serial.println(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
     Serial.println(String("Infrared Treshold ") + getIrTreshold());
     Serial.println(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
@@ -642,6 +658,7 @@ void outputTurntableDetailsValues() {
 void resyncTurntableDetailsToScreen() {
   ESPUI.updateControlValue(detectionDurationLabelId, String(getDetectionDuration()));
   ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
+  ESPUI.updateControlValue(ffwdRewSkipAmmountLabelId, String(getFfwdRewLenght()));
   ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
   ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
   ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(START30)));
@@ -652,6 +669,7 @@ void resyncTurntableDetailsToScreen() {
 void applyTurntableDetailsToMemory() {
   setDetectionDuration(ESPUI.getControl(detectionDurationLabelId)->value.toInt());
   setMuteDuration(ESPUI.getControl(muteDurationLabelId)->value.toInt());
+  setFfwdRewLenght(ESPUI.getControl(ffwdRewSkipAmmountLabelId)->value.toInt());
   setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
   setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
   setArmPresetValues(0, ESPUI.getControl(armPresetValue30LabelId)->value.toInt(), 
@@ -662,6 +680,7 @@ void applyTurntableDetailsToMemory() {
 void saveTurntableDetailsToConfig() {
     ttConfig.putUShort("detectDuration", (uint16_t)getDetectionDuration());
     ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
+    ttConfig.putUShort("revffwdlen", (uint16_t)getFfwdRewLenght());
     ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
     ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
     ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(START30));
