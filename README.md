@@ -19,6 +19,15 @@ The original F4992 microprocessor daughterboard was designed and developped by S
 
 I have developped this replacement F4992 microprocessor board because I had acquired a Sansui P-L45 turntable that had suffered catastrophic surcharge causing the CPU to stop functionning. This project is aimed at replacing or upgrading such turntables.
 
+Here is a short demo video of the controller in action.
+
+<p align="center">
+  <a href="https://www.facebook.com/share/v/1EmVMut6VT/">
+    <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/F4992ESP32S3-demo.png">
+  </a>
+</p>
+
+
 
 ## Hardware
 
