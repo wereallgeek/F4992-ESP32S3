@@ -117,9 +117,13 @@ void wifi_init() {
 //WiFi================================================================================
 
 //Topic Out===================================================================
-void publishData(String suffix, String value, unsigned long minInterval = 250, bool retain = true) {
+void publishData(String suffix, String value, unsigned long minInterval = 250, unsigned long maxInterval = 600000, bool retain = true) {
   unsigned long now = millis();
-  if (sendOnReconnect || ((lastPublishedValues[suffix] != value) && (now - lastPublishTimes[suffix] >= minInterval))) {
+  bool maxIntervalElapsed = (maxInterval > 0) && (now - lastPublishTimes[suffix] >= maxInterval);
+  bool hasChanged = lastPublishedValues[suffix] != value;
+  bool minIntervalElapsed = now - lastPublishTimes[suffix] >= minInterval;
+
+  if (sendOnReconnect || (hasChanged && minIntervalElapsed) || maxIntervalElapsed) {
     String topic = stored_mqtt_topic_out + "/" + suffix;
     if (client.publish(topic.c_str(), value.c_str(), retain)) {
       lastPublishedValues[suffix] = value;
@@ -327,7 +331,7 @@ void publishTurntableData() {
   publishData("media_duration", isPlaying() ? String(approximateRecordLenght(), 0) : "0", 10000);
   publishData("media_position", isPlaying() ? String(currentPositionInSeconds(), 1) : "0", 750);
   publishData("tt_timedesc", elaboratedTimeStatus(), 750);
-  publishData("tt_arm_pct", String(currentPositionPercent()));
+  publishData("tt_arm_pct", String(currentPositionPercent()), 250, 1000);
 }
 
 void addVolumeEntities() {
@@ -341,7 +345,7 @@ void addVolumeEntities() {
 
 void publishVolumeData() {
   if (!volumeChangerActivated()) return;
-  publishData("tt_volume",   String(getDesiredVolumePercent()));
+  publishData("tt_volume",   String(getDesiredVolumePercent()), 250, 1000);
   publishData("get_volume",  String(getDesiredVolumeZeroOne(), 2));
   publishData("tt_c_vol",    String(getVolumePercent()));
   publishData("tt_d_vol",    String(getDesiredVolumePercent()));
