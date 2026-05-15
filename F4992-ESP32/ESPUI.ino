@@ -184,11 +184,21 @@ void espui_init() {
   detectionDurationLabelId = ESPUI.addControl(Text, "", String(getDetectionDuration()), Dark, durationLabel, noCallback);
   ESPUI.setElementStyle(detectionDurationLabelId, espuiTelStyle);
   ESPUI.setInputType(detectionDurationLabelId, "tel");
-  auto muteLabel = ESPUI.addControl(Label, "", "     mute: ", None, durationLabel, noCallback);
+  auto muteLabel = ESPUI.addControl(Label, "", "mute: ", None, durationLabel, noCallback);
   ESPUI.setElementStyle(muteLabel, espuiLongLabelStyle);
   muteDurationLabelId = ESPUI.addControl(Text, "", String(getMuteDuration()), Dark, durationLabel, noCallback);
   ESPUI.setElementStyle(muteDurationLabelId, espuiTelStyle);
   ESPUI.setInputType(muteDurationLabelId, "tel");
+  auto timeoutLabel = ESPUI.addControl(Label, "", "timeout (minutes): ", None, durationLabel, noCallback);
+  ESPUI.setElementStyle(timeoutLabel, espuiLongLabelStyle);
+  timeoutLabelId = ESPUI.addControl(Text, "", String(getTimeoutDuration()), Dark, durationLabel, noCallback);
+  ESPUI.setElementStyle(timeoutLabelId, espuiTelStyle);
+  ESPUI.setInputType(timeoutLabelId, "tel");
+  auto timeoutEnabledLabel = ESPUI.addControl(Label, "", "timeout enabled : ", None, durationLabel, noCallback);
+  ESPUI.setElementStyle(timeoutEnabledLabel, espuiLSwtLabelStyle);
+  timeoutEnabledLabelId = ESPUI.addControl(Switcher, "", String(getTimeoutEnabled()), None, durationLabel, switchCallback);
+  ESPUI.setElementStyle(timeoutEnabledLabelId, getEspuiSwitchStyle(getTimeoutEnabled()));
+
 
   auto ffwdrewLabel = ESPUI.addControl(Label, "FFWD & REW", "time skipped: ", None, configtab, noCallback);
   ESPUI.setElementStyle(ffwdrewLabel, espuiLongLabelStyle);

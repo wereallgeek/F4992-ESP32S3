@@ -330,6 +330,7 @@ bool isAtEndPosition() {
 void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) Serial.print(String(millis()) + " - "); //state change remains in low verbosity
   if(firstPassCompleted) Serial.println(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
+  setTimeoutTimer(currentState != newState && newState == IDLE);
   currentState = newState;
   if (newState == NOGO) rejectTime = millis();
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
@@ -773,6 +774,9 @@ void turntableLoop() {
       else {
         raiseArm();
         startDD();
+        if (leftUnattendedForTooLong()) {
+          changeState(GOHOME);
+        }
       }
       dontMove();
       break;

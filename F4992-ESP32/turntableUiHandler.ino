@@ -70,16 +70,22 @@ unsigned long lastUpdateCycle1 = 0;
 unsigned long lastUpdateCycle2 = 0; 
 unsigned long lastUpdateCycle3 = 0; 
 
+unsigned long beenIdleSince = 0;
+
 //Storage variables
 #define DEFIRCYCLEDURATION         2500
 #define DEFDETECTIONDURATION       3000
 #define DEFMUTEDURATION            575
+#define DEFTIMEOUT                 30
+#define DEFTIMEOUTENABLED          false
 #define DEFUPDURATION              350
 #define DEFIRTRESHOLD              1500
 #define DEFFFWDREWLEN              2000
 volatile int irCycleDuration =     DEFIRCYCLEDURATION;
 volatile int detectionDuration =   DEFDETECTIONDURATION;
 volatile int muteDuration =        DEFMUTEDURATION;
+volatile int playtimeout =         DEFTIMEOUT;
+volatile bool playtimeoutEnabled = DEFTIMEOUTENABLED;
 volatile int upDuration =          DEFUPDURATION;
 volatile int irTreshold =          DEFIRTRESHOLD;
 volatile int ffwdRevLenInMs =      DEFFFWDREWLEN;
@@ -530,6 +536,34 @@ int getMuteDuration() {
   return muteDuration;
 }
 
+void readTimeoutDurationFromStorage(){
+  setTimeoutDuration(ttConfig.getUShort("t_out", DEFTIMEOUT));
+}
+
+void setTimeoutDuration(int duration) {
+  playtimeout  = duration;
+}
+
+int getTimeoutDuration() {
+  return playtimeout; //seconds
+}
+
+int getTimeoutDurationInMs() {
+  return playtimeout * 60000;
+}
+
+void readTimeoutEnabledFromStorage(){
+  setTimeoutEnabled(ttConfig.getBool("t_out_active", DEFTIMEOUTENABLED));
+}
+
+void setTimeoutEnabled(bool enable) {
+  playtimeoutEnabled = enable;
+}
+
+bool getTimeoutEnabled() {
+  return playtimeoutEnabled;
+}
+
 void readFfwdRewLenghtFromStorage(){
   setFfwdRewLenght(ttConfig.getUShort("revffwdlen", DEFFFWDREWLEN));
 }
@@ -635,6 +669,8 @@ void readTurntablePresetValuesFromStorage() {
   readArmPresetValuesFromStorage();
   readDetectionDurationFromStorage();
   readMuteDurationFromStorage();
+  readTimeoutDurationFromStorage();
+  readTimeoutEnabledFromStorage();
   readFfwdRewLenghtFromStorage();
   readUpDurationFromStorage();
   readIrCycleDurationFromStorage();
@@ -642,12 +678,25 @@ void readTurntablePresetValuesFromStorage() {
 }
 //======================== UI exposition of constants =======================
 
+//======================== time out auto return =============================
+void setTimeoutTimer(bool goingIdle) {
+  if (goingIdle) beenIdleSince = millis();
+}
+
+bool leftUnattendedForTooLong() {
+  if ((!playtimeoutEnabled) || (!getCurrentState() == IDLE) || (!isTurning())) return false;
+  if (millis() - beenIdleSince >= getTimeoutDurationInMs()) return true;
+  return false;
+}
+//======================== time out auto return =============================
+
 //======================== TT CONFIGURATION =================================
 //Handling config changes
 void outputTurntableDetailsValues() {
   if(highVerbosity) {
     Serial.println(String("Detection phase duration ") + getDetectionDuration() + String(" ms"));
     Serial.println(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
+    Serial.println(String("Turntable timeout ") + getTimeoutEnabled()? "Enabled, duration is " : "disabled, duration would be " + getTimeoutDuration() + String(" min"));
     Serial.println(String("FFWD & REW lenght ") + getFfwdRewLenght() + String(" ms"));
     Serial.println(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
     Serial.println(String("Infrared Treshold ") + getIrTreshold());
@@ -658,6 +707,8 @@ void outputTurntableDetailsValues() {
 void resyncTurntableDetailsToScreen() {
   ESPUI.updateControlValue(detectionDurationLabelId, String(getDetectionDuration()));
   ESPUI.updateControlValue(muteDurationLabelId, String(getMuteDuration()));
+  ESPUI.updateControlValue(timeoutLabelId, String(getTimeoutDuration()));
+  ESPUI.updateControlValue(timeoutEnabledLabelId, String(getTimeoutEnabled()));
   ESPUI.updateControlValue(ffwdRewSkipAmmountLabelId, String(getFfwdRewLenght()));
   ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
   ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
@@ -669,6 +720,8 @@ void resyncTurntableDetailsToScreen() {
 void applyTurntableDetailsToMemory() {
   setDetectionDuration(ESPUI.getControl(detectionDurationLabelId)->value.toInt());
   setMuteDuration(ESPUI.getControl(muteDurationLabelId)->value.toInt());
+  setTimeoutDuration(ESPUI.getControl(timeoutLabelId)->value.toInt());
+  setTimeoutEnabled(ESPUI.getControl(timeoutEnabledLabelId)->value.toInt());
   setFfwdRewLenght(ESPUI.getControl(ffwdRewSkipAmmountLabelId)->value.toInt());
   setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
   setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
@@ -680,6 +733,8 @@ void applyTurntableDetailsToMemory() {
 void saveTurntableDetailsToConfig() {
     ttConfig.putUShort("detectDuration", (uint16_t)getDetectionDuration());
     ttConfig.putUShort("muteDuration", (uint16_t)getMuteDuration());
+    ttConfig.putUShort("t_out", (uint16_t)getTimeoutDuration());
+    ttConfig.putBool("t_out_active", getTimeoutEnabled());
     ttConfig.putUShort("revffwdlen", (uint16_t)getFfwdRewLenght());
     ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
     ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
