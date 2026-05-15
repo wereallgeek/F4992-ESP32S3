@@ -185,6 +185,11 @@ void espui_init() {
   ESPUI.setElementStyle(muteDurationLabelId, espuiTelStyle);
   ESPUI.setInputType(muteDurationLabelId, "tel");
 
+  auto ffwdrewLabel = ESPUI.addControl(Label, "FFWD & REW", "time skipped: ", None, configtab, noCallback);
+  ESPUI.setElementStyle(ffwdrewLabel, espuiLongLabelStyle);
+  ffwdRewSkipAmmountLabelId = ESPUI.addControl(Text, "", String(getFfwdRewLenght()), Dark, ffwdrewLabel, noCallback);
+  ESPUI.setElementStyle(ffwdRewSkipAmmountLabelId, espuiTelStyle);
+
   auto infraredLabel = ESPUI.addControl(Label, "Infrared", "duration: ", None, configtab, noCallback);
   ESPUI.setElementStyle(infraredLabel, espuiLongLabelStyle);
   irCycleDurationLabelId = ESPUI.addControl(Text, "", String(getIrCycleDuration()), Dark, infraredLabel, noCallback);

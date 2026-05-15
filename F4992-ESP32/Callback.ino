@@ -101,14 +101,14 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
 
   else if (topic.indexOf("tt_ffwd") > -1) {
     if (!isHome()) {
-      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
+      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + ((float)getFfwdRewLenght() / 1000.0f), 0, approximateRecordLenght()));
       uiAskMoveTo = true;
     }
   }
 
   else if (topic.indexOf("tt_rew") > -1) {
     if (!isHome()) {
-      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
+      uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - ((float)getFfwdRewLenght() / 1000.0f), 0, approximateRecordLenght()));
       uiAskMoveTo = true;
     }
   }
@@ -137,13 +137,13 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
     }
     else if (payload.indexOf("next") > -1) {
       if (!isHome()) {
-        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + 3.0f, 0, approximateRecordLenght()));
+        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() + ((float)getFfwdRewLenght() / 1000.0f), 0, approximateRecordLenght()));
         uiAskMoveTo = true;
       }
     }
     else if (payload.indexOf("previous") > -1) {
       if (!isHome()) {
-        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - 3.0f, 0, approximateRecordLenght()));
+        uiToPosition = computePositionStepFromSeconds(constrain(currentPositionInSeconds() - ((float)getFfwdRewLenght() / 1000.0f), 0, approximateRecordLenght()));
         uiAskMoveTo = true;
       }
     }

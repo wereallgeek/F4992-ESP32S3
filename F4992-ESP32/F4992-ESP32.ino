@@ -63,7 +63,7 @@ volatile bool softSpeedInverter = false;
 
 //ESPUI turntable GUI fields
 uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch, firmwareUpdate;
-uint16_t detectionDurationLabelId, muteDurationLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
+uint16_t detectionDurationLabelId, muteDurationLabelId, ffwdRewSkipAmmountLabelId, irCycleDurationLabelId, irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
 //ESPUI==================================================================================================================
 
 
