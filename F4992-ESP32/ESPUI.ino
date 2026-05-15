@@ -98,11 +98,16 @@ void espui_init() {
   auto vol_switch = ESPUI.addControl(Switcher, "", String(volumeChangerActivated()), None, rptvollabel, switchVolActCallback);
   ESPUI.setElementStyle(vol_switch, getEspuiSwitchStyle(volumeChangerActivated()));
 
-  auto minpwmEntryLabel = ESPUI.addControl(Label, "", "Vol zero PWM : ", None, rptvollabel, noCallback);
+  auto minpwmEntryLabel = ESPUI.addControl(Label, "", "Vol low PWM : ", None, rptvollabel, noCallback);
   ESPUI.setElementStyle(minpwmEntryLabel, espuiLTxtLabelStyle);
   auto minpwmEntry = ESPUI.addControl(Text, "", String(currentMinPwm()), Dark, rptvollabel, volMinPwmCallback);
   ESPUI.setElementStyle(minpwmEntry, espuiTelStyle);
   ESPUI.setInputType(minpwmEntry, "tel");
+  auto maxpwmEntryLabel = ESPUI.addControl(Label, "", "Vol high PWM : ", None, rptvollabel, noCallback);
+  ESPUI.setElementStyle(maxpwmEntryLabel, espuiLTxtLabelStyle);
+  auto maxpwmEntry = ESPUI.addControl(Text, "", String(currentMaxPwm()), Dark, rptvollabel, volMaxPwmCallback);
+  ESPUI.setElementStyle(maxpwmEntry, espuiTelStyle);
+  ESPUI.setInputType(maxpwmEntry, "tel");
   auto volreboot = ESPUI.addControl(Button, "", "Reboot turntable", None, rptvollabel, ESPReset);
   ESPUI.setElementStyle(volreboot, espuilargebutton);
 
