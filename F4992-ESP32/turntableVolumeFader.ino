@@ -7,6 +7,7 @@
 Preferences volumeControlSetup;
 volatile bool volumeFaderActive = true;
 volatile int minpwmvalue = 0;
+volatile int maxpwmvalue = 255;
 
 const long volumeDelay        = 21;
 unsigned long volumeFaderTime = 0;
@@ -23,6 +24,7 @@ void setupVolumeFader() {
   loadVolumeControlEnable();
   loadDesiredVolumePercent();
   loadMinpwmvalue();
+  loadMaxpwmvalue();
 }
 
 void loadVolumeControlEnable() {
@@ -31,6 +33,10 @@ void loadVolumeControlEnable() {
 
 void loadDesiredVolumePercent() {
   desiredVolumePercent = volumeControlSetup.getInt("dvolpct", 100);
+}
+
+void loadMaxpwmvalue() {
+  maxpwmvalue = volumeControlSetup.getInt("maxpwm", 175);
 }
 
 void loadMinpwmvalue() {
@@ -45,12 +51,20 @@ void storeCurrentDesiredVolumePercent() {
   if (desiredVolumePercent != volumeControlSetup.getInt("dvolpct", 100)) volumeControlSetup.putInt("dvolpct", desiredVolumePercent);
 }
 
+void storeMaxpwmvalue(int newPwm) {
+  if (newPwm != volumeControlSetup.getInt("maxpwm", 175)) volumeControlSetup.putInt("maxpwm", newPwm);
+}
+
 void storeMinpwmvalue(int newPwm) {
   if (newPwm != volumeControlSetup.getInt("minpwm", 125)) volumeControlSetup.putInt("minpwm", newPwm);
 }
 
 bool volumeChangerActivated() {
   return volumeFaderActive;
+}
+
+int currentMaxPwm() {
+  return maxpwmvalue;
 }
 
 int currentMinPwm() {
@@ -97,7 +111,8 @@ bool getVolumeMuteActivation() {
 
 int computeVolumePwm() {
   if (currentVolumePercent <= 0) return 0;
-  return map(currentVolumePercent, 0, 100, minpwmvalue, 255);
+  if (currentVolumePercent >= 100) return 255;
+  return map(currentVolumePercent, 1, 99, minpwmvalue, maxpwmvalue);
 }
 
 void volumeChanges() {

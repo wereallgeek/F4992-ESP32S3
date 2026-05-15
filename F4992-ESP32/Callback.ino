@@ -290,6 +290,12 @@ void verbosityCallback(Control *sender, int type) {
 //Turntable ESPUI callback========================
 
 //volume control setup callback===================
+void volMaxPwmCallback(Control *sender, int type) {
+  if (type == T_VALUE) {
+    storeMaxpwmvalue(sender->value.toInt());
+  }
+}
+
 void volMinPwmCallback(Control *sender, int type) {
   if (type == T_VALUE) {
     storeMinpwmvalue(sender->value.toInt());
