@@ -331,6 +331,7 @@ void changeState(TurntableState newState) {
   if(firstPassCompleted && highVerbosity) Serial.print(String(millis()) + " - "); //state change remains in low verbosity
   if(firstPassCompleted) Serial.println(String("State: ") + turntableStatus(currentState) + " -> " + turntableStatus(newState));
   setTimeoutTimer(currentState != newState && newState == IDLE);
+  setElapsedTimer(currentState, newState);
   currentState = newState;
   if (newState == NOGO) rejectTime = millis();
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
@@ -367,6 +368,7 @@ void toggleArm() {
 void resetArmposition() {
   pcnt_unit_clear_count(counterUnit);
   initializationCompleted = true;
+  resetElapsedTimer(true);
   if (isMovingOut()) changeState(IDLE);
 }
 
