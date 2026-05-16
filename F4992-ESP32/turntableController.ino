@@ -775,6 +775,7 @@ void turntableLoop() {
         raiseArm();
         startDD();
         if (leftUnattendedForTooLong()) {
+          incrementTimeout();
           changeState(GOHOME);
         }
       }
