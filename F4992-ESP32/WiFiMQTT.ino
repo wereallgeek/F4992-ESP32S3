@@ -329,7 +329,7 @@ void publishTurntableData() {
   publishData("available", "Online", 36000, true);
   publishData("media", turntableCurrentMediaplayerStatus(), 750); 
   publishData("media_duration", isPlaying() ? String(approximateRecordLenght(), 0) : "0", 10000);
-  publishData("media_position", isPlaying() ? String(currentPositionInSeconds(), 1) : "0", 750);
+  publishData("media_position", isPlaying() ? String(elapsedPlaytimeInSeconds(), 1) : "0", 750);
   publishData("tt_timedesc", elaboratedTimeStatus(), 750);
   publishData("tt_arm_pct", String(currentPositionPercent()), 250, 1000);
 }

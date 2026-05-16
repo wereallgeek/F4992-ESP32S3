@@ -70,7 +70,12 @@ unsigned long lastUpdateCycle1 = 0;
 unsigned long lastUpdateCycle2 = 0; 
 unsigned long lastUpdateCycle3 = 0; 
 
-unsigned long beenIdleSince = 0;
+unsigned long beenIdleSince           = 0;
+unsigned long playTimerUpdateTime     = 0;
+unsigned long playtimer               = 0;
+bool          playTimerIsIncrementing = false;
+int32_t       positionAtPause         = 0;
+bool          playTimerWasPaused      = false;
 
 //Storage variables
 #define DEFIRCYCLEDURATION         2500
@@ -80,7 +85,7 @@ unsigned long beenIdleSince = 0;
 #define DEFTIMEOUTENABLED          false
 #define DEFUPDURATION              350
 #define DEFIRTRESHOLD              1500
-#define DEFFFWDREWLEN              2000
+#define DEFFFWDREWLEN              2500
 volatile int irCycleDuration =     DEFIRCYCLEDURATION;
 volatile int detectionDuration =   DEFDETECTIONDURATION;
 volatile int muteDuration =        DEFMUTEDURATION;
@@ -376,12 +381,12 @@ String elaboratedTurntableStatus() {
 }
 
 String elaboratedTimeForState(int stateToReport, float posInSecs, float lenghtInSecs) {  
-  if (stateToReport == PLAY || stateToReport == UPTOMOVE || stateToReport == MOVE) return secondsToText(posInSecs) + "/" + secondsToText(lenghtInSecs);
+  if (stateToReport == PLAY || stateToReport == UPTOMOVE || stateToReport == MOVE) return secondsToText(posInSecs) + " / ~" + secondsToText(lenghtInSecs);
   return "";
 }
 
 String elaboratedTimeStatus() {  
-  return elaboratedTimeForState(getCurrentState(), currentPositionInSeconds(), approximateRecordLenght());
+  return elaboratedTimeForState(getCurrentState(), elapsedPlaytimeInSeconds(), approximateRecordLenght());
 }
 
 int computePositionStepFromPercent(int targetPercent) {
@@ -414,21 +419,32 @@ int computePositionStepFromSeconds(float targetSeconds) {
   return startStep + (int)(ratio * (float)(endStep - startStep));
 }
 
-float positionToSeconds(int position) {
-  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+int startStep() {
+  return (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
+}
+
+float totalTravel() {
   int endStep = ArmPresets[END];
-  int currentStep = position;
-  
-  // travel computation
-  float totalTravel = (float)(endStep - startStep);
-  float currentTravel = (float)(currentStep - startStep);
+  return (float)(endStep - startStep());
+}
 
-  float ratio = currentTravel / totalTravel;
-  // filter
-  ratio = constrain(ratio, 0.0, 1.0);
+unsigned long stepsToMilliseconds(int steps) {
+  return (unsigned long)(stepsToSeconds(steps) * 1000.0f); 
+}
 
-  // Mapping : (Steps parcourus / Steps totaux) * Durée en secondes
+float stepsToSeconds(int steps) {
+  float ratio = (float)steps / totalTravel();
   return ratio * approximateRecordLenght();
+}
+
+float positionToSeconds(int position) {
+  float ratio = (float)(position - startStep()) / totalTravel();
+  ratio = constrain(ratio, 0.0f, 1.0f);
+  return ratio * approximateRecordLenght();
+}
+
+float elapsedPlaytimeInSeconds() {
+  return currentElapsedPlayinSeconds();
 }
 
 float currentPositionInSeconds() {
@@ -677,6 +693,56 @@ void readTurntablePresetValuesFromStorage() {
   readIrTresholdFromStorage();
 }
 //======================== UI exposition of constants =======================
+
+//======================== elapsedTimeCounter =============================
+void increasePlayTimer(unsigned long ammount) {
+  playtimer += ammount;
+}
+
+void updatePlayTimer() {
+  if (playTimerIsIncrementing) {
+    increasePlayTimer(millis() - playTimerUpdateTime);
+    playTimerUpdateTime = millis();
+  }
+}
+
+unsigned long currentElapsedPlayInMs() {
+  updatePlayTimer();
+  return playtimer;
+}
+
+float currentElapsedPlayinSeconds() {
+  return (float)currentElapsedPlayInMs() / 1000.0f;
+}
+
+void resetElapsedTimer(bool resetTimer) {
+  if (resetTimer) {
+    playtimer = 0;
+    playTimerWasPaused = false;
+    playTimerIsIncrementing = false;
+  }
+}
+
+void startElapsedTimer() {
+  playTimerUpdateTime = millis();
+  if (playTimerWasPaused) increasePlayTimer(stepsToMilliseconds(armPosition() - positionAtPause));
+  playTimerWasPaused = false;
+  playTimerIsIncrementing = true;
+}
+
+void pauseElapsedTimer() {
+  updatePlayTimer();
+  positionAtPause = armPosition();
+  playTimerWasPaused = true;
+  playTimerIsIncrementing = false;
+}
+
+void setElapsedTimer(int previousState, int nextState) {
+  if (previousState == nextState) return;
+  if (previousState == PLAY) pauseElapsedTimer();
+  if (nextState == PLAY) startElapsedTimer();
+}
+//======================== elapsedTimeCounter =============================
 
 //======================== time out auto return =============================
 void setTimeoutTimer(bool goingIdle) {
