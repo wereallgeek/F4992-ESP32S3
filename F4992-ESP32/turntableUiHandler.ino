@@ -390,42 +390,42 @@ String elaboratedTimeStatus() {
 }
 
 int computePositionStepFromPercent(int targetPercent) {
-  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
-  int endStep = ArmPresets[END];
   if (startStep == endStep) return 0;
-  return map(constrain(targetPercent, 0, 100), 0, 100, startStep, endStep);
+  return map(constrain(targetPercent, 0, 100), 0, 100, startStep(), endStep());
+}
+
+int currentElapsedPercent() {
+  return currentElapsedPlayinSeconds() * 100 / approximateRecordLenght();
 }
 
 int currentPositionPercent() {
-  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
-  int endStep = ArmPresets[END];
-  int currentStep = uiArmPosition;
   if (startStep == endStep) return 0;
-  int percent = map(currentStep, startStep, endStep, 0, 100);
+  int percent = map(uiArmPosition, startStep(), endStep(), 0, 100);
   return constrain(percent, 0, 100);
 }
 
 int computePositionStepFromSeconds(float targetSeconds) {
-  int startStep = (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
-  int endStep = ArmPresets[END];
-  if (startStep == endStep) return startStep;
+  if (startStep() == endStep()) return startStep();
 
   float totalSeconds = approximateRecordLenght();
-  if (totalSeconds <= 0.0) return startStep;
+  if (totalSeconds <= 0.0) return startStep();
 
   float ratio = targetSeconds / totalSeconds;
   ratio = constrain(ratio, 0.0, 1.0);
 
-  return startStep + (int)(ratio * (float)(endStep - startStep));
+  return startStep() + (int)(ratio * (float)(endStep() - startStep()));
 }
 
 int startStep() {
   return (getUiRecordSize() == "33") ? ArmPresets[START30] : ArmPresets[START17];
 }
 
+int endStep() {
+  return ArmPresets[END];
+}
+
 float totalTravel() {
-  int endStep = ArmPresets[END];
-  return (float)(endStep - startStep());
+  return (float)(endStep() - startStep());
 }
 
 unsigned long stepsToMilliseconds(int steps) {
