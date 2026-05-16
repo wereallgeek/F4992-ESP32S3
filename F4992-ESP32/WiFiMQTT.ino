@@ -208,6 +208,10 @@ void addEntity(String type, String name, String suffix, String deviceClass = "",
     if (type == "switch" || type == "light" || type == "number" || type == "button") {
       payload += "\"cmd_t\":\"" + cmdTopic + "\",";
     }
+
+    if (type == "number") {
+      payload += "\"step\":0.001,"; 
+    }
   }
 
   if (icon != "") {
@@ -331,7 +335,7 @@ void publishTurntableData() {
   publishData("media_duration", isPlaying() ? String(approximateRecordLenght(), 0) : "0", 10000);
   publishData("media_position", isPlaying() ? String(elapsedPlaytimeInSeconds(), 1) : "0", 750);
   publishData("tt_timedesc", elaboratedTimeStatus(), 750);
-  publishData("tt_arm_pct", String(currentPositionPercent()), 250, 1000);
+  publishData("tt_arm_pct", String(currentPositionPercentWithDecimals(), 3), 250, 1000);
 }
 
 void addVolumeEntities() {
