@@ -118,10 +118,10 @@ int maxStatIndex() {
 }
 
 void printStatsReport() {
-  Serial.println("--- Turntable Stats ---");
+  webSerialPrintln("--- Turntable Stats ---");
   for (int i = 0; i < MAXCOUNTER; i++) {
     if (strlen(statsLabels[i]) > 0) {
-      Serial.println(formattedStatsColumn(i));
+      webSerialPrintln(formattedStatsColumn(i));
     }
   }
 }
@@ -133,5 +133,5 @@ String formattedStatsColumn(int index) {
 void statsReset() {
   ttStats.clear(); 
   for (int i = 0; i < MAXCOUNTER; i++) numberStats[i] = 0;
-  Serial.println("Turntable statistics reset");
+  webSerialPrintln("Turntable statistics reset");
 }

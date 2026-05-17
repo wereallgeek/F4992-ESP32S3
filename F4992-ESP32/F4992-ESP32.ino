@@ -64,7 +64,7 @@ volatile bool softSpeedInverter = false;
 //ESPUI turntable GUI fields
 uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch, firmwareUpdate;
 uint16_t detectionDurationLabelId, muteDurationLabelId, timeoutLabelId, timeoutEnabledLabelId, ffwdRewSkipAmmountLabelId, irCycleDurationLabelId;
-uint16_t irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId;
+uint16_t irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId, serialLabelId;
 //ESPUI==================================================================================================================
 
 
@@ -120,8 +120,8 @@ void setup() {
   firstPassCompleted = true;
   if (!UserTTBypassRequest) xTaskCreatePinnedToCore(TaskTurntable, "TurntableTask", 10000, NULL, 3, &Handle_Turntable, 1);
 
-  Serial.println(String("FW ver ") + firmwareVersion());
-  Serial.println(String("[") + stored_devicename + "] awoken");
+  webSerialPrintln(String("FW ver ") + firmwareVersion());
+  webSerialPrintln(String("[") + stored_devicename + "] awoken");
 }
 //SETUP=========================
 
