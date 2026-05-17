@@ -309,8 +309,8 @@ void addTurntableEntities() {
   addEntity("sensor",       "Information",  "tt_title",        "",         "",       "",            "", "mdi:information-slab-box-outline");
   
 
-  addEntity("binary_sensor", "Arm Reset Switch",    "tt_armlim",    "motion", "", "", "", "mdi:arrow-collapse-right");
-  addEntity("binary_sensor", "Platter is spinning", "tt_spinning",  "running", "", "", "", "mdi:rotate-right");
+  addEntity("binary_sensor", "Arm Reset Switch", "tt_armlim",    "motion", "", "", "", "mdi:arrow-collapse-right");
+  addEntity("binary_sensor", "Platter rotation", "tt_spinning",  "running", "", "", "", "mdi:rotate-right");
 }
 
 void publishTurntableData() {
@@ -392,7 +392,7 @@ void publishAllhWirelessStats() {
 void addAllCpuInfoEntities() {
   addEntity("sensor", "Restart Reason", "rst_reason", "", "", "", "diagnostic", "mdi:information-outline");
   addEntity("sensor", "Last Known Crash", "crash_reason", "", "", "", "diagnostic", "mdi:alert-octagon");
-  addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "°C", "measurement", "diagnostic", "", false);
+  addEntity("sensor", "CPU Temp", "cpu_temp", "temperature", "Â°C", "measurement", "diagnostic", "", false);
   addEntity("sensor", "CPU Model", "cpu_model", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "CPU Cores", "cpu_cores", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
   addEntity("sensor", "CPU Frequency", "cpu_freq", "", "", "", "diagnostic", "mdi:cpu-64-bit", false);
