@@ -42,12 +42,13 @@ Here is the daughterboard/motherboard interface pinout and matching GPIO address
 
 
 
-The replacement daughterboard PCB will be made available at PCBWay's shared projects - **link to follow** - PCBWay supplied the PCBs for prototypes phase 1 and 2 of this project. Thanks again.
+The replacement daughterboard PCB is  available at PCBWay's shared projects - see [here](https://www.pcbway.com/project/shareproject/F4992_ESP32S3_CPU_board_replacement_586c1eb8.html) - PCBWay supplied the PCBs for prototypes phase 1 and 2 of this project. Thanks again.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/PCBv2.png">
 </p>
 
+[PCB Shared Project at PCBWay](https://www.pcbway.com/project/shareproject/F4992_ESP32S3_CPU_board_replacement_586c1eb8.html)
 
 ## Connectivity
 
