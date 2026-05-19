@@ -135,3 +135,9 @@ void statsReset() {
   for (int i = 0; i < MAXCOUNTER; i++) numberStats[i] = 0;
   webSerialPrintln("Turntable statistics reset");
 }
+
+void bootcountReset() {
+  numberStats[BOOTCOUNT] = 0; 
+  ttStats.putUInt(statsKeys[BOOTCOUNT], numberStats[BOOTCOUNT]);
+  webSerialPrintln("bootcount statistics reset");
+}
