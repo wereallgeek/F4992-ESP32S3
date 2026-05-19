@@ -412,7 +412,7 @@ int currentElapsedPercent() {
 
 float currentPositionPercentWithDecimals() {
   if (startStep() == endStep()) return 0.0f;
-  float percent = ((float)(uiArmPosition - startStep()) / (float)(endStep() - startStep())) * 100.0f;
+  float percent = ((float)(armPosition() - startStep()) / (float)(endStep() - startStep())) * 100.0f;
   return constrain(percent, 0.0f, 100.0f);;
 }
 
@@ -464,7 +464,7 @@ float elapsedPlaytimeInSeconds() {
 }
 
 float currentPositionInSeconds() {
-  return positionToSeconds(uiArmPosition);
+  return positionToSeconds(armPosition());
 }
 
 String getUiSizeName() {
@@ -477,10 +477,6 @@ String getUiRecordSize() {
 
 int getUipreviousDcm() {
   return previousDcm;
-}
-
-int getUiArmPosition() {
-  return uiArmPosition;
 }
 
 bool isPlaying() {

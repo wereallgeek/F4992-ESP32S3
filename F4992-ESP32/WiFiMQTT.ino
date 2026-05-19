@@ -322,7 +322,7 @@ void publishTurntableData() {
   publishData("tt_spd",     getUiRecordSize());
   publishData("tt_size",    getUiSizeName());
   publishData("tt_armlift", (armLifter() == getArmUpLevel() ? "Raised" : "Lowered"));
-  publishData("tt_armpos",  String(getUiArmPosition()));
+  publishData("tt_armpos",  String(armPosition()));
   publishData("tt_status",  turntableCurrentStatus());
   publishData("tt_title", elaboratedTurntableStatus());
   publishData("tt_dcm",     String("DCM") + getUipreviousDcm());
