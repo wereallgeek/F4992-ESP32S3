@@ -574,6 +574,14 @@ void SerialCommand(String input) {
     printStatsReport();
   }
 
+  else if (input.indexOf("zeroize") > -1) {
+    statsReset();
+  }
+
+  else if (input.indexOf("bootreset") > -1) {
+    bootcountReset();
+  }
+
   else if (input.indexOf("volume") > -1) {
     if (volumeChangerActivated()) {
       String volumeLevel = splitString(input, ' ', 1);
