@@ -147,6 +147,7 @@ void mqtt_loop() {
       publishAllStats();
       publishAllhWirelessStats();
       publisAllCpuInfo();
+      publishSerialConsole();
       sendOnReconnect = false;
     }
     client.loop();
@@ -266,6 +267,7 @@ void reconnect() {
       addAllStatEntities();
       addAllWirelessStatEntities();
       addAllCpuInfoEntities();
+      addSerialConsoleEntities();
       //------------------------------------------------------
 
     } else {
@@ -416,5 +418,14 @@ void publisAllCpuInfo() {
   publishData("flash_size", String(getFlashSize()));
   publishData("sketch_size", String(getSketchSize()));
   publishData("free_sketch", String(getFreeSketchSpace()));
+}
+
+void addSerialConsoleEntities() {
+  addEntity("sensor", "Serial Console", "console", "", "", "", "diagnostic", "mdi:console-line", false);
+
+}
+
+void publishSerialConsole() {
+  publishData("console", oneLiner());
 }
 //Specific ===================================================================

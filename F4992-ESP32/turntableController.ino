@@ -113,6 +113,11 @@ unsigned long armuptime = 0;
 
 volatile bool repeat = false;
 
+unsigned long lastStepChange = 0;
+uint16_t  noscratchpos       = 0;
+volatile bool suspectLoop   = false;
+volatile bool actedOnLoop   = false;
+
 pcnt_unit_handle_t counterUnit = NULL;
 pcnt_channel_handle_t counterChan = NULL;
 
@@ -335,6 +340,7 @@ void changeState(TurntableState newState) {
   currentState = newState;
   if (newState == NOGO) rejectTime = millis();
   ledAnimationSetState(currentState, armPosition(), desiredPosition);
+  CleanScratchFilterOnStateChange(currentState, newState);
   setWifiSleep(currentState == IDLE);
   taskDelay = (currentState == IDLE) ? 20 : 1;
   setCpuFrequencyMhz((currentState == IDLE) ? 80 : 240); 
@@ -767,6 +773,31 @@ void completeInitialization() {
   resetDiskSize();
 }
 
+void CleanScratchFilterOnStateChange(int previousState, int nextState) {
+  if (!getScratchFilterEnabled() || previousState == nextState || nextState != PLAY) return;
+  setScratchfilter();
+}
+
+void setScratchfilter() {
+  lastStepChange = 0;
+  noscratchpos   = 0;
+  suspectLoop    = false;
+  actedOnLoop    = false;
+}
+
+bool checkForScratches() {
+  if (!getScratchFilterEnabled()) return false;
+  if (noscratchpos != armPosition()) {
+    lastStepChange = millis();
+    noscratchpos= armPosition();
+    suspectLoop = false;
+  }
+  else if (millis() - lastStepChange > getScratchDuration()) {
+    suspectLoop = true;
+  }
+  return suspectLoop;
+}
+
 void turntableLoop() {
   switch (currentState) {
     case IDLE:
@@ -846,6 +877,14 @@ void turntableLoop() {
     case PLAY:
       if (isOverPlatter() && isTurning()) playRecord();
       
+      if (checkForScratches()) {
+        incrementSkip();
+        webSerialPrintln("Skipping a scratch.");
+        decreasePlayTimer(getScratchDuration()); //best effort to adjust elapsed time.
+        requestGoToAndPlay(armPosition() + getSkipAmmount());
+      }
+      
+
       if (reachedEndPosition()) {
         if (repeat) {
           nextState = PLAY;

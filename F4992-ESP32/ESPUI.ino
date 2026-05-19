@@ -293,6 +293,19 @@ void espui_init() {
     ffwdRewSkipAmmountLabelId = ESPUI.addControl(Text, "", String(getFfwdRewLenght()), Dark, ffwdrewLabel, noCallback);
     ESPUI.setElementStyle(ffwdRewSkipAmmountLabelId, espuiTelStyle);
 
+    auto scratchDurationLabel = ESPUI.addControl(Label, "Auto record-skipping bypass", "lenght : ", None, configtab, noCallback);
+    ESPUI.setElementStyle(scratchDurationLabel, espuiLongLabelStyle);
+    scratchDurationLabelId = ESPUI.addControl(Text, "", String(getScratchDuration()), Dark, scratchDurationLabel, noCallback);
+    ESPUI.setElementStyle(scratchDurationLabelId, espuiTelStyle);
+    auto scratchSkipAmmountLabel = ESPUI.addControl(Label, "", "ammount : ", None, scratchDurationLabel, noCallback);
+    ESPUI.setElementStyle(scratchSkipAmmountLabel, espuiLongLabelStyle);
+    scratchSkipAmmountLabelId = ESPUI.addControl(Text, "", String(getSkipAmmount()), Dark, scratchDurationLabel, noCallback);
+    ESPUI.setElementStyle(scratchSkipAmmountLabelId, espuiTelStyle);
+    auto scratchFilterEnabledLabel = ESPUI.addControl(Label, "", "enable : ", None, scratchDurationLabel, noCallback);
+    ESPUI.setElementStyle(scratchFilterEnabledLabel, espuiSwtLabelStyle);
+    scratchFilterEnabledLabelId = ESPUI.addControl(Switcher, "Scratch Skip", String(getScratchFilterEnabled()), Dark, scratchDurationLabel, scratchFilterEnableCallback);
+    ESPUI.setElementStyle(scratchFilterEnabledLabelId, getEspuiSwitchStyle(getScratchFilterEnabled()));
+
     auto infraredLabel = ESPUI.addControl(Label, "Infrared", "duration: ", None, configtab, noCallback);
     ESPUI.setElementStyle(infraredLabel, espuiLongLabelStyle);
     irCycleDurationLabelId = ESPUI.addControl(Text, "", String(getIrCycleDuration()), Dark, infraredLabel, noCallback);

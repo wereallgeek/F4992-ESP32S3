@@ -8,8 +8,21 @@ std::deque<String> webLog;
 SemaphoreHandle_t logMutex = xSemaphoreCreateMutex();
 volatile bool haschanged = true;
 
+volatile bool lineEnded = false;
+String lineOfText = "";
+
+void addTextToOneLiner(String s, bool crlf) {
+  if (lineEnded) lineOfText = "";
+  lineOfText += s;
+  lineEnded = crlf;
+}
+String oneLiner() {
+  return lineOfText;
+}
+
 void wsprint(String s) {
   Serial.print(s);
+  addTextToOneLiner(s, false);
   if (!debugTabVisible()) return;
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(5)) == pdTRUE) { //no doubledipping
     if (webLog.empty()) {
@@ -25,6 +38,7 @@ void wsprint(String s) {
 
 void wsprintln(String s) {
   Serial.println(s);
+  addTextToOneLiner(s, true);
   if (!debugTabVisible()) return;
   if (xSemaphoreTake(logMutex, pdMS_TO_TICKS(5)) == pdTRUE) { //no doubledipping
    if (webLog.empty()) {

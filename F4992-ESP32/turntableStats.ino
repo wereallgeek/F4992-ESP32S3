@@ -9,7 +9,7 @@ Preferences ttStats;
 enum statsType {
   START_MANUAL, START_WEB, START_CMD, START_MQTT,
   STOP_MANUAL, STOP_WEB, STOP_CMD, STOP_MQTT,
-  AUTO_STOP, REPEAT, REJECT, TIMEOUT,
+  AUTO_STOP, REPEAT, REJECT, TIMEOUT, SKIPCOUNT, 
   PLAYCOUNT, SIZE17, SIZE30,
   BOOTCOUNT,
   MAXCOUNTER
@@ -18,7 +18,7 @@ enum statsType {
 const char* statsKeys[] = {
   "st_man", "st_web", "st_cmd", "st_mqtt",
   "sp_man", "sp_web", "sp_cmd", "sp_mqtt",
-  "sp_auto", "rep_ct", "rej_ct", "tmout_ct",
+  "sp_auto", "rep_ct", "rej_ct", "tmout_ct", "skip_ct",
   "ply_ct", "sz17", "sz30",
   "boot_ct"
 };
@@ -26,7 +26,7 @@ const char* statsKeys[] = {
 const char* statsLabels[] = {
   "Start (manual): ", "Start (web): ", "Start (serial): ", "Start (mqtt): ",
   "Stop (manual): ", "Stop (web): ", "Stop (serial): ", "Stop (mqtt): ",
-  "Stop (auto): ", "Repeat: ", "Rejected: ", "Timed out: ",
+  "Stop (auto): ", "Repeat: ", "Rejected: ", "Timed out: ", "Loop skipped: ",
   "Playcount: ", "7\" Record: ", "12\" Record: ",
   "Bootcount: "
 };
@@ -34,7 +34,7 @@ const char* statsLabels[] = {
 const char* statsIcons[] = {
   "mdi:play", "mdi:play-circle", "mdi:play-circle", "mdi:play-circle",
   "mdi:stop", "mdi:stop-circle", "mdi:stop-circle", "mdi:stop-circle",
-  "mdi:stop-circle-outline", "mdi:repeat", "mdi:eject", "mdi:camera-timer",
+  "mdi:stop-circle-outline", "mdi:repeat", "mdi:eject", "mdi:camera-timer", "mdi:skip-forward",
   "mdi:counter", "mdi:disc", "mdi:record-circle",
   "mdi:power-cycle"
 };
@@ -89,6 +89,16 @@ void incrementPlaycount() {
   incrementStat(PLAYCOUNT);
 }
 
+void incrementSkip() {
+  incrementStat(SKIPCOUNT);
+}
+
+//To be used for self-inflicted reboots (configs)
+void decrementBootcount() {
+  numberStats[BOOTCOUNT] -= 1; 
+  ttStats.putUInt(statsKeys[BOOTCOUNT], numberStats[BOOTCOUNT]);
+}
+
 uint32_t getStat(int type) {
   if (type < 0 || type >= MAXCOUNTER) return 0;
   return numberStats[type];
@@ -134,10 +144,4 @@ void statsReset() {
   ttStats.clear(); 
   for (int i = 0; i < MAXCOUNTER; i++) numberStats[i] = 0;
   webSerialPrintln("Turntable statistics reset");
-}
-
-void bootcountReset() {
-  numberStats[BOOTCOUNT] = 0; 
-  ttStats.putUInt(statsKeys[BOOTCOUNT], numberStats[BOOTCOUNT]);
-  webSerialPrintln("bootcount statistics reset");
 }
