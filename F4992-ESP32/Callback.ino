@@ -9,6 +9,7 @@ void mqtt_callback(String topic, byte *message, unsigned int length) {
   topic.toLowerCase();
 
   if (topic.indexOf("restart_btn") > -1) {
+    decrementBootcount();
     ESP.restart();
   }
 
@@ -272,6 +273,11 @@ void switchLedCallback(Control *sender, int type) {
   switchCallback(sender, type);
 }
 
+void scratchFilterEnableCallback(Control *sender, int type) {
+  setScratchFilterEnabled(type == S_ACTIVE);
+  switchCallback(sender, type);
+}
+
 void switchCallback(Control *sender, int type) {
   reflectSwitchPosition(sender->id, (type == S_ACTIVE));
 }
@@ -406,6 +412,7 @@ void saveWifiDetailsCallback(Control *sender, int type) {
 //ESP Reset=================================
 void ESPReset(Control *sender, int type) {
   if (type == B_UP) {
+    decrementBootcount();
     ESP.restart();
   }
 }
@@ -488,6 +495,7 @@ void SerialCommand(String input) {
   input.toLowerCase();
   //handle lowercase entries to match with cellphone autocorrect
   if (input.indexOf("restart") > -1) {
+    decrementBootcount();
     ESP.restart();
   }
 
@@ -576,10 +584,6 @@ void SerialCommand(String input) {
 
   else if (input.indexOf("zeroize") > -1) {
     statsReset();
-  }
-
-  else if (input.indexOf("bootreset") > -1) {
-    bootcountReset();
   }
 
   else if (input.indexOf("volume") > -1) {

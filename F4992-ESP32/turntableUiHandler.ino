@@ -88,14 +88,21 @@ bool          playTimerWasPaused      = false;
 #define DEFUPDURATION              350
 #define DEFIRTRESHOLD              1500
 #define DEFFFWDREWLEN              2500
-volatile int irCycleDuration =     DEFIRCYCLEDURATION;
-volatile int detectionDuration =   DEFDETECTIONDURATION;
-volatile int muteDuration =        DEFMUTEDURATION;
-volatile int playtimeout =         DEFTIMEOUT;
-volatile bool playtimeoutEnabled = DEFTIMEOUTENABLED;
-volatile int upDuration =          DEFUPDURATION;
-volatile int irTreshold =          DEFIRTRESHOLD;
-volatile int ffwdRevLenInMs =      DEFFFWDREWLEN;
+#define DEFSCRATCHLEN              15000
+#define DEFSKIPAMT                 5
+#define DEFSCRATCHENABLED          false
+
+volatile int irCycleDuration =       DEFIRCYCLEDURATION;
+volatile int detectionDuration =     DEFDETECTIONDURATION;
+volatile int muteDuration =          DEFMUTEDURATION;
+volatile int playtimeout =           DEFTIMEOUT;
+volatile bool playtimeoutEnabled =   DEFTIMEOUTENABLED;
+volatile int upDuration =            DEFUPDURATION;
+volatile int irTreshold =            DEFIRTRESHOLD;
+volatile int ffwdRevLenInMs =        DEFFFWDREWLEN;
+volatile int scratchLenInMs =        DEFSCRATCHLEN;
+volatile int skipAmmountInSteps =    DEFSKIPAMT;
+volatile bool scratchFilterEnabled = DEFSCRATCHENABLED;
 
 
 
@@ -393,7 +400,7 @@ String elaboratedTimeForState(int stateToReport, float posInSecs, float lenghtIn
   return "";
 }
 
-String elaboratedTimeStatus() {  
+String elaboratedTimeStatus() {
   return elaboratedTimeForState(getCurrentState(), elapsedPlaytimeInSeconds(), approximateRecordLenght());
 }
 
@@ -604,6 +611,42 @@ int getFfwdRewLenght(){
   return ffwdRevLenInMs;
 }
 
+void readScratchDurationFromStorage(){
+  setScratchDuration(ttConfig.getUShort("scrfiltdur", DEFSCRATCHLEN));
+}
+
+void setScratchDuration(int lenghtInmiliseconds) {
+  scratchLenInMs = lenghtInmiliseconds;
+}
+
+int getScratchDuration(){
+  return scratchLenInMs;
+}
+
+void readSkipAmmountFromStorage(){
+  setSkipAmmount(ttConfig.getUShort("skipamt", DEFSKIPAMT));
+}
+
+void setSkipAmmount(int ammountInSteps) {
+  skipAmmountInSteps = ammountInSteps;
+}
+
+int getSkipAmmount() {
+  return skipAmmountInSteps;
+}
+
+void readScratchFilterEnableFromStorage(){
+  setScratchFilterEnabled(ttConfig.getBool("scrfiltenab", DEFTIMEOUTENABLED));
+}
+
+void setScratchFilterEnabled(bool enable) {
+  scratchFilterEnabled = enable;
+}
+
+int getScratchFilterEnabled(){
+  return scratchFilterEnabled;
+}
+
 void readUpDurationFromStorage(){
   setUpDuration(ttConfig.getUShort("upDuration", DEFUPDURATION));
 }
@@ -700,6 +743,9 @@ void readTurntablePresetValuesFromStorage() {
   readTimeoutDurationFromStorage();
   readTimeoutEnabledFromStorage();
   readFfwdRewLenghtFromStorage();
+  readScratchDurationFromStorage();
+  readSkipAmmountFromStorage();
+  readScratchFilterEnableFromStorage();
   readUpDurationFromStorage();
   readIrCycleDurationFromStorage();
   readIrTresholdFromStorage();
@@ -709,6 +755,10 @@ void readTurntablePresetValuesFromStorage() {
 //======================== elapsedTimeCounter =============================
 void increasePlayTimer(unsigned long ammount) {
   playtimer += ammount;
+}
+
+void decreasePlayTimer(unsigned long ammount) {
+  playtimer -= ammount;
 }
 
 void updatePlayTimer() {
@@ -776,6 +826,7 @@ void outputTurntableDetailsValues() {
     webSerialPrintln(String("Needledrop mute duration ") + getMuteDuration() + String(" ms"));
     webSerialPrintln(String("Turntable timeout ") + getTimeoutEnabled()? "Enabled, duration is " : "disabled, duration would be " + getTimeoutDuration() + String(" min"));
     webSerialPrintln(String("FFWD & REW lenght ") + getFfwdRewLenght() + String(" ms"));
+    webSerialPrintln(String("Scratch skipper ") + getScratchFilterEnabled()? "Enabled, duration is " : "disabled, duration would be " + getScratchDuration() + String(" ms and skip ammount ") + getSkipAmmount());
     webSerialPrintln(String("IR cycle duration ") + getIrCycleDuration() + String(" ms"));
     webSerialPrintln(String("Infrared Treshold ") + getIrTreshold());
     webSerialPrintln(String("Arm Presets [0, ") + getArmPresetValue(START30) + String(", ") + getArmPresetValue(START17) + String(", ") + getArmPresetValue(END)+ String("]"));
@@ -788,6 +839,9 @@ void resyncTurntableDetailsToScreen() {
   ESPUI.updateControlValue(timeoutLabelId, String(getTimeoutDuration()));
   ESPUI.updateControlValue(timeoutEnabledLabelId, String(getTimeoutEnabled()));
   ESPUI.updateControlValue(ffwdRewSkipAmmountLabelId, String(getFfwdRewLenght()));
+  ESPUI.updateControlValue(scratchDurationLabelId, String(getScratchDuration()));
+  ESPUI.updateControlValue(scratchSkipAmmountLabelId, String(getSkipAmmount()));
+  ESPUI.updateControlValue(scratchFilterEnabledLabelId, String(getScratchFilterEnabled()));
   ESPUI.updateControlValue(irCycleDurationLabelId, String(getIrCycleDuration()));
   ESPUI.updateControlValue(irTresholdLabelId, String(getIrTreshold()));
   ESPUI.updateControlValue(armPresetValue30LabelId, String(getArmPresetValue(START30)));
@@ -801,6 +855,9 @@ void applyTurntableDetailsToMemory() {
   setTimeoutDuration(ESPUI.getControl(timeoutLabelId)->value.toInt());
   setTimeoutEnabled(ESPUI.getControl(timeoutEnabledLabelId)->value.toInt());
   setFfwdRewLenght(ESPUI.getControl(ffwdRewSkipAmmountLabelId)->value.toInt());
+  setScratchDuration(ESPUI.getControl(scratchDurationLabelId)->value.toInt());
+  setSkipAmmount(ESPUI.getControl(scratchSkipAmmountLabelId)->value.toInt());
+  setScratchFilterEnabled(ESPUI.getControl(scratchFilterEnabledLabelId)->value.toInt());
   setIrCycleDuration(ESPUI.getControl(irCycleDurationLabelId)->value.toInt());
   setIrTreshold(ESPUI.getControl(irTresholdLabelId)->value.toInt());
   setArmPresetValues(0, ESPUI.getControl(armPresetValue30LabelId)->value.toInt(), 
@@ -814,6 +871,9 @@ void saveTurntableDetailsToConfig() {
     ttConfig.putUShort("t_out", (uint16_t)getTimeoutDuration());
     ttConfig.putBool("t_out_active", getTimeoutEnabled());
     ttConfig.putUShort("revffwdlen", (uint16_t)getFfwdRewLenght());
+    ttConfig.putUShort("scrfiltdur", (uint16_t)getScratchDuration());
+    ttConfig.putUShort("skipamt", (uint16_t)getSkipAmmount());
+    ttConfig.putBool("scrfiltenab", getScratchFilterEnabled());
     ttConfig.putUShort("irCycleDuration", (uint16_t)getIrCycleDuration());
     ttConfig.putUShort("irTreshold", (uint16_t)getIrTreshold());
     ttConfig.putUShort("Steps30", (uint16_t)getArmPresetValue(START30));

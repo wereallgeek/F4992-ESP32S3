@@ -74,6 +74,7 @@ void setupOTA(AsyncWebServer &otaServer, const char* path) {
 
       if(!failure) {
         xTimerStart(xTimerCreate("reboot", pdMS_TO_TICKS(2000), pdFALSE, (void *)0, [](TimerHandle_t xTimer){
+          decrementBootcount();
           ESP.restart();
         }), 0);
       }
