@@ -133,8 +133,8 @@ void espui_init() {
   setupInterface();
 
   //create tabs here to get urls with #1, #2, etc.
-  auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
   if (wifiSettingsVisible()) wifitab    = ESPUI.addControl(Tab, "", "WiFi");
+  auto tonearmtab = ESPUI.addControl(Tab, "", "Status");
   auto addonstab  = ESPUI.addControl(Tab, "", "Addons");
   if (hardwareTuningVisible()) configtab  = ESPUI.addControl(Tab, "", "H/W");
   if (debugTabVisible()) updatetab  = ESPUI.addControl(Tab, "", "Debug");
