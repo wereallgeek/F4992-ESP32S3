@@ -229,24 +229,26 @@ void espui_init() {
   //Addons - configuration for ui interface, features, and hardware addons --------------------------------------------------------
 
   //Tonearm Control - in header to be available from all tabs----------------------------------------------------------------------
-  ledId = ESPUI.label(espuiMainpageStyle, Dark, "");
-  ESPUI.setElementStyle(ledId, getEspuiIndicatorColor("#2c3e50"));
-  auto in_button = ESPUI.addControl(Button, "", "< Left ", None, ledId, buttonInCallback);
+  statusLedId = ESPUI.label(espuiMainpageStyle, Dark, "");
+  ESPUI.setElementStyle(statusLedId, getEspuiIndicatorColor("#2c3e50"));
+  mqttLedId = ESPUI.addControl(Label, "", "", Dark, statusLedId, noCallback);
+  ESPUI.setElementStyle(mqttLedId, getEspuiIndicatorColor("#2c3e50"));
+  auto in_button = ESPUI.addControl(Button, "", "< Left ", None, statusLedId, buttonInCallback);
   ESPUI.setElementStyle(in_button, btnStyle);
-  auto out_button = ESPUI.addControl(Button, "", "Right >", None, ledId, buttonOutCallback);
+  auto out_button = ESPUI.addControl(Button, "", "Right >", None, statusLedId, buttonOutCallback);
   ESPUI.setElementStyle(out_button, btnStyle);
-  auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, ledId, buttonUpdownCallback);
+  auto up_button = ESPUI.addControl(Button, "", "Up/Down", None, statusLedId, buttonUpdownCallback);
   ESPUI.setElementStyle(up_button, btnStyle);
-  auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, ledId, buttonStartStopCallback);
+  auto ss_button = ESPUI.addControl(Button, "", "Start/Stop", None, statusLedId, buttonStartStopCallback);
   ESPUI.setElementStyle(ss_button, btnStyle);
   if (espuiRepeatButtonVisible) {
-    auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, ledId, buttonRepeatCallback);
+    auto rpt_button = ESPUI.addControl(Button, "", "Repeat", None, statusLedId, buttonRepeatCallback);
     ESPUI.setElementStyle(rpt_button, btnStyle);
-    repeatId = ESPUI.addControl(Label, "", "", Dark, ledId, noCallback);
+    repeatId = ESPUI.addControl(Label, "", "", Dark, statusLedId, noCallback);
     ESPUI.setElementStyle(repeatId, getEspuiIndicatorColor("#2c3e50"));
   }
   if (espuiInvertButtonVisible) {
-    spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, ledId, buttonInvertCallback);
+    spd_switch = ESPUI.addControl(Switcher, "", String(softSpeedInverter), None, statusLedId, buttonInvertCallback);
     ESPUI.setElementStyle(spd_switch, getEspuiSwitchStyle(false));
   }
   //Turntable Controls-------------------------------------------------------------------------------------------------------------

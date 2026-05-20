@@ -47,6 +47,7 @@ volatile bool armlifterDirty   = false;
 volatile bool ttstateDirty     = false;
 volatile bool armpositionDirty = false;
 volatile bool ledstateDirty    = false;
+volatile bool mqttstateDirty   = false;
 volatile bool uiDd3Active      = false;
 volatile int  uiArmPosition    = 0;
 volatile const char* uiRecordStyle;
@@ -55,6 +56,7 @@ volatile const char* uidcmIcon;
 volatile const char* uiTurntableStatus;
 volatile const char* uiStatusHexColor;
 volatile const char* uiOnOffIndicatorColor;
+volatile const char* mqttIndicatorColor;
 
 volatile bool    previousRepeat    = false;
 volatile bool    previousDD33      = false;
@@ -66,6 +68,7 @@ volatile int     previousDiscSize  = -1;
 volatile int     previousArmState  = -1;
 volatile int     previousLedState  = -1;
 volatile int     previousTtState   = -1;
+volatile bool    mqttState         = false;
 
 unsigned long lastUpdateCycle1 = 0; 
 unsigned long lastUpdateCycle2 = 0; 
@@ -147,6 +150,16 @@ bool computeTtstateDirty() {
   return false;
 }
 
+bool computeMqttstateDirty() {
+  bool currentState = isMqttConnected();
+  if (mqttState != currentState) {
+    mqttState = currentState;
+    mqttIndicatorColor = onOffIndicatorColor[currentState ? 1 : 0];
+    return true;
+  }
+  return false;
+}
+
 bool computeLedstateDirty() {
   int currentState = getCurrentState();
   if (previousLedState != currentState) {
@@ -196,6 +209,7 @@ void dirtyComputation() {
   if (computeTtstateDirty()) ttstateDirty = true;
   if (computeArmpositionDirty()) armpositionDirty = true;
   if (computeLedstateDirty()) ledstateDirty = true;
+  if (computeMqttstateDirty()) mqttstateDirty = true;
 }
 
 void requestComputation() {
@@ -309,6 +323,10 @@ void turntableUiUpdate() {
       ESPUI.print(lifterStatusId, (char *)uiLifterIcon);
       armlifterDirty = false;
     }
+    if (mqttstateDirty) {
+      changeEspuiIndicatorColor(mqttLedId, (char *)mqttIndicatorColor);
+      mqttstateDirty = false;
+    }
   }
   else if (currentmillis - lastUpdateCycle4 >= 1024) {
     lastUpdateCycle4 = currentmillis;
@@ -321,7 +339,7 @@ void turntableUiUpdate() {
       armpositionDirty = false;
     }
     if (ledstateDirty) {
-      changeEspuiIndicatorColor(ledId, (char *)uiStatusHexColor);
+      changeEspuiIndicatorColor(statusLedId, (char *)uiStatusHexColor);
       ledstateDirty = false;
     }
     if (uiAskfwupdate) {

@@ -62,9 +62,9 @@ bool mqtt_enabled = false;
 volatile bool softSpeedInverter = false;
 
 //ESPUI turntable GUI fields
-uint16_t armStatusLabelId, armPositionLabelId, repeatId, ledId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch, firmwareUpdate;
+uint16_t armStatusLabelId, armPositionLabelId, repeatId, statusLedId, recordsizeLabelId, lifterStatusId, dcmStatusId, spd_switch, firmwareUpdate;
 uint16_t detectionDurationLabelId, muteDurationLabelId, timeoutLabelId, timeoutEnabledLabelId, ffwdRewSkipAmmountLabelId, irCycleDurationLabelId;
-uint16_t scratchDurationLabelId, scratchSkipAmmountLabelId, scratchFilterEnabledLabelId;
+uint16_t scratchDurationLabelId, scratchSkipAmmountLabelId, scratchFilterEnabledLabelId, mqttLedId;
 uint16_t irTresholdLabelId, armPresetValue30LabelId, armPresetValue17LabelId, armPresetValueEndLabelId, serialLabelId;
 //ESPUI==================================================================================================================
 
