@@ -51,6 +51,10 @@ bool isWifiConnected() {
   return (WiFi.status() == WL_CONNECTED);
 }
 
+bool isMqttConnected() {
+  return client.connected();
+}
+
 bool isAnAccessPoint() {
   return (WiFi.getMode() & WIFI_AP);
 }
