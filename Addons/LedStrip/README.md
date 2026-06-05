@@ -17,6 +17,10 @@ The LED strip needs to follow the WS2812B standard for communitation.
 The idea is to fit the strip under the top cover of the arm tray area; but different LED Strips have different LED density - more or less LEDs per inch.
 The number of leds is configurable in software.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/LedStrip.png">
+</p>
+
 [PCB Shared Project at PCBWay](https://www.pcbway.com/project/shareproject/F4992_ESP32S3_CPU_board_replacement_586c1eb8.html)
 
 ## Connectivity
@@ -34,7 +38,10 @@ Any user wanting to use a 15V led strip can tap on the turntable's 15V power cir
 
 In the Web interface the Led strop addon permits to enable the LED Strip.
 
-tunable values are as follow:
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/ui-ledStrip.png">
+</p>
+
 Ledstrip enabled - turn the add-on ON/OFF
 Number of leds - the number of LEDs on the STRIP
 Brightness - how bright should the LEDs be

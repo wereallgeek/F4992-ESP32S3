@@ -16,6 +16,10 @@ When Sansui designed the P-L series turntables they made a very powerful followe
 All of this is done without any software- purely in electroncis equilibrium.
 There are hardware tweaks that can be done, as seen in figure 6-5 in the Sansui P-L45 & P-L55 automatic direct-drive turntable service manuals.
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/fig6-5.png">
+</p>
+
 fVR1 adjusts how easy it is to trigger movement
 fVR2 adjusts how fast this movement will be
 
@@ -25,6 +29,10 @@ When properly adjusted, the arm will remain in-equilibrium on its own, but sligh
 ## GUI
 
 The Auto record-skipping bypass section of the online configuratino tool gives only a few options but they need to be properly tweaked.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/wereallgeek/F4992-ESP32S3/main/images/ui-skipBypass.png">
+</p>
 
 lenght - the duration of immobility required for the corrective action to take place. This needs to be tweaked to match fVR1 & fVR2 and how the Servo arm motion behaves.
 ammount - the number of steps the tray will take when correcting. Too small and it may require more than one correction. Too big and you skip more music than required
